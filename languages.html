@@ -35,8 +35,19 @@
     <button class="btn" onclick="setLang('ES')">🇪🇸 Español</button>
   </div>
 37 <div style="margin-bottom:16px">
-38   <button class="btn" onclick="startTest()">📝 Тест</button>
+38   <button class="btn" onclick=onclick="startTestMode()">📝 Тест</button>
 39 </div>
+  <!-- ⭐ ТЕСТ -->
+<div id="testBox" class="card" style="display:none">
+  <h2>📝 Тест</h2>
+
+  <label>Количество слов:</label><br>
+  <input id="testCount" type="number" value="10" min="1" style="width:100px"><br><br>
+
+  <button class="btn" onclick="beginTest()">Начать тест</button>
+
+  <div id="testArea" style="margin-top:16px"></div>
+</div>
 
   <!-- Тип: слова / фразы -->
   <div style="display:flex;gap:10px;margin-bottom:16px">
