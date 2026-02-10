@@ -46,5 +46,19 @@
   </div>
 </main>
 
+<script>
+  const CORRECT_PIN = "256444"; // ← свой PIN
+
+  if (!localStorage.getItem("access_granted")) {
+    const pin = prompt("Введите PIN-код:");
+    if (pin === CORRECT_PIN) {
+      localStorage.setItem("access_granted", "true");
+    } else {
+      document.body.innerHTML =
+        "<h2 style='color:white;text-align:center;margin-top:40vh'>Доступ запрещён</h2>";
+    }
+  }
+</script>
+
 </body>
 </html>
