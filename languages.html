@@ -238,10 +238,12 @@ function showQuestion() {
 
     <p id="feedback" style="margin-top:12px;font-weight:bold"></p>
 
-    <button class="btn" id="nextBtn" style="display:none;margin-top:10px"
+    <button class="btn" id="nextBtn"
+      style="display:none;margin-top:10px"
       onclick="nextQuestion()">Дальше →</button>
   `;
 }
+
 
 
 function checkAnswer() {
@@ -249,10 +251,13 @@ function checkAnswer() {
   const feedback = document.getElementById("feedback");
   const nextBtn = document.getElementById("nextBtn");
 
-  if (!input) return;
+  if (!input || !feedback || !nextBtn) {
+    console.error("❌ Элементы теста не найдены");
+    return;
+  }
 
   const user = input.value.trim().toLowerCase();
-  const correct = testWords[testIndex].translation.toLowerCase();
+  const correct = testWords[testIndex].translation.trim().toLowerCase();
 
   if (user === correct) {
     correctAnswers++;
@@ -263,10 +268,7 @@ function checkAnswer() {
     feedback.style.color = "#ff6b6b";
   }
 
-  // блокируем повторный ввод
   input.disabled = true;
-
-  // показываем кнопку «Дальше»
   nextBtn.style.display = "inline-block";
 }
 
@@ -274,13 +276,6 @@ function checkAnswer() {
   testIndex++;
   showQuestion();
 }
-
-
-// 👇 ОБЯЗАТЕЛЬНО: делаем функции видимыми для HTML
-window.startTestMode = startTestMode;
-window.beginTest = beginTest;
-window.checkAnswer = checkAnswer;
-window.nextQuestion = nextQuestion;  
 
 
   // 👇 ДЕЛАЕМ ФУНКЦИИ ДОСТУПНЫМИ ДЛЯ HTML
