@@ -45,7 +45,6 @@
 
   <input id="search"
          placeholder="Поиск..."
-         oninput="render()"
          style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
 
   <div id="list"></div>
@@ -61,77 +60,99 @@
   </div>
 </main>
 
-<script>
-64   let currentLang = "EN";
-65   let currentType = "words";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  
+const firebaseConfig = {
+    apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
+    authDomain: "my-dashboard-dc67a.firebaseapp.com",
+    projectId: "my-dashboard-dc67a",
+    storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+    messagingSenderId: "710702954120",
+    appId: "1:710702954120:web:f06b1038c48d3bd328913d",
+    measurementId: "G-74720EWKSB"
+  };
 
-66   const db = JSON.parse(localStorage.getItem("langDB") || `{
-67     "EN": { "words": [], "phrases": [] },
-68     "DE": { "words": [], "phrases": [] },
-69     "PL": { "words": [], "phrases": [] },
-70     "ES": { "words": [], "phrases": [] }
-71   }`);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-72   function setLang(lang) {
-73     currentLang = lang;
-74     render();
-75   }
+import { query, where, orderBy } from
+"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-76   function setType(type) {
-77     currentType = type;
-78     render();
-79   }
 
-80   function render() {
-81     const q = search.value.toLowerCase();
-82     const list = document.getElementById("list");
-83     list.innerHTML = "";
 
-84     document.getElementById("title").innerText =
-85       `${currentLang} — ${currentType === "words" ? "Слова" : "Фразы"}`;
+   let currentLang = "EN";
+   let currentType = "words";
 
-86     db[currentLang][currentType]
-87       .filter(e =>
-88         e.text.toLowerCase().includes(q) ||
-89         e.translation.toLowerCase().includes(q)
-90       )
-91       .forEach((e, i) => {
-92         list.innerHTML += `
-93           <div class="card">
-94             <h3>${e.text}</h3>
-95             <p><b>${e.translation}</b></p>
-96             <p>${e.note || ""}</p>
-97             <button class="btn" onclick="removeItem(${i})">Удалить</button>
-98           </div>
-99         `;
-100       });
 
-101     localStorage.setItem("langDB", JSON.stringify(db));
-102   }
 
-103   function add() {
-104     if (!text.value || !translation.value) return;
+   function setLang(lang) {
+     currentLang = lang;
+     loadData();
+ 
+   }
 
-105     db[currentLang][currentType].push({
-106       text: text.value,
-107       translation: translation.value,
-108       note: note.value
-109     });
+   function setType(type) {
+     currentType = type;
+     loadData();
+   }
+  async function add() {
+  if (!text.value || !translation.value) return;
 
-110     text.value = "";
-111     translation.value = "";
-112     note.value = "";
+  await addDoc(collection(db, "languages"), {
+    lang: currentLang,
+    type: currentType,
+    text: text.value,
+    translation: translation.value,
+    note: note.value || "",
+    created: Date.now()
+  });
 
-113     render();
-114   }
+  text.value = "";
+  translation.value = "";
+  note.value = "";
 
-115   function removeItem(i) {
-116     db[currentLang][currentType].splice(i, 1);
-117     render();
-118   }
+  loadData();
+}
+async function removeItem(id) {
+  await deleteDoc(doc(db, "languages", id));
+  loadData();
+}
 
-119   render();
-120 </script>
+
+  async function loadData() {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  const q = query(
+    collection(db, "languages"),
+    where("lang", "==", currentLang),
+    where("type", "==", currentType),
+    orderBy("created", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach(docSnap => {
+    const e = docSnap.data();
+    list.innerHTML += `
+      <div class="card">
+        <h3>${e.text}</h3>
+        <p><b>${e.translation}</b></p>
+        <p>${e.note || ""}</p>
+        <button class="btn" onclick="removeItem('${docSnap.id}')">Удалить</button>
+      </div>
+    `;
+  });
+}
+
+
+
+
+
+ </script>
 
 </body>
 </html>
