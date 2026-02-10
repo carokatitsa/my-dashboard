@@ -26,13 +26,33 @@
 
 <main>
   <h1>📚 Языки</h1>
+
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <button class="btn" onclick="setLang('EN')">🇬🇧 English</button>
+    <button class="btn" onclick="setLang('DE')">🇩🇪 Deutsch</button>
+    <button class="btn" onclick="setLang('PL')">🇵🇱 Polski</button>
+    <button class="btn" onclick="setLang('ES')">🇪🇸 Español</button>
+  </div>
+
+  <h2 id="current-lang-title"></h2>
+
+  <input id="search" placeholder="Поиск..."
+         oninput="renderWords()"
+         style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
+
+  <div id="word-list"></div>
+
   <div class="card">
-    <p class="muted">
-      Здесь будет словарь, фразы и повторение.
-      Далее подключим базу слов и поиск.
-    </p>
+    <h2>➕ Добавить слово</h2>
+
+    <input id="word" placeholder="Слово"><br><br>
+    <input id="translation" placeholder="Перевод"><br><br>
+    <textarea id="note" placeholder="Заметка / пример / грамматика"></textarea><br><br>
+
+    <button class="btn" onclick="addWord()">Добавить</button>
   </div>
 </main>
+
 
 </body>
 </html>
