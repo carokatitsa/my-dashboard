@@ -27,32 +27,111 @@
 <main>
   <h1>📚 Языки</h1>
 
-  <div style="display:flex;gap:10px;margin-bottom:16px">
+  <!-- Языки -->
+  <div style="display:flex;gap:10px;margin-bottom:12px">
     <button class="btn" onclick="setLang('EN')">🇬🇧 English</button>
     <button class="btn" onclick="setLang('DE')">🇩🇪 Deutsch</button>
     <button class="btn" onclick="setLang('PL')">🇵🇱 Polski</button>
     <button class="btn" onclick="setLang('ES')">🇪🇸 Español</button>
   </div>
 
-  <h2 id="current-lang-title"></h2>
+  <!-- Тип: слова / фразы -->
+  <div style="display:flex;gap:10px;margin-bottom:16px">
+    <button class="btn" onclick="setType('words')">📝 Слова</button>
+    <button class="btn" onclick="setType('phrases')">💬 Фразы</button>
+  </div>
 
-  <input id="search" placeholder="Поиск..."
-         oninput="renderWords()"
+  <h2 id="title"></h2>
+
+  <input id="search"
+         placeholder="Поиск..."
+         oninput="render()"
          style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
 
-  <div id="word-list"></div>
+  <div id="list"></div>
 
   <div class="card">
-    <h2>➕ Добавить слово</h2>
+    <h2>➕ Добавить</h2>
 
-    <input id="word" placeholder="Слово"><br><br>
+    <input id="text" placeholder="Слово или фраза"><br><br>
     <input id="translation" placeholder="Перевод"><br><br>
-    <textarea id="note" placeholder="Заметка / пример / грамматика"></textarea><br><br>
+    <textarea id="note" placeholder="Заметка (необязательно)"></textarea><br><br>
 
-    <button class="btn" onclick="addWord()">Добавить</button>
+    <button class="btn" onclick="add()">Добавить</button>
   </div>
 </main>
 
+<script>
+64   let currentLang = "EN";
+65   let currentType = "words";
+
+66   const db = JSON.parse(localStorage.getItem("langDB") || `{
+67     "EN": { "words": [], "phrases": [] },
+68     "DE": { "words": [], "phrases": [] },
+69     "PL": { "words": [], "phrases": [] },
+70     "ES": { "words": [], "phrases": [] }
+71   }`);
+
+72   function setLang(lang) {
+73     currentLang = lang;
+74     render();
+75   }
+
+76   function setType(type) {
+77     currentType = type;
+78     render();
+79   }
+
+80   function render() {
+81     const q = search.value.toLowerCase();
+82     const list = document.getElementById("list");
+83     list.innerHTML = "";
+
+84     document.getElementById("title").innerText =
+85       `${currentLang} — ${currentType === "words" ? "Слова" : "Фразы"}`;
+
+86     db[currentLang][currentType]
+87       .filter(e =>
+88         e.text.toLowerCase().includes(q) ||
+89         e.translation.toLowerCase().includes(q)
+90       )
+91       .forEach((e, i) => {
+92         list.innerHTML += `
+93           <div class="card">
+94             <h3>${e.text}</h3>
+95             <p><b>${e.translation}</b></p>
+96             <p>${e.note || ""}</p>
+97             <button class="btn" onclick="removeItem(${i})">Удалить</button>
+98           </div>
+99         `;
+100       });
+
+101     localStorage.setItem("langDB", JSON.stringify(db));
+102   }
+
+103   function add() {
+104     if (!text.value || !translation.value) return;
+
+105     db[currentLang][currentType].push({
+106       text: text.value,
+107       translation: translation.value,
+108       note: note.value
+109     });
+
+110     text.value = "";
+111     translation.value = "";
+112     note.value = "";
+
+113     render();
+114   }
+
+115   function removeItem(i) {
+116     db[currentLang][currentType].splice(i, 1);
+117     render();
+118   }
+
+119   render();
+120 </script>
 
 </body>
 </html>
