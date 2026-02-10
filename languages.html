@@ -143,17 +143,23 @@ async function removeItem(id) {
 
   const snapshot = await getDocs(q);
 
-  snapshot.forEach(docSnap => {
-    const e = docSnap.data();
-    list.innerHTML += `
-      <div class="card">
-        <h3>${e.text}</h3>
-        <p><b>${e.translation}</b></p>
-        <p>${e.note || ""}</p>
-        <button class="btn" onclick="removeItem('${docSnap.id}')">Удалить</button>
-      </div>
-    `;
-  });
+let index = 1;
+
+snapshot.forEach(docSnap => {
+  const e = docSnap.data();
+
+  list.innerHTML += `
+    <div class="card">
+      <h3>${index}. ${e.text}</h3>
+      <p><b>${e.translation}</b></p>
+      <p>${e.note || ""}</p>
+      <button class="btn" onclick="removeItem('${docSnap.id}')">Удалить</button>
+    </div>
+  `;
+
+  index++;
+});
+
 }
 
 
