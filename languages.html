@@ -252,9 +252,11 @@ function checkAnswer() {
   showQuestion();
 }
 
-window.startTest = function () {
-  alert("Тест стартовал ✅");
-};
+// 👇 ОБЯЗАТЕЛЬНО: делаем функции видимыми для HTML
+window.startTestMode = startTestMode;
+window.beginTest = beginTest;
+window.checkAnswer = checkAnswer;
+
 
   // 👇 ДЕЛАЕМ ФУНКЦИИ ДОСТУПНЫМИ ДЛЯ HTML
 window.startTestMode = startTestMode;
