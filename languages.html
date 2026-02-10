@@ -182,6 +182,84 @@ window.removeItem = removeItem;
 window.setLang = setLang;
 window.setType = setType;
 
+// =======================
+// 🧠 TEST LOGIC
+// =======================
+
+let testWords = [];
+let testIndex = 0;
+let correctAnswers = 0;
+
+function startTestMode() {
+  document.getElementById("testBox").style.display = "block";
+  document.getElementById("testArea").innerHTML = "";
+}
+
+async function beginTest() {
+  const count = Number(document.getElementById("testCount").value);
+  if (!count || count <= 0) return;
+
+  testWords = [];
+  testIndex = 0;
+  correctAnswers = 0;
+
+  const q = query(
+    collection(db, "languages"),
+    where("lang", "==", currentLang),
+    where("type", "==", currentType)
+  );
+
+  const snapshot = await getDocs(q);
+
+  let all = [];
+  snapshot.forEach(doc => {
+    all.push(doc.data());
+  });
+
+  // 🔀 RANDOM
+  all = all.sort(() => Math.random() - 0.5);
+  testWords = all.slice(0, count);
+
+  showQuestion();
+}
+
+function showQuestion() {
+  const area = document.getElementById("testArea");
+
+  if (testIndex >= testWords.length) {
+    area.innerHTML = `
+      <h3>✅ Тест завершён</h3>
+      <p>Правильных ответов: <b>${correctAnswers}</b> из <b>${testWords.length}</b></p>
+    `;
+    return;
+  }
+
+  const word = testWords[testIndex];
+
+  area.innerHTML = `
+    <p><b>${testIndex + 1}. ${word.text}</b></p>
+
+    <input id="answerInput" placeholder="Перевод на русском"
+      style="width:100%;padding:8px"><br><br>
+
+    <button class="btn" onclick="checkAnswer()">Ответить</button>
+  `;
+}
+
+function checkAnswer() {
+  const input = document.getElementById("answerInput");
+  if (!input) return;
+
+  const user = input.value.trim().toLowerCase();
+  const correct = testWords[testIndex].translation.toLowerCase();
+
+  if (user === correct) {
+    correctAnswers++;
+  }
+
+  testIndex++;
+  showQuestion();
+}
 
 
  </script>
