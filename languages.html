@@ -221,6 +221,7 @@ function showQuestion() {
     area.innerHTML = `
       <h3>✅ Тест завершён</h3>
       <p>Правильных ответов: <b>${correctAnswers}</b> из <b>${testWords.length}</b></p>
+      <button class="btn" onclick="loadData()">К словам</button>
     `;
     return;
   }
@@ -234,11 +235,20 @@ function showQuestion() {
       style="width:100%;padding:8px"><br><br>
 
     <button class="btn" onclick="checkAnswer()">Ответить</button>
+
+    <p id="feedback" style="margin-top:12px;font-weight:bold"></p>
+
+    <button class="btn" id="nextBtn" style="display:none;margin-top:10px"
+      onclick="nextQuestion()">Дальше →</button>
   `;
 }
 
+
 function checkAnswer() {
   const input = document.getElementById("answerInput");
+  const feedback = document.getElementById("feedback");
+  const nextBtn = document.getElementById("nextBtn");
+
   if (!input) return;
 
   const user = input.value.trim().toLowerCase();
@@ -246,22 +256,38 @@ function checkAnswer() {
 
   if (user === correct) {
     correctAnswers++;
+    feedback.innerHTML = "✅ Правильно";
+    feedback.style.color = "#4caf50";
+  } else {
+    feedback.innerHTML = `❌ Неправильно. Правильный ответ: <b>${correct}</b>`;
+    feedback.style.color = "#ff6b6b";
   }
 
+  // блокируем повторный ввод
+  input.disabled = true;
+
+  // показываем кнопку «Дальше»
+  nextBtn.style.display = "inline-block";
+}
+
+  function nextQuestion() {
   testIndex++;
   showQuestion();
 }
+
 
 // 👇 ОБЯЗАТЕЛЬНО: делаем функции видимыми для HTML
 window.startTestMode = startTestMode;
 window.beginTest = beginTest;
 window.checkAnswer = checkAnswer;
+window.nextQuestion = nextQuestion;  
 
 
   // 👇 ДЕЛАЕМ ФУНКЦИИ ДОСТУПНЫМИ ДЛЯ HTML
 window.startTestMode = startTestMode;
 window.beginTest = beginTest;
 window.checkAnswer = checkAnswer;
+window.nextQuestion = nextQuestion;
 
 
  </script>
