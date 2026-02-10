@@ -139,7 +139,6 @@ async function removeItem(id) {
     collection(db, "languages"),
     where("lang", "==", currentLang),
     where("type", "==", currentType),
-    orderBy("created", "desc")
   );
 
   const snapshot = await getDocs(q);
