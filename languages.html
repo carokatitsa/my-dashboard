@@ -88,8 +88,6 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-
-  
 const firebaseConfig = {
     apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
     authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -103,20 +101,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-
-
-
    let currentLang = "EN";
    let currentType = "words";
-
-
 
    function setLang(lang) {
      currentLang = lang;
      loadData();
- 
    }
-
    function setType(type) {
      currentType = type;
      loadData();
@@ -143,7 +134,6 @@ async function removeItem(id) {
   await deleteDoc(doc(db, "languages", id));
   loadData();
 }
-
 
   async function loadData() {
   const list = document.getElementById("list");
@@ -261,6 +251,9 @@ function checkAnswer() {
   showQuestion();
 }
 
+window.startTest = function () {
+  alert("Тест стартовал ✅");
+};
 
  </script>
 
