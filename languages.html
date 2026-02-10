@@ -62,7 +62,7 @@
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } 
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy } 
 from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
   
 const firebaseConfig = {
@@ -149,6 +149,10 @@ async function removeItem(id) {
 }
 
 
+window.add = add;
+window.removeItem = removeItem;
+window.setLang = setLang;
+window.setType = setType;
 
 
 
