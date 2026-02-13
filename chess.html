@@ -2,60 +2,154 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>My Chess Module</title>
-
-<link rel="stylesheet"
-href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard.min.css"/>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard.min.js"></script>
+<title>My Opening Trainer</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-</head>
+<style>
+body {
+  font-family: Arial;
+}
 
+#board {
+  display: grid;
+  grid-template-columns: repeat(8, 60px);
+  grid-template-rows: repeat(8, 60px);
+  width: 480px;
+  border: 2px solid black;
+}
+
+.square {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  cursor: pointer;
+}
+
+.white { background: #f0d9b5; }
+.black { background: #b58863; }
+
+.selected {
+  background: yellow !important;
+}
+
+button {
+  margin: 10px 5px 10px 0;
+  padding: 6px 12px;
+}
+</style>
+</head>
 
 <body>
 
-  <h2>My Opening Trainer</h2>
+<h2>Opening Trainer</h2>
 
 <button onclick="playOpening()">Play My Opening</button>
-    
-  <div id="board" style="width: 400px"></div>
+<button onclick="resetBoard()">Reset</button>
 
-  <script>
-  var game = new Chess();
+<div id="board"></div>
 
-  var board = Chessboard('board', {
-    draggable: true,
-    position: 'start',
-    onDrop: function(source, target) {
+<script>
+var game = new Chess();
+var selectedSquare = null;
 
-      var move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q'
-      });
+function renderBoard() {
+  var boardDiv = document.getElementById("board");
+  boardDiv.innerHTML = "";
 
-      if (move === null) return 'snapback';
+  var position = game.board();
+
+  for (var row = 0; row < 8; row++) {
+    for (var col = 0; col < 8; col++) {
+
+      var square = document.createElement("div");
+      square.classList.add("square");
+
+      if ((row + col) % 2 === 0) {
+        square.classList.add("white");
+      } else {
+        square.classList.add("black");
+      }
+
+      var piece = position[row][col];
+
+      if (piece) {
+        square.textContent = getPieceSymbol(piece);
+      }
+
+      var squareName = getSquareName(row, col);
+      square.dataset.square = squareName;
+
+      square.addEventListener("click", onSquareClick);
+
+      boardDiv.appendChild(square);
     }
-  });
+  }
+}
 
-      function playOpening() {
+function getSquareName(row, col) {
+  var files = "abcdefgh";
+  return files[col] + (8 - row);
+}
+
+function getPieceSymbol(piece) {
+  var symbols = {
+    p: "♟",
+    r: "♜",
+    n: "♞",
+    b: "♝",
+    q: "♛",
+    k: "♚"
+  };
+
+  return piece.color === "w"
+    ? symbols[piece.type].toUpperCase()
+    : symbols[piece.type];
+}
+
+function onSquareClick(e) {
+  var square = e.currentTarget.dataset.square;
+
+  if (!selectedSquare) {
+    selectedSquare = square;
+  } else {
+    var move = game.move({
+      from: selectedSquare,
+      to: square,
+      promotion: "q"
+    });
+
+    if (!move) {
+      alert("Illegal move");
+    }
+
+    selectedSquare = null;
+    renderBoard();
+  }
+}
+
+function playOpening() {
   var moves = ['d4','d5','c4','e6','Nf3','Nf6','g3'];
 
   game.reset();
-  board.start();
 
   moves.forEach(function(move) {
     game.move(move);
   });
 
-  board.position(game.fen());
+  renderBoard();
 }
-</script>
 
+function resetBoard() {
+  game.reset();
+  renderBoard();
+}
+
+renderBoard();
+</script>
 
 </body>
 </html>
