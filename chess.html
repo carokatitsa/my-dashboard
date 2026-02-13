@@ -140,6 +140,13 @@ const START = [
   ['R','N','B','Q','K','B','N','R']
 ];
 
+let enPassantTarget = null;
+
+let castlingRights = {
+  white: { kingSide: true, queenSide: true },
+  black: { kingSide: true, queenSide: true }
+};
+  
 let board = cloneBoard(START);
 let turn = 'w'; // 'w' or 'b'
 let selected = null;
@@ -302,7 +309,29 @@ function genPseudoMoves(b, r, c){
         add(r+dr,c+dc);
       }
     }
-    // castling intentionally omitted for simplicity
+    // ===== РОКИРОВКА =====
+    if(side === 'w' && r === 7 && c === 4){
+        // короткая
+        if(b[7][5]==='' && b[7][6]==='' && b[7][7]==='R'){
+            moves.push({from:{r,c}, to:{r:7,c:6}});
+        }
+        // длинная
+        if(b[7][1]==='' && b[7][2]==='' && b[7][3]==='' && b[7][0]==='R'){
+            moves.push({from:{r,c}, to:{r:7,c:2}});
+        }
+    }
+
+    if(side === 'b' && r === 0 && c === 4){
+        // короткая
+        if(b[0][5]==='' && b[0][6]==='' && b[0][7]==='r'){
+            moves.push({from:{r,c}, to:{r:0,c:6}});
+        }
+        // длинная
+        if(b[0][1]==='' && b[0][2]==='' && b[0][3]==='' && b[0][0]==='r'){
+            moves.push({from:{r,c}, to:{r:0,c:2}});
+        }
+    }
+}
   }
 
   return moves;
@@ -351,6 +380,31 @@ function makeMove(fromR, fromC, toR, toC){
   board[fromR][fromC] = '';
   board[toR][toC] = piece;
 
+// РОКИРОВКА
+if(piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2){
+    if(toC === 6){ // короткая
+        board[toR][5] = board[toR][7];
+        board[toR][7] = '';
+    }
+    if(toC === 2){ // длинная
+        board[toR][3] = board[toR][0];
+        board[toR][0] = '';
+    }
+}
+
+// ВЗЯТИЕ НА ПРОХОДЕ
+if(piece.toLowerCase() === 'p'){
+    if(fromC !== toC && captured === ''){
+        if(turn === 'w'){
+            board[toR+1][toC] = '';
+        } else {
+            board[toR-1][toC] = '';
+        }
+    }
+}
+
+
+  
   // promotion
   if(piece.toLowerCase()==='p'){
     if((turn==='w' && toR===0) || (turn==='b' && toR===7)){
