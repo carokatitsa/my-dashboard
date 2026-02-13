@@ -2,9 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>My Opening Trainer</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<title>Pure Chess Board</title>
 
 <style>
 body {
@@ -13,144 +11,105 @@ body {
 
 #board {
   display: grid;
-  grid-template-columns: repeat(8, 60px);
-  grid-template-rows: repeat(8, 60px);
-  width: 480px;
+  grid-template-columns: repeat(8, 70px);
+  grid-template-rows: repeat(8, 70px);
+  width: 560px;
   border: 2px solid black;
 }
 
 .square {
-  width: 60px;
-  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 40px;
+  font-size: 48px;
   cursor: pointer;
+  user-select: none;
 }
 
 .white { background: #f0d9b5; }
 .black { background: #b58863; }
 
 .selected {
-  background: yellow !important;
-}
-
-button {
-  margin: 10px 5px 10px 0;
-  padding: 6px 12px;
+  outline: 3px solid red;
 }
 </style>
 </head>
 
 <body>
 
-<h2>Opening Trainer</h2>
-
-<button onclick="playOpening()">Play My Opening</button>
+<h2>Pure Chess Board (No Libraries)</h2>
 <button onclick="resetBoard()">Reset</button>
 
 <div id="board"></div>
 
 <script>
-var game = new Chess();
-var selectedSquare = null;
+const boardElement = document.getElementById("board");
+let selected = null;
 
-function renderBoard() {
-  var boardDiv = document.getElementById("board");
-  boardDiv.innerHTML = "";
+// стартовая позиция
+const startPosition = [
+  ["♜","♞","♝","♛","♚","♝","♞","♜"],
+  ["♟","♟","♟","♟","♟","♟","♟","♟"],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["","","","","","","",""],
+  ["♙","♙","♙","♙","♙","♙","♙","♙"],
+  ["♖","♘","♗","♕","♔","♗","♘","♖"]
+];
 
-  var position = game.board();
+let boardState = JSON.parse(JSON.stringify(startPosition));
 
-  for (var row = 0; row < 8; row++) {
-    for (var col = 0; col < 8; col++) {
+function drawBoard() {
+  boardElement.innerHTML = "";
 
-      var square = document.createElement("div");
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+
+      const square = document.createElement("div");
       square.classList.add("square");
+      square.classList.add((row + col) % 2 === 0 ? "white" : "black");
 
-      if ((row + col) % 2 === 0) {
-        square.classList.add("white");
-      } else {
-        square.classList.add("black");
-      }
+      square.dataset.row = row;
+      square.dataset.col = col;
+      square.textContent = boardState[row][col];
 
-      var piece = position[row][col];
+      square.addEventListener("click", handleClick);
 
-      if (piece) {
-        square.textContent = getPieceSymbol(piece);
-      }
-
-      var squareName = getSquareName(row, col);
-      square.dataset.square = squareName;
-
-      square.addEventListener("click", onSquareClick);
-
-      boardDiv.appendChild(square);
+      boardElement.appendChild(square);
     }
   }
 }
 
-function getSquareName(row, col) {
-  var files = "abcdefgh";
-  return files[col] + (8 - row);
-}
+function handleClick(e) {
+  const row = e.target.dataset.row;
+  const col = e.target.dataset.col;
 
-function getPieceSymbol(piece) {
-  var symbols = {
-    p: "♟",
-    r: "♜",
-    n: "♞",
-    b: "♝",
-    q: "♛",
-    k: "♚"
-  };
-
-  return piece.color === "w"
-    ? symbols[piece.type].toUpperCase()
-    : symbols[piece.type];
-}
-
-function onSquareClick(e) {
-  var square = e.currentTarget.dataset.square;
-
-  if (!selectedSquare) {
-    selectedSquare = square;
+  if (selected === null) {
+    if (boardState[row][col] !== "") {
+      selected = { row, col };
+      e.target.classList.add("selected");
+    }
   } else {
-    var move = game.move({
-      from: selectedSquare,
-      to: square,
-      promotion: "q"
-    });
-
-    if (!move) {
-      alert("Illegal move");
-    }
-
-    selectedSquare = null;
-    renderBoard();
+    movePiece(selected.row, selected.col, row, col);
+    selected = null;
+    drawBoard();
   }
 }
 
-function playOpening() {
-  var moves = ['d4','d5','c4','e6','Nf3','Nf6','g3'];
-
-  game.reset();
-
-  moves.forEach(function(move) {
-    game.move(move);
-  });
-
-  renderBoard();
+function movePiece(fromRow, fromCol, toRow, toCol) {
+  boardState[toRow][toCol] = boardState[fromRow][fromCol];
+  boardState[fromRow][fromCol] = "";
 }
 
 function resetBoard() {
-  game.reset();
-  renderBoard();
+  boardState = JSON.parse(JSON.stringify(startPosition));
+  selected = null;
+  drawBoard();
 }
 
-renderBoard();
+drawBoard();
 </script>
 
 </body>
 </html>
-
