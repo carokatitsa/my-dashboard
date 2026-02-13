@@ -1,778 +1,276 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Opening Trainer (No Libraries)</title>
+<meta charset="UTF-8">
+<title>Chess Engine</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 18px; }
-  h2 { margin: 0 0 10px; }
-  .row { display:flex; gap:14px; flex-wrap: wrap; align-items:flex-start; }
-  .panel { min-width: 320px; max-width: 520px; }
-  .controls { display:flex; gap:8px; flex-wrap: wrap; margin: 10px 0; }
-  button { padding: 7px 12px; cursor: pointer; }
-  select, input, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
-  textarea { height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .hint { color:#444; font-size: 13px; line-height: 1.35; }
-
-  #board {
-    display: grid;
-    grid-template-columns: repeat(8, 64px);
-    grid-template-rows: repeat(8, 64px);
-    width: 512px;
-    border: 2px solid #111;
-    user-select: none;
-    touch-action: manipulation;
-  }
-  @media (max-width: 560px) {
-    #board { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(8, 44px); width: 352px; }
-  }
-  .sq {
-    display:flex; align-items:center; justify-content:center;
-    font-size: 42px;
-    cursor: pointer;
-  }
-  @media (max-width: 560px) { .sq { font-size: 30px; } }
-
-  .w { background: #f0d9b5; }
-  .b { background: #b58863; }
-
-  .selected { outline: 3px solid #e11d48; outline-offset: -3px; }
-  .hintmove { box-shadow: inset 0 0 0 4px rgba(34,197,94,.55); }
-  .capture { box-shadow: inset 0 0 0 4px rgba(239,68,68,.55); }
-  .check { box-shadow: inset 0 0 0 4px rgba(59,130,246,.6); }
-
-  .status { margin-top: 8px; font-weight: 600; }
-  .small { font-size: 13px; color:#333; }
-  code { background:#f2f2f2; padding: 1px 5px; border-radius: 6px; }
+body{font-family:Arial}
+#board{
+display:grid;
+grid-template-columns:repeat(8,70px);
+grid-template-rows:repeat(8,70px);
+width:560px;
+border:2px solid black;
+}
+.square{
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:48px;
+cursor:pointer;
+user-select:none;
+}
+.white{background:#f0d9b5}
+.black{background:#b58863}
+.selected{outline:3px solid red}
 </style>
 </head>
-
 <body>
-<h2>Opening Trainer (без библиотек)</h2>
 
-<div class="row">
-  <div>
-    <div id="board"></div>
-    <div class="controls">
-      <button onclick="undoMove()">⬅ Назад</button>
-      <button onclick="redoMove()">Вперёд ➡</button>
-      <button onclick="resetAll()">Reset</button>
-      <button onclick="toggleAutoOpponent()">Auto-opponent: <span id="autoOpp">ON</span></button>
-    </div>
-    <div class="status" id="status">Загрузка…</div>
-    <div class="small" id="substatus"></div>
-  </div>
+<h2>Pure Chess Engine</h2>
+<button onclick="undoMove()">Undo</button>
+<button onclick="redoMove()">Redo</button>
+<button onclick="initGame()">Reset</button>
 
-  <div class="panel">
-    <div class="controls">
-      <select id="openingSelect"></select>
-      <button onclick="applyOpening()">Start Opening</button>
-      <button onclick="deleteOpening()">Delete</button>
-    </div>
-
-    <div class="hint">
-      Формат ходов дебюта: <b>UCI</b> (как в движках), например:
-      <div><code>e2e4 e7e5 g1f3 b8c6 f1b5</code></div>
-      Можно в несколько строк, с пробелами — всё равно поймём.
-      <br><br>
-      ✅ В тренере ход должен совпасть с вариантом — иначе откат.
-      <br>
-      ✅ Если включен Auto-opponent, то после твоего хода программа сама делает ход соперника из варианта.
-    </div>
-
-    <div style="margin-top:10px;">
-      <input id="openingName" placeholder="Название дебюта (например: Catalan mainline)" />
-    </div>
-    <div style="margin-top:8px;">
-      <textarea id="openingMoves" placeholder="Вставь ходы UCI, например:
-d2d4 d7d5 c2c4 e7e6 g1f3 g8f6 g2g3"></textarea>
-    </div>
-    <div class="controls">
-      <button onclick="saveOpening()">💾 Save / Update</button>
-      <button onclick="exportOpenings()">📤 Export</button>
-      <button onclick="importOpenings()">📥 Import</button>
-    </div>
-    <div class="small">Экспорт/импорт — JSON через prompt, чтобы не было файлов/библиотек.</div>
-  </div>
-</div>
+<div id="board"></div>
 
 <script>
-/* =========================
-   CHESS ENGINE (Minimal but legal)
-   - Move legality including "king not left in check"
-   - Undo/redo
-   - UCI move input
-   - No castling / no en-passant (можно добавить позже)
-   - Promotion: всегда в ферзя
-========================= */
+const boardElement=document.getElementById("board");
 
-// Piece codes: 'P','N','B','R','Q','K' for White; lowercase for Black
-const PIECE_UNI = {
-  P:'♙', N:'♘', B:'♗', R:'♖', Q:'♕', K:'♔',
-  p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚'
-};
+let board,turn,enPassant,castle,undoStack,redoStack,selected=null;
 
-function cloneBoard(b){ return b.map(r => r.slice()); }
-function inBounds(r,c){ return r>=0 && r<8 && c>=0 && c<8; }
-function isWhite(p){ return p && p === p.toUpperCase(); }
-function isBlack(p){ return p && p === p.toLowerCase(); }
-function sameColor(a,b){ if(!a||!b) return false; return (isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b)); }
-
-function sqToRC(sq){
-  // 'a1' -> row=7,col=0 ; 'a8' -> row=0,col=0
-  const file = sq.charCodeAt(0) - 97;
-  const rank = parseInt(sq[1],10);
-  return { r: 8-rank, c: file };
-}
-function rcToSq(r,c){
-  return String.fromCharCode(97+c) + (8-r);
-}
-
-const START = [
-  ['r','n','b','q','k','b','n','r'],
-  ['p','p','p','p','p','p','p','p'],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['P','P','P','P','P','P','P','P'],
-  ['R','N','B','Q','K','B','N','R']
+function initGame(){
+board=[
+['r','n','b','q','k','b','n','r'],
+['p','p','p','p','p','p','p','p'],
+['','','','','','','',''],
+['','','','','','','',''],
+['','','','','','','',''],
+['','','','','','','',''],
+['P','P','P','P','P','P','P','P'],
+['R','N','B','Q','K','B','N','R']
 ];
+turn='w';
+enPassant=null;
+castle={w:{k:true,q:true},b:{k:true,q:true}};
+undoStack=[];redoStack=[];
+render();
+}
 
-let enPassantTarget = null;
+function render(){
+boardElement.innerHTML='';
+for(let r=0;r<8;r++){
+for(let c=0;c<8;c++){
+const sq=document.createElement('div');
+sq.className='square '+((r+c)%2?'black':'white');
+sq.textContent=symbol(board[r][c]);
+sq.onclick=()=>click(r,c);
+boardElement.appendChild(sq);
+}
+}
+}
 
-let castlingRights = {
-  white: { kingSide: true, queenSide: true },
-  black: { kingSide: true, queenSide: true }
+function symbol(p){
+if(!p) return '';
+const m={
+p:'♟',r:'♜',n:'♞',b:'♝',q:'♛',k:'♚',
+P:'♙',R:'♖',N:'♘',B:'♗',Q:'♕',K:'♔'
 };
-  
-let board = cloneBoard(START);
-let turn = 'w'; // 'w' or 'b'
-let selected = null;
-let legalTargets = [];
-let undoStack = [];
-let redoStack = [];
-let autoOpponent = true;
-
-// Opening trainer state
-let openings = {};
-let currentOpeningName = '';
-let openingLine = [];      // array of UCI moves
-let openingIndex = 0;      // next expected ply (0-based)
-let strictTrainer = true;  // if move not in line => reject
-
-/* =========================
-   Attack / Check helpers
-========================= */
-function findKing(b, side){
-  const target = (side==='w') ? 'K' : 'k';
-  for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(b[r][c]===target) return {r,c};
-  return null;
+return m[p];
 }
 
-function isSquareAttacked(b, r, c, bySide){
-  // bySide attacks (bySide==='w' means white pieces attack)
-  const pawnDir = (bySide==='w') ? -1 : 1;
-  const pawn = (bySide==='w') ? 'P' : 'p';
-  const knight = (bySide==='w') ? 'N' : 'n';
-  const bishop = (bySide==='w') ? 'B' : 'b';
-  const rook = (bySide==='w') ? 'R' : 'r';
-  const queen = (bySide==='w') ? 'Q' : 'q';
-  const king = (bySide==='w') ? 'K' : 'k';
+function color(p){return p===p.toUpperCase()?'w':'b'}
 
-  // Pawns
-  for(const dc of [-1,1]){
-    const rr = r - pawnDir;
-    const cc = c - dc;
-    if(inBounds(rr,cc) && b[rr][cc]===pawn) return true;
-  }
-
-  // Knights
-  const kD = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-  for(const [dr,dc] of kD){
-    const rr=r+dr, cc=c+dc;
-    if(inBounds(rr,cc) && b[rr][cc]===knight) return true;
-  }
-
-  // Bishops / Queens diagonals
-  const diag = [[-1,-1],[-1,1],[1,-1],[1,1]];
-  for(const [dr,dc] of diag){
-    let rr=r+dr, cc=c+dc;
-    while(inBounds(rr,cc)){
-      const p=b[rr][cc];
-      if(p){
-        if(p===bishop || p===queen) return true;
-        break;
-      }
-      rr+=dr; cc+=dc;
-    }
-  }
-
-  // Rooks / Queens lines
-  const line = [[-1,0],[1,0],[0,-1],[0,1]];
-  for(const [dr,dc] of line){
-    let rr=r+dr, cc=c+dc;
-    while(inBounds(rr,cc)){
-      const p=b[rr][cc];
-      if(p){
-        if(p===rook || p===queen) return true;
-        break;
-      }
-      rr+=dr; cc+=dc;
-    }
-  }
-
-  // Kings (adjacent)
-  for(let dr=-1;dr<=1;dr++){
-    for(let dc=-1;dc<=1;dc++){
-      if(dr===0 && dc===0) continue;
-      const rr=r+dr, cc=c+dc;
-      if(inBounds(rr,cc) && b[rr][cc]===king) return true;
-    }
-  }
-
-  return false;
+function click(r,c){
+if(selected){
+if(move(selected.r,selected.c,r,c)){
+selected=null;
+render();
+}else{
+selected=null;
+render();
+}
+}else{
+if(board[r][c]&&color(board[r][c])===turn)
+selected={r,c};
+}
 }
 
-function inCheck(b, side){
-  const k = findKing(b, side);
-  if(!k) return false;
-  const attacker = (side==='w') ? 'b' : 'w';
-  return isSquareAttacked(b, k.r, k.c, attacker);
+function move(fr,fc,tr,tc){
+const legal=getLegal(fr,fc);
+if(!legal.some(m=>m.r===tr&&m.c===tc)) return false;
+
+saveState();
+
+const piece=board[fr][fc];
+board[fr][fc]='';
+
+if(piece.toLowerCase()==='p'){
+if(enPassant&&tr===enPassant.r&&tc===enPassant.c)
+board[turn==='w'?tr+1:tr-1][tc]='';
+
+if(Math.abs(tr-fr)===2)
+enPassant={r:(fr+tr)/2,c:fc};
+else enPassant=null;
+
+if((turn==='w'&&tr===0)||(turn==='b'&&tr===7))
+board[tr][tc]=turn==='w'?'Q':'q';
+else board[tr][tc]=piece;
+}else{
+enPassant=null;
+board[tr][tc]=piece;
 }
 
-/* =========================
-   Move generation
-========================= */
-function genPseudoMoves(b, r, c){
-  const p = b[r][c];
-  if(!p) return [];
-  const side = isWhite(p) ? 'w' : 'b';
-  const enemy = (side==='w') ? isBlack : isWhite;
-  const moves = [];
-
-  const add = (rr,cc) => { if(inBounds(rr,cc) && !sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); };
-
-  const type = p.toLowerCase();
-  if(type==='p'){
-    const dir = (side==='w') ? -1 : 1;
-    const startRow = (side==='w') ? 6 : 1;
-    // forward 1
-    const r1=r+dir;
-    if(inBounds(r1,c) && b[r1][c]===''){
-      moves.push({from:{r,c},to:{r:r1,c}});
-      // forward 2
-      const r2=r+2*dir;
-      if(r===startRow && inBounds(r2,c) && b[r2][c]==='') moves.push({from:{r,c},to:{r:r2,c}});
-    }
-    // captures
-    for(const dc of [-1,1]){
-      const rr=r+dir, cc=c+dc;
-      if(inBounds(rr,cc) && b[rr][cc]!=='' && enemy(b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}});
-    }
-  }
-
-  if(type==='n'){
-    const kD = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-    for(const [dr,dc] of kD) add(r+dr,c+dc);
-  }
-
-  if(type==='b' || type==='q'){
-    const diag = [[-1,-1],[-1,1],[1,-1],[1,1]];
-    for(const [dr,dc] of diag){
-      let rr=r+dr, cc=c+dc;
-      while(inBounds(rr,cc)){
-        if(b[rr][cc]===''){ moves.push({from:{r,c},to:{r:rr,c:cc}}); }
-        else { if(!sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); break; }
-        rr+=dr; cc+=dc;
-      }
-    }
-  }
-
-  if(type==='r' || type==='q'){
-    const line = [[-1,0],[1,0],[0,-1],[0,1]];
-    for(const [dr,dc] of line){
-      let rr=r+dr, cc=c+dc;
-      while(inBounds(rr,cc)){
-        if(b[rr][cc]===''){ moves.push({from:{r,c},to:{r:rr,c:cc}}); }
-        else { if(!sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); break; }
-        rr+=dr; cc+=dc;
-      }
-    }
-  }
-
-  if(type==='k'){
-    for(let dr=-1;dr<=1;dr++){
-      for(let dc=-1;dc<=1;dc++){
-        if(dr===0 && dc===0) continue;
-        add(r+dr,c+dc);
-      }
-    }
-    // ===== РОКИРОВКА =====
-    if(side === 'w' && r === 7 && c === 4){
-        // короткая
-        if(b[7][5]==='' && b[7][6]==='' && b[7][7]==='R'){
-            moves.push({from:{r,c}, to:{r:7,c:6}});
-        }
-        // длинная
-        if(b[7][1]==='' && b[7][2]==='' && b[7][3]==='' && b[7][0]==='R'){
-            moves.push({from:{r,c}, to:{r:7,c:2}});
-        }
-    }
-
-    if(side === 'b' && r === 0 && c === 4){
-        // короткая
-        if(b[0][5]==='' && b[0][6]==='' && b[0][7]==='r'){
-            moves.push({from:{r,c}, to:{r:0,c:6}});
-        }
-        // длинная
-        if(b[0][1]==='' && b[0][2]==='' && b[0][3]==='' && b[0][0]==='r'){
-            moves.push({from:{r,c}, to:{r:0,c:2}});
-        }
-    }
+if(piece.toLowerCase()==='k'){
+castle[turn].k=false;
+castle[turn].q=false;
+if(Math.abs(tc-fc)===2){
+if(tc===6){
+board[tr][5]=board[tr][7];
+board[tr][7]='';
+}else{
+board[tr][3]=board[tr][0];
+board[tr][0]='';
 }
-  }
-
-  return moves;
+}
 }
 
-function genLegalMovesForSquare(r,c){
-  const p = board[r][c];
-  if(!p) return [];
-  const side = isWhite(p) ? 'w' : 'b';
-  if(side !== turn) return [];
-  const pseudo = genPseudoMoves(board, r, c);
-
-  // Filter moves that leave king in check
-  const legal = [];
-  for(const m of pseudo){
-    const nb = cloneBoard(board);
-    const moved = nb[r][c];
-    nb[r][c] = '';
-    nb[m.to.r][m.to.c] = moved;
-
-    // Promotion: pawn reaches last rank -> queen
-    if(moved.toLowerCase()==='p'){
-      if((side==='w' && m.to.r===0) || (side==='b' && m.to.r===7)){
-        nb[m.to.r][m.to.c] = (side==='w') ? 'Q' : 'q';
-      }
-    }
-
-    if(!inCheck(nb, side)) legal.push(m);
-  }
-  return legal;
+if(piece.toLowerCase()==='r'){
+if(fr===7&&fc===0) castle.w.q=false;
+if(fr===7&&fc===7) castle.w.k=false;
+if(fr===0&&fc===0) castle.b.q=false;
+if(fr===0&&fc===7) castle.b.k=false;
 }
 
-/* =========================
-   Apply move + history
-========================= */
-function makeMove(fromR, fromC, toR, toC){
-  const legal = genLegalMovesForSquare(fromR, fromC);
-  const ok = legal.find(m => m.to.r===toR && m.to.c===toC);
-  if(!ok) return null;
-
-  const piece = board[fromR][fromC];
-  const captured = board[toR][toC] || '';
-  const before = { board: cloneBoard(board), turn, openingIndex };
-
-  // move
-  board[fromR][fromC] = '';
-  board[toR][toC] = piece;
-
-// РОКИРОВКА
-if(piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2){
-    if(toC === 6){ // короткая
-        board[toR][5] = board[toR][7];
-        board[toR][7] = '';
-    }
-    if(toC === 2){ // длинная
-        board[toR][3] = board[toR][0];
-        board[toR][0] = '';
-    }
+turn=turn==='w'?'b':'w';
+return true;
 }
 
-// ВЗЯТИЕ НА ПРОХОДЕ
-if(piece.toLowerCase() === 'p'){
-    if(fromC !== toC && captured === ''){
-        if(turn === 'w'){
-            board[toR+1][toC] = '';
-        } else {
-            board[toR-1][toC] = '';
-        }
-    }
+function getLegal(r,c){
+if(!board[r][c]||color(board[r][c])!==turn) return [];
+let pseudo=getPseudo(r,c);
+return pseudo.filter(m=>{
+const snap=saveTemp();
+move(r,c,m.r,m.c);
+const check=isCheck(turn==='w'?'b':'w');
+restoreTemp(snap);
+return !check;
+});
 }
 
+function isCheck(side){
+let kr,kc;
+for(let r=0;r<8;r++)
+for(let c=0;c<8;c++)
+if(board[r][c]===(side==='w'?'K':'k')){kr=r;kc=c}
+for(let r=0;r<8;r++)
+for(let c=0;c<8;c++)
+if(board[r][c]&&color(board[r][c])!==side)
+if(getPseudo(r,c).some(m=>m.r===kr&&m.c===kc))
+return true;
+return false;
+}
 
-  
-  // promotion
-  if(piece.toLowerCase()==='p'){
-    if((turn==='w' && toR===0) || (turn==='b' && toR===7)){
-      board[toR][toC] = (turn==='w') ? 'Q' : 'q';
-    }
-  }
+function getPseudo(r,c){
+const p=board[r][c];
+const side=color(p);
+const moves=[];
+const add=(rr,cc)=>{
+if(rr>=0&&rr<8&&cc>=0&&cc<8&&(!board[rr][cc]||color(board[rr][cc])!==side))
+moves.push({r:rr,c:cc});
+};
+const t=p.toLowerCase();
 
-  turn = (turn==='w') ? 'b' : 'w';
+if(t==='p'){
+const dir=side==='w'?-1:1;
+if(!board[r+dir]?.[c]) add(r+dir,c);
+if((side==='w'?r===6:r===1)&&!board[r+dir]?.[c]&&!board[r+2*dir]?.[c])
+add(r+2*dir,c);
+for(const dc of [-1,1]){
+if(board[r+dir]?.[c+dc]&&color(board[r+dir][c+dc])!==side)
+add(r+dir,c+dc);
+if(enPassant&&enPassant.r===r+dir&&enPassant.c===c+dc)
+moves.push({r:r+dir,c:c+dc});
+}
+}
 
-  // history
-  undoStack.push(before);
-  redoStack = [];
+if(t==='n'){
+[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]]
+.forEach(([dr,dc])=>add(r+dr,c+dc));
+}
 
-  return { from: rcToSq(fromR,fromC), to: rcToSq(toR,toC), piece, captured };
+if(t==='b'||t==='q'){
+[[1,1],[1,-1],[-1,1],[-1,-1]].forEach(([dr,dc])=>{
+let rr=r+dr,cc=c+dc;
+while(rr>=0&&rr<8&&cc>=0&&cc<8){
+if(!board[rr][cc]) moves.push({r:rr,c:cc});
+else{
+if(color(board[rr][cc])!==side) moves.push({r:rr,c:cc});
+break;
+}
+rr+=dr;cc+=dc;
+}
+});
+}
+
+if(t==='r'||t==='q'){
+[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dr,dc])=>{
+let rr=r+dr,cc=c+dc;
+while(rr>=0&&rr<8&&cc>=0&&cc<8){
+if(!board[rr][cc]) moves.push({r:rr,c:cc});
+else{
+if(color(board[rr][cc])!==side) moves.push({r:rr,c:cc});
+break;
+}
+rr+=dr;cc+=dc;
+}
+});
+}
+
+if(t==='k'){
+for(let dr=-1;dr<=1;dr++)
+for(let dc=-1;dc<=1;dc++)
+if(dr||dc) add(r+dr,c+dc);
+
+if(castle[side].k&&!board[r][5]&&!board[r][6])
+moves.push({r,c:6});
+if(castle[side].q&&!board[r][1]&&!board[r][2]&&!board[r][3])
+moves.push({r,c:2});
+}
+
+return moves;
+}
+
+function saveState(){
+undoStack.push(JSON.stringify({board,turn,enPassant,castle}));
+redoStack=[];
+}
+
+function saveTemp(){
+return JSON.stringify({board,turn,enPassant,castle});
+}
+
+function restoreTemp(s){
+const o=JSON.parse(s);
+board=o.board;turn=o.turn;enPassant=o.enPassant;castle=o.castle;
 }
 
 function undoMove(){
-  if(undoStack.length===0) return;
-  const last = undoStack.pop();
-  const snapshot = { board: cloneBoard(board), turn, openingIndex };
-  redoStack.push(snapshot);
-
-  board = cloneBoard(last.board);
-  turn = last.turn;
-  openingIndex = last.openingIndex;
-
-  selected = null; legalTargets = [];
-  draw();
+if(!undoStack.length) return;
+redoStack.push(JSON.stringify({board,turn,enPassant,castle}));
+restoreTemp(undoStack.pop());
+render();
 }
 
 function redoMove(){
-  if(redoStack.length===0) return;
-  const next = redoStack.pop();
-  const snapshot = { board: cloneBoard(board), turn, openingIndex };
-  undoStack.push(snapshot);
-
-  board = cloneBoard(next.board);
-  turn = next.turn;
-  openingIndex = next.openingIndex;
-
-  selected = null; legalTargets = [];
-  draw();
+if(!redoStack.length) return;
+undoStack.push(JSON.stringify({board,turn,enPassant,castle}));
+restoreTemp(redoStack.pop());
+render();
 }
 
-/* =========================
-   UI board drawing
-========================= */
-const boardEl = document.getElementById('board');
-
-function clearHighlights(){
-  for(const el of boardEl.querySelectorAll('.sq')){
-    el.classList.remove('selected','hintmove','capture','check');
-  }
-}
-
-function draw(){
-  boardEl.innerHTML = '';
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
-      const sq = document.createElement('div');
-      sq.className = 'sq ' + (((r+c)%2===0)?'w':'b');
-      sq.dataset.r = r;
-      sq.dataset.c = c;
-      const p = board[r][c];
-      sq.textContent = p ? PIECE_UNI[p] : '';
-      sq.addEventListener('click', onSquareClick);
-      boardEl.appendChild(sq);
-    }
-  }
-
-  // show if side in check
-  if(inCheck(board, turn)){
-    const k = findKing(board, turn);
-    if(k){
-      const el = getSquareEl(k.r,k.c);
-      if(el) el.classList.add('check');
-    }
-  }
-
-  updateStatus();
-  highlightNextExpected();
-}
-
-function getSquareEl(r,c){
-  return boardEl.querySelector(`.sq[data-r="${r}"][data-c="${c}"]`);
-}
-
-function onSquareClick(e){
-  const r = parseInt(e.currentTarget.dataset.r,10);
-  const c = parseInt(e.currentTarget.dataset.c,10);
-  const p = board[r][c];
-
-  // If nothing selected -> select own piece
-  if(!selected){
-    if(!p) return;
-    if(turn==='w' && !isWhite(p)) return;
-    if(turn==='b' && !isBlack(p)) return;
-
-    selected = {r,c};
-    legalTargets = genLegalMovesForSquare(r,c).map(m => m.to);
-
-    clearHighlights();
-    e.currentTarget.classList.add('selected');
-    for(const t of legalTargets){
-      const el = getSquareEl(t.r,t.c);
-      if(!el) continue;
-      if(board[t.r][t.c] !== '') el.classList.add('capture');
-      else el.classList.add('hintmove');
-    }
-    return;
-  }
-
-  // If selected -> attempt move or change selection
-  if(selected){
-    // click same color piece -> change selection
-    if(p && ((turn==='w' && isWhite(p)) || (turn==='b' && isBlack(p)))){
-      selected = null; legalTargets=[];
-      clearHighlights();
-      onSquareClick(e);
-      return;
-    }
-
-    const moved = tryTrainerMove(selected.r, selected.c, r, c);
-    selected = null; legalTargets=[];
-    clearHighlights();
-    if(moved) draw();
-  }
-}
-
-/* =========================
-   Opening trainer logic (UCI)
-========================= */
-function normalizeMoves(text){
-  return text
-    .replace(/[\n\r\t]+/g,' ')
-    .replace(/,+/g,' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-}
-
-function uciFromTo(fromSq,toSq){ return fromSq+toSq; }
-
-function tryTrainerMove(fr,fc,tr,tc){
-  const moveUci = uciFromTo(rcToSq(fr,fc), rcToSq(tr,tc));
-  const expected = openingLine[openingIndex] || null;
-
-  // if trainer active and expects move
-  if(strictTrainer && openingLine.length>0){
-    if(expected && expected !== moveUci){
-      // reject (snapback)
-      flashStatus(`Неправильно: ожидался ${expected}, ты сделал ${moveUci}`);
-      return false;
-    }
-  }
-
-  const mv = makeMove(fr,fc,tr,tc);
-  if(!mv){
-    flashStatus('Нелегальный ход (по правилам).');
-    return false;
-  }
-
-  // advance opening ply if matches
-  if(openingLine.length>0){
-    const exp = openingLine[openingIndex] || null;
-    if(exp === moveUci) openingIndex++;
-  }
-
-  // auto opponent reply
-  if(autoOpponent) maybePlayOpponent();
-
-  return true;
-}
-
-function maybePlayOpponent(){
-  if(openingLine.length===0) return;
-  const next = openingLine[openingIndex];
-  if(!next) return;
-
-  // next move should be by side to move; we just play it if legal
-  const fr = sqToRC(next.slice(0,2));
-  const to = sqToRC(next.slice(2,4));
-  const mv = makeMove(fr.r, fr.c, to.r, to.c);
-  if(mv){
-    openingIndex++;
-  } else {
-    flashStatus(`Вариант содержит нелегальный ход: ${next} (проверь дебют)`);
-  }
-}
-
-/* =========================
-   Status + Next expected highlight
-========================= */
-let statusTimer = null;
-function flashStatus(msg){
-  const st = document.getElementById('status');
-  st.textContent = msg;
-  st.style.color = '#c2410c';
-  clearTimeout(statusTimer);
-  statusTimer = setTimeout(()=>{ st.style.color = '#111'; updateStatus(); }, 1800);
-}
-
-function updateStatus(){
-  const st = document.getElementById('status');
-  const sub = document.getElementById('substatus');
-
-  const sideText = (turn==='w') ? 'Ход белых' : 'Ход чёрных';
-  const checkText = inCheck(board, turn) ? ' — ШАХ!' : '';
-  st.textContent = sideText + checkText;
-
-  if(openingLine.length>0){
-    const next = openingLine[openingIndex] || '(конец варианта)';
-    sub.textContent = `Дебют: ${currentOpeningName || '—'} | следующий ход: ${next} | ply: ${openingIndex}/${openingLine.length}`;
-  } else {
-    sub.textContent = `Дебют не выбран (можешь добавить свой справа).`;
-  }
-}
-
-function highlightNextExpected(){
-  if(openingLine.length===0) return;
-  const next = openingLine[openingIndex];
-  if(!next) return;
-
-  // highlight FROM square of expected move for side to move
-  const fr = sqToRC(next.slice(0,2));
-  const el = getSquareEl(fr.r, fr.c);
-  if(el) el.classList.add('selected');
-}
-
-/* =========================
-   Openings storage
-========================= */
-function defaultOpenings(){
-  return {
-    "Catalan (sample)": "d2d4 d7d5 c2c4 e7e6 g1f3 g8f6 g2g3",
-    "Italian (sample)": "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5",
-    "QGD (sample)": "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6"
-  };
-}
-
-function loadOpenings(){
-  try{
-    const raw = localStorage.getItem('my_openings_v1');
-    openings = raw ? JSON.parse(raw) : defaultOpenings();
-  }catch(e){
-    openings = defaultOpenings();
-  }
-  refreshOpeningSelect();
-}
-
-function saveOpenings(){
-  localStorage.setItem('my_openings_v1', JSON.stringify(openings));
-}
-
-function refreshOpeningSelect(){
-  const sel = document.getElementById('openingSelect');
-  sel.innerHTML = '';
-  const names = Object.keys(openings).sort((a,b)=>a.localeCompare(b));
-  const opt0 = document.createElement('option');
-  opt0.value = '';
-  opt0.textContent = '— выбери дебют —';
-  sel.appendChild(opt0);
-
-  for(const n of names){
-    const o = document.createElement('option');
-    o.value = n;
-    o.textContent = n;
-    sel.appendChild(o);
-  }
-  sel.addEventListener('change', ()=>{
-    const name = sel.value;
-    if(!name) return;
-    document.getElementById('openingName').value = name;
-    document.getElementById('openingMoves').value = openings[name];
-  });
-}
-
-function saveOpening(){
-  const name = document.getElementById('openingName').value.trim();
-  const movesText = document.getElementById('openingMoves').value.trim();
-  if(!name){ flashStatus('Дай название дебюту.'); return; }
-  const moves = normalizeMoves(movesText);
-  if(moves.length===0){ flashStatus('Вставь ходы (UCI).'); return; }
-
-  openings[name] = moves.join(' ');
-  saveOpenings();
-  refreshOpeningSelect();
-  flashStatus('Сохранено ✅');
-}
-
-function deleteOpening(){
-  const name = document.getElementById('openingSelect').value || document.getElementById('openingName').value.trim();
-  if(!name || !openings[name]){ flashStatus('Нечего удалять.'); return; }
-  if(!confirm(`Удалить "${name}"?`)) return;
-  delete openings[name];
-  saveOpenings();
-  refreshOpeningSelect();
-  document.getElementById('openingName').value='';
-  document.getElementById('openingMoves').value='';
-  flashStatus('Удалено.');
-}
-
-function applyOpening(){
-  const sel = document.getElementById('openingSelect').value;
-  const name = sel || document.getElementById('openingName').value.trim();
-  if(!name || !openings[name]){ flashStatus('Выбери дебют из списка.'); return; }
-  currentOpeningName = name;
-  openingLine = normalizeMoves(openings[name]);
-  openingIndex = 0;
-
-  // reset position
-  board = cloneBoard(START);
-  turn = 'w';
-  undoStack = [];
-  redoStack = [];
-  selected = null;
-  legalTargets = [];
-
-  draw();
-  flashStatus(`Старт: ${name}`);
-}
-
-function exportOpenings(){
-  const data = JSON.stringify(openings, null, 2);
-  prompt('Скопируй JSON (экспорт):', data);
-}
-
-function importOpenings(){
-  const raw = prompt('Вставь JSON (импорт):');
-  if(!raw) return;
-  try{
-    const obj = JSON.parse(raw);
-    if(typeof obj !== 'object' || Array.isArray(obj)) throw new Error('bad');
-    openings = obj;
-    saveOpenings();
-    refreshOpeningSelect();
-    flashStatus('Импортировано ✅');
-  }catch(e){
-    flashStatus('Ошибка импорта (JSON).');
-  }
-}
-
-/* =========================
-   Misc controls
-========================= */
-function resetAll(){
-  board = cloneBoard(START);
-  turn = 'w';
-  undoStack = [];
-  redoStack = [];
-  selected = null;
-  legalTargets = [];
-  openingIndex = 0;
-  draw();
-}
-
-function toggleAutoOpponent(){
-  autoOpponent = !autoOpponent;
-  document.getElementById('autoOpp').textContent = autoOpponent ? 'ON' : 'OFF';
-  flashStatus(`Auto-opponent: ${autoOpponent ? 'ON' : 'OFF'}`);
-}
-
-/* =========================
-   Init
-========================= */
-document.getElementById('autoOpp').textContent = autoOpponent ? 'ON' : 'OFF';
-loadOpenings();
-draw();
+initGame();
 </script>
+
 </body>
 </html>
