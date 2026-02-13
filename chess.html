@@ -3,41 +3,28 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Шахматные дебюты</title>
+  <title>Репетитор дебютов</title>
 
-  <!-- CSS для доски -->
+  <!-- CSS -->
   <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+    href="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
       background: #0b0f17;
-      color: #e8eefc;
+      color: white;
       text-align: center;
-    }
-
-    header {
-      background: #111a2e;
-      padding: 16px;
-    }
-
-    nav a {
-      color: #e8eefc;
-      margin-right: 14px;
-      text-decoration: none;
-      font-weight: 600;
+      font-family: Arial;
     }
 
     #board {
       width: 400px;
-      margin: 30px auto;
+      margin: 40px auto;
     }
 
     button {
-      padding: 8px 16px;
-      font-size: 14px;
+      padding: 8px 15px;
       cursor: pointer;
     }
   </style>
@@ -45,43 +32,30 @@
 
 <body>
 
-<header>
-  <nav>
-    <a href="index.html">🏠 Главная</a>
-    <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html">📚 Языки</a>
-    <a href="training.html">💪 Тренировки</a>
-    <a href="chess.html">♟ Шахматы</a>
-  </nav>
-</header>
-
 <h1>♟ Репетитор дебютов</h1>
 
 <div id="board"></div>
+<button onclick="resetBoard()">Сбросить</button>
 
-<div style="margin-top:20px">
-  <button onclick="resetBoard()">🔄 Сбросить</button>
-</div>
-
-<!-- Библиотеки в правильном порядке -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+<!-- БИБЛИОТЕКИ ВНИЗУ -->
+<script src="https://unpkg.com/chess.js@0.10.3/chess.js"></script>
+<script src="https://unpkg.com/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
 <script>
-  const game = new Chess();
+  var game = new Chess();
 
-  const board = Chessboard('board', {
+  var board = Chessboard('board', {
     draggable: true,
     position: 'start',
     onDrop: onDrop
   });
 
-  const moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
-  let moveIndex = 0;
+  var moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
+  var moveIndex = 0;
 
   function onDrop(source, target) {
-    const move = game.move({
+
+    var move = game.move({
       from: source,
       to: target,
       promotion: 'q'
@@ -90,7 +64,7 @@
     if (move === null) return 'snapback';
 
     if (move.san !== moves[moveIndex]) {
-      alert("❌ Неправильный ход");
+      alert("Неправильный ход");
       game.undo();
       return 'snapback';
     }
@@ -98,7 +72,7 @@
     moveIndex++;
 
     if (moveIndex < moves.length) {
-      setTimeout(() => {
+      setTimeout(function() {
         game.move(moves[moveIndex]);
         board.position(game.fen());
         moveIndex++;
