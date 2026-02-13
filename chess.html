@@ -14,6 +14,10 @@
     nav a { color:#e8eefc; margin-right:14px; text-decoration:none; font-weight:600; }
     #board { width: 400px; margin: 30px auto; }
   </style>
+
+  <link rel="stylesheet"
+href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css" />
+
 </head>
 <body>
 
@@ -28,6 +32,15 @@
 </header>
 
 <h1>♟ Репетитор дебютов</h1>
+
+  <div style="max-width:500px;margin:auto;margin-top:40px">
+  <div id="board" style="width:100%"></div>
+</div>
+
+<div style="text-align:center;margin-top:20px">
+  <button onclick="resetBoard()">🔄 Сбросить</button>
+</div>
+
 
 <div id="board"></div>
 
@@ -72,7 +85,15 @@
       }, 500);
     }
   }
+  function resetBoard() {
+    game.reset();
+    board.start();
+    moveIndex = 0;
+  }
 </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chess.js@0.12.0/chess.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
 </body>
 </html>
