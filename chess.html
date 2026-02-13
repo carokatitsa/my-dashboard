@@ -1,112 +1,113 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Шахматные дебюты</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Репетитор дебютов</title>
 
-<!-- CSS доски -->
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css"/>
+  <!-- jQuery (нужен для chessboard) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-<style>
-body {
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#0b0f17;
-  color:#e8eefc;
-  text-align:center;
-}
-header {
-  background:#111a2e;
-  padding:16px;
-}
-nav a {
-  color:#e8eefc;
-  margin-right:14px;
-  text-decoration:none;
-  font-weight:600;
-}
-#board {
-  width:400px;
-  margin:30px auto;
-}
-</style>
+  <!-- Chessboard -->
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0f17;
+      color: #e8eefc;
+      text-align: center;
+    }
+
+    header {
+      background: #111a2e;
+      padding: 16px;
+    }
+
+    nav a {
+      color: #e8eefc;
+      margin-right: 14px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    #board {
+      width: 400px;
+      margin: 30px auto;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
 </head>
+
 <body>
 
 <header>
-<nav>
-  <a href="index.html">🏠 Главная</a>
-  <a href="coins.html">🪙 Монеты</a>
-  <a href="languages.html">📚 Языки</a>
-  <a href="training.html">💪 Тренировки</a>
-  <a href="chess.html">♟ Шахматы</a>
-</nav>
+  <nav>
+    <a href="index.html">🏠 Главная</a>
+    <a href="coins.html">🪙 Монеты</a>
+    <a href="languages.html">📚 Языки</a>
+    <a href="training.html">💪 Тренировки</a>
+    <a href="chess.html">♟ Шахматы</a>
+  </nav>
 </header>
 
 <h1>♟ Репетитор дебютов</h1>
+<p>Сделай ход — если ход не из варианта, фигура вернётся назад.</p>
 
 <div id="board"></div>
 
-<button onclick="resetBoard()">🔄 Сбросить</button>
-
-<!-- ВАЖНО: сначала jQuery -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-
-<!-- потом chess.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-
-<!-- потом chessboard -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+<button onclick="resetBoard()">Сбросить</button>
 
 <script>
+  const correctMoves = [
+    { from: "d2", to: "d4" },
+    { from: "d7", to: "d5" },
+    { from: "c2", to: "c4" },
+    { from: "e7", to: "e6" },
+    { from: "g1", to: "f3" },
+    { from: "g8", to: "f6" }
+  ];
 
-const game = new Chess();
+  let moveIndex = 0;
 
-const board = Chessboard('board', {
-  draggable: true,
-  position: 'start',
-  onDrop: onDrop
-});
-
-const moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
-let moveIndex = 0;
-
-function onDrop(source, target) {
-
-  const move = game.move({
-    from: source,
-    to: target,
-    promotion: 'q'
+  const board = Chessboard('board', {
+    draggable: true,
+    position: 'start',
+    onDrop: onDrop
   });
 
-  if (move === null) return 'snapback';
+  function onDrop(source, target) {
+    const expected = correctMoves[moveIndex];
 
-  if (move.san !== moves[moveIndex]) {
-    alert("❌ Неправильный ход");
-    game.undo();
-    return 'snapback';
+    if (!expected || source !== expected.from || target !== expected.to) {
+      return 'snapback';
+    }
+
+    moveIndex++;
+
+    if (moveIndex < correctMoves.length) {
+      setTimeout(() => {
+        board.move(
+          correctMoves[moveIndex].from + '-' +
+          correctMoves[moveIndex].to
+        );
+        moveIndex++;
+      }, 500);
+    }
   }
 
-  moveIndex++;
-
-  if (moveIndex < moves.length) {
-    setTimeout(() => {
-      game.move(moves[moveIndex]);
-      board.position(game.fen());
-      moveIndex++;
-    }, 500);
+  function resetBoard() {
+    board.start();
+    moveIndex = 0;
   }
-}
-
-function resetBoard() {
-  game.reset();
-  board.start();
-  moveIndex = 0;
-}
-
 </script>
 
 </body>
