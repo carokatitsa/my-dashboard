@@ -1,137 +1,117 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Репетитор дебютов</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Репетитор дебютов</title>
 
-  <!-- jQuery -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<!-- jQuery (ОБЯЗАТЕЛЬНО первым) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-  <!-- Chess.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
+<!-- Chess.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
 
-  <!-- Chessboard CSS -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard.min.css"/>
+<!-- Chessboard CSS -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
 
-  <!-- Chessboard JS -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard.min.js"></script>
+<!-- Chessboard JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b0f17;
-      color: #e8eefc;
-      text-align: center;
-    }
-
-    header {
-      background: #111a2e;
-      padding: 16px;
-    }
-
-    nav a {
-      color: #e8eefc;
-      margin-right: 14px;
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    #board {
-      width: 400px;
-      margin: 30px auto;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    .info {
-      margin-top: 15px;
-      font-size: 16px;
-    }
-  </style>
+<style>
+body {
+    margin:0;
+    font-family: Arial, sans-serif;
+    background:#0b0f17;
+    color:#e8eefc;
+    text-align:center;
+}
+header {
+    background:#111a2e;
+    padding:16px;
+}
+nav a {
+    color:#e8eefc;
+    margin-right:14px;
+    text-decoration:none;
+    font-weight:600;
+}
+#board {
+    width: 400px;
+    margin: 30px auto;
+}
+button {
+    padding: 10px 20px;
+    font-size:16px;
+    cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 
 <header>
-  <nav>
-    <a href="index.html">🏠 Главная</a>
-    <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html">📚 Языки</a>
-    <a href="training.html">💪 Тренировки</a>
-    <a href="chess.html">♟ Шахматы</a>
-  </nav>
+<nav>
+<a href="index.html">🏠 Главная</a>
+<a href="coins.html">🪙 Монеты</a>
+<a href="languages.html">📚 Языки</a>
+<a href="training.html">💪 Тренировки</a>
+<a href="chess.html">♟ Шахматы</a>
+</nav>
 </header>
 
 <h1>♟ Репетитор дебютов</h1>
-<p>Сделай ход — если он не из варианта, фигура вернётся назад.</p>
+<p>Сделай ход — если ход не из варианта, фигура вернётся назад.</p>
 
 <div id="board"></div>
 
-<button onclick="resetBoard()">🔄 Сбросить</button>
-
-<div class="info" id="info"></div>
+<button onclick="resetBoard()">Сбросить</button>
 
 <script>
+const game = new Chess();
 
-  var game = new Chess();
-
-  var board = Chessboard('board', {
+const board = Chessboard('board', {
     draggable: true,
     position: 'start',
     pieceTheme:
-      'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/{piece}.png',
+        'https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/img/chesspieces/wikipedia/{piece}.png',
     onDrop: onDrop
-  });
+});
 
-  // === ТВОЙ ВАРИАНТ ===
-  var moves = ["d4", "d5", "c4", "e6", "Nc3", "Nf6"];
-  var moveIndex = 0;
+const moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
+let moveIndex = 0;
 
-  function onDrop(source, target) {
-
-    var move = game.move({
-      from: source,
-      to: target,
-      promotion: 'q'
+function onDrop(source, target) {
+    const move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q'
     });
 
     if (move === null) return 'snapback';
 
-    // Проверяем правильный ли ход
     if (move.san !== moves[moveIndex]) {
-      document.getElementById("info").innerHTML =
-        "❌ Неправильный ход. Правильный: " + moves[moveIndex];
-      game.undo();
-      return 'snapback';
+        alert("❌ Неправильный ход");
+        game.undo();
+        return 'snapback';
     }
 
-    document.getElementById("info").innerHTML = "✅ Правильно!";
     moveIndex++;
 
-    // Ход компьютера
     if (moveIndex < moves.length) {
-      setTimeout(function () {
-        game.move(moves[moveIndex]);
-        board.position(game.fen());
-        moveIndex++;
-      }, 500);
+        setTimeout(() => {
+            game.move(moves[moveIndex]);
+            board.position(game.fen());
+            moveIndex++;
+        }, 500);
     }
-  }
+}
 
-  function resetBoard() {
+function resetBoard() {
     game.reset();
     board.start();
     moveIndex = 0;
-    document.getElementById("info").innerHTML = "";
-  }
-
+}
 </script>
 
 </body>
