@@ -1,110 +1,113 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Шахматные дебюты</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Шахматные дебюты</title>
 
-  <!-- Chessboard CSS -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+<!-- CSS доски -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css"/>
 
-  <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#0b0f17; color:#e8eefc; text-align:center; }
-    header { background:#111a2e; padding:16px; }
-    nav a { color:#e8eefc; margin-right:14px; text-decoration:none; font-weight:600; }
-    #board { width: 420px; margin: 30px auto; }
-    button { padding:10px 14px; border-radius:10px; border:0; cursor:pointer; }
-    .muted { color:#a9b6d3; font-size:14px; }
-  </style>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#0b0f17;
+  color:#e8eefc;
+  text-align:center;
+}
+header {
+  background:#111a2e;
+  padding:16px;
+}
+nav a {
+  color:#e8eefc;
+  margin-right:14px;
+  text-decoration:none;
+  font-weight:600;
+}
+#board {
+  width:400px;
+  margin:30px auto;
+}
+</style>
 
-  <!-- ВАЖНО: порядок -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-
-  <!-- chess.js (НЕ module, без export) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
-
-  <!-- chessboard.js (требует jQuery) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 </head>
-
 <body>
-  <header>
-    <nav>
-      <a href="index.html">🏠 Главная</a>
-      <a href="coins.html">🪙 Монеты</a>
-      <a href="languages.html">📚 Языки</a>
-      <a href="training.html">💪 Тренировки</a>
-      <a href="chess.html">♟ Шахматы</a>
-    </nav>
-  </header>
 
-  <h1>♟ Репетитор дебютов</h1>
-  <div class="muted">Сделай ход — если ход не из твоего варианта, вернётся назад.</div>
+<header>
+<nav>
+  <a href="index.html">🏠 Главная</a>
+  <a href="coins.html">🪙 Монеты</a>
+  <a href="languages.html">📚 Языки</a>
+  <a href="training.html">💪 Тренировки</a>
+  <a href="chess.html">♟ Шахматы</a>
+</nav>
+</header>
 
-  <div id="board"></div>
+<h1>♟ Репетитор дебютов</h1>
 
-  <div style="margin:18px 0;">
-    <button onclick="resetBoard()">🔄 Сбросить</button>
-  </div>
+<div id="board"></div>
 
-  <script>
-    // ✅ Твой вариант (пока тестовый)
-    const moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
-    let moveIndex = 0;
+<button onclick="resetBoard()">🔄 Сбросить</button>
 
-    const game = new Chess();
+<!-- ВАЖНО: сначала jQuery -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 
-    const board = Chessboard('board', {
-      draggable: true,
-      position: 'start',
-      onDrop: onDrop
-    });
+<!-- потом chess.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.13.4/chess.min.js"></script>
 
-    function onDrop(source, target) {
-      const move = game.move({
-        from: source,
-        to: target,
-        promotion: 'q'
-      });
+<!-- потом chessboard -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
 
-      if (move === null) return 'snapback';
+<script>
 
-      // проверяем, что игрок сыграл ожидаемый ход
-      const expected = moves[moveIndex];
+const game = new Chess();
 
-      if (!expected) {
-        // вариант закончился — запрещаем любые новые ходы
-        game.undo();
-        return 'snapback';
-      }
+const board = Chessboard('board', {
+  draggable: true,
+  position: 'start',
+  onDrop: onDrop
+});
 
-      if (move.san !== expected) {
-        alert("❌ Неправильный ход. Ожидалось: " + expected);
-        game.undo();
-        return 'snapback';
-      }
+const moves = ["d4", "d5", "c4", "e6", "Nf3", "Nf6"];
+let moveIndex = 0;
 
+function onDrop(source, target) {
+
+  const move = game.move({
+    from: source,
+    to: target,
+    promotion: 'q'
+  });
+
+  if (move === null) return 'snapback';
+
+  if (move.san !== moves[moveIndex]) {
+    alert("❌ Неправильный ход");
+    game.undo();
+    return 'snapback';
+  }
+
+  moveIndex++;
+
+  if (moveIndex < moves.length) {
+    setTimeout(() => {
+      game.move(moves[moveIndex]);
+      board.position(game.fen());
       moveIndex++;
+    }, 500);
+  }
+}
 
-      // ход "компа" (следующий ход из твоего варианта)
-      if (moveIndex < moves.length) {
-        setTimeout(() => {
-          game.move(moves[moveIndex]);
-          board.position(game.fen());
-          moveIndex++;
-        }, 400);
-      }
-    }
+function resetBoard() {
+  game.reset();
+  board.start();
+  moveIndex = 0;
+}
 
-    function resetBoard() {
-      game.reset();
-      board.start();
-      moveIndex = 0;
-    }
+</script>
 
-    // чтобы кнопка работала из HTML onclick
-    window.resetBoard = resetBoard;
-  </script>
 </body>
 </html>
