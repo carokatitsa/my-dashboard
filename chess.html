@@ -313,7 +313,41 @@ function genPseudoMoves(b, r, c){
         add(r+dr,c+dc);
       }
     }
-    // castling intentionally omitted for simplicity
+    if(type==='k'){
+    for(let dr=-1;dr<=1;dr++){
+        for(let dc=-1;dc<=1;dc++){
+            if(dr===0 && dc===0) continue;
+            add(r+dr,c+dc);
+        }
+    }
+
+    // =====================
+    // CASTLING generation
+    // =====================
+
+    if(side === 'w' && r === 7 && c === 4){
+        // short
+        if(b[7][5]==='' && b[7][6]==='' && b[7][7]==='R'){
+            moves.push({from:{r,c}, to:{r:7,c:6}});
+        }
+        // long
+        if(b[7][1]==='' && b[7][2]==='' && b[7][3]==='' && b[7][0]==='R'){
+            moves.push({from:{r,c}, to:{r:7,c:2}});
+        }
+    }
+
+    if(side === 'b' && r === 0 && c === 4){
+        // short
+        if(b[0][5]==='' && b[0][6]==='' && b[0][7]==='r'){
+            moves.push({from:{r,c}, to:{r:0,c:6}});
+        }
+        // long
+        if(b[0][1]==='' && b[0][2]==='' && b[0][3]==='' && b[0][0]==='r'){
+            moves.push({from:{r,c}, to:{r:0,c:2}});
+        }
+    }
+}
+
   }
 
   return moves;
