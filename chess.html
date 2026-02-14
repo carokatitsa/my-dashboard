@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chess Pro: Debuts & Training</title>
+    <title>Chess Master - Fix</title>
     <style>
         :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
         body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
@@ -15,24 +15,20 @@
         .piece.w { color: #fff; -webkit-text-stroke: 1.5px #000; }
         .piece.b { color: #000; }
         .selected { background-color: var(--hl) !important; }
-        .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.15); border-radius: 50%; }
+        .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.15); border-radius: 50%; position: absolute; }
         
         #right-pane { width: 350px; display: flex; flex-direction: column; gap: 15px; background: #252525; padding: 20px; border-radius: 10px; }
-        .controls { display: flex; gap: 10px; width: 100%; }
+        .controls { display: flex; gap: 10px; width: 100%; margin-top: 20px;}
         button { flex: 1; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; }
         button:hover { background: #555; }
-        input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
+        input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; width: calc(100% - 22px); }
         
-        #debut-list { background: #1a1a1a; border-radius: 5px; height: 300px; overflow-y: auto; border: 1px solid #333; }
-        .debut-item { 
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 10px; border-bottom: 1px solid #333; cursor: pointer; 
-        }
+        #debut-list { background: #1a1a1a; border-radius: 5px; height: 300px; overflow-y: auto; border: 1px solid #333; margin-top: 10px; }
+        .debut-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #333; cursor: pointer; }
         .debut-item:hover { background: #333; }
         .active-debut { background: #2c3e20 !important; border-left: 4px solid #779556; }
-        .delete-btn { color: #e74c3c; padding: 5px 10px; font-weight: bold; border-radius: 3px; }
-        .delete-btn:hover { background: rgba(231, 76, 60, 0.2); }
-        #training-status { color: #f1c40f; font-weight: bold; min-height: 1.2em; }
+        .delete-btn { color: #e74c3c; cursor: pointer; padding: 0 10px; font-size: 18px; }
+        #training-status { color: #f1c40f; font-weight: bold; min-height: 1.5em; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -40,7 +36,7 @@
 <div id="left-pane">
     <div id="status" style="margin-bottom: 15px; font-size: 22px;">Ход белых</div>
     <div id="board"></div>
-    <div class="controls" style="margin-top: 20px;">
+    <div class="controls">
         <button onclick="undo()">⬅ Назад</button>
         <button onclick="redo()">Вперед ➡</button>
         <button onclick="resetGame()" style="background: #c0392b;">Сброс</button>
@@ -49,10 +45,10 @@
 
 <div id="right-pane">
     <h3>Тренажер дебютов</h3>
-    <div id="training-status">Выберите дебют для тренировки</div>
+    <div id="training-status">Выберите дебют</div>
     
-    <input type="text" id="debut-name" placeholder="Название (напр. Сицилианка)">
-    <button onclick="saveDebut()" style="background: #27ae60;">Сохранить как новый дебют</button>
+    <input type="text" id="debut-name" placeholder="Название дебюта...">
+    <button onclick="saveDebut()" style="background: #27ae60; margin-top: 5px; flex: none;">Сохранить как новый дебют</button>
     
     <div id="debut-list"></div>
 </div>
@@ -71,17 +67,16 @@
         ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
     ];
 
-    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white'}];
+    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}}];
     let historyIndex = 0;
     let selected = null;
     let validMoves = [];
-    let debuts = JSON.parse(localStorage.getItem('chess_debuts_v2') || '{}');
+    let debuts = JSON.parse(localStorage.getItem('chess_debuts_v3') || '{}');
     let activeDebutName = null;
 
     function render() {
         boardEl.innerHTML = '';
-        const currentData = history[historyIndex];
-        const currentBoard = currentData.board;
+        const current = history[historyIndex];
         
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
@@ -92,11 +87,10 @@
                 const move = validMoves.find(m => m.r === r && m.c === c);
                 if (move) sq.classList.add('can-move');
 
-                if (currentBoard[r][c]) {
-                    const char = currentBoard[r][c];
-                    const isWhite = char === char.toUpperCase();
+                if (current.board[r][c]) {
+                    const char = current.board[r][c];
                     const p = document.createElement('span');
-                    p.className = `piece ${isWhite ? 'w' : 'b'}`;
+                    p.className = `piece ${char === char.toUpperCase() ? 'w' : 'b'}`;
                     p.innerText = PIECES_MAP[char];
                     sq.appendChild(p);
                 }
@@ -104,27 +98,23 @@
                 boardEl.appendChild(sq);
             }
         }
-        statusEl.innerText = `Ход ${currentData.turn === 'white' ? 'белых' : 'черных'}`;
-        updateDebutListUI();
+        statusEl.innerText = `Ход ${current.turn === 'white' ? 'белых' : 'черных'}`;
+        updateListUI();
     }
 
     function onSquareClick(r, c) {
-        const currentBoard = history[historyIndex].board;
-        const turn = history[historyIndex].turn;
-        const piece = currentBoard[r][c];
+        const current = history[historyIndex];
+        const piece = current.board[r][c];
         const isWhite = piece && piece === piece.toUpperCase();
-        const myTurn = (turn === 'white' && isWhite) || (turn === 'black' && piece && !isWhite);
+        const myTurn = (current.turn === 'white' && isWhite) || (current.turn === 'black' && piece && !isWhite);
 
         if (selected) {
             const move = validMoves.find(m => m.r === r && m.c === c);
-            if (move) {
-                executeMove(selected.r, selected.c, r, c);
-                return;
-            }
+            if (move) { executeMove(selected.r, selected.c, r, c, move.type); return; }
         }
         if (myTurn) {
             selected = {r, c};
-            validMoves = getValidMoves(r, c, currentBoard);
+            validMoves = getValidMoves(r, c, current);
         } else {
             selected = null;
             validMoves = [];
@@ -132,147 +122,133 @@
         render();
     }
 
-    function executeMove(fR, fC, tR, tC) {
-        let newBoard = JSON.parse(JSON.stringify(history[historyIndex].board));
+    function executeMove(fR, fC, tR, tC, type) {
+        const current = history[historyIndex];
+        let newBoard = JSON.parse(JSON.stringify(current.board));
+        let newCastling = JSON.parse(JSON.stringify(current.castling));
         const piece = newBoard[fR][fC];
+
+        // Логика рокировки
+        if (type === 'castle') {
+            if (tC === 6) { newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; }
+            if (tC === 2) { newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; }
+        }
+
         newBoard[tR][tC] = piece;
         newBoard[fR][fC] = '';
-        
-        // Превращение пешки (всегда в ферзя для простоты)
-        if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) {
-            newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
-        }
 
-        const nextTurn = history[historyIndex].turn === 'white' ? 'black' : 'white';
-        const moveKey = `${fR}${fC}${tR}${tC}`;
-        
+        // Пешка -> Ферзь
+        if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
+
+        // Обновление прав рокировки
+        if (piece === 'K') newCastling.W = {K:false, Q:false};
+        if (piece === 'k') newCastling.B = {K:false, Q:false};
+        if (fR === 7 && fC === 7) newCastling.W.K = false;
+        if (fR === 7 && fC === 0) newCastling.W.Q = false;
+        if (fR === 0 && fC === 7) newCastling.B.K = false;
+        if (fR === 0 && fC === 0) newCastling.B.Q = false;
+
+        const nextTurn = current.turn === 'white' ? 'black' : 'white';
         history = history.slice(0, historyIndex + 1);
-        history.push({board: newBoard, turn: nextTurn, move: moveKey});
+        history.push({board: newBoard, turn: nextTurn, castling: newCastling, move: `${fR}${fC}${tR}${tC}`});
         historyIndex++;
-        
-        selected = null;
-        validMoves = [];
+        selected = null; validMoves = [];
         render();
 
-        // Проверка ответа компьютера в режиме тренажера
-        if (activeDebutName) {
-            checkBotResponse();
-        }
+        if (activeDebutName) checkBot();
     }
 
-    function checkBotResponse() {
-        const debutMoves = debuts[activeDebutName];
-        const currentMovesCount = history.length - 1; // Сколько ходов уже сделано в партии
-
-        // Если мы сделали ход, и в списке дебюта есть следующий ход
-        if (debutMoves.length > currentMovesCount) {
-            // Проверяем, совпадает ли наш последний ход с тем, что записан в дебюте
-            const lastPlayerMove = history[historyIndex].move;
-            const expectedMove = debutMoves[currentMovesCount - 1];
-
-            if (lastPlayerMove === expectedMove) {
-                // Ход совпал! Делаем ответ за бота
-                trainStatusEl.innerText = "Изучаем: " + activeDebutName;
-                setTimeout(() => {
-                    const botMoveStr = debutMoves[currentMovesCount];
-                    const [fR, fC, tR, tC] = botMoveStr.split('').map(Number);
-                    executeMove(fR, fC, tR, tC);
-                }, 600);
-            } else {
-                trainStatusEl.innerText = "❌ Не по плану (свернули с дебюта)";
-                activeDebutName = null;
-            }
-        } else {
-            trainStatusEl.innerText = "✅ Вариант закончен!";
-            activeDebutName = null;
-        }
-    }
-
-    function getValidMoves(r, c, b) {
+    function getValidMoves(r, c, state) {
         const moves = [];
+        const b = state.board;
         const piece = b[r][c].toLowerCase();
         const isWhite = b[r][c] === b[r][c].toUpperCase();
-        const dMap = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
         
+        const dMap = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+
         if (piece === 'p') {
-            const step = isWhite ? -1 : 1;
-            if (!b[r+step]?.[c]) {
-                moves.push({r: r+step, c: c});
-                if (((isWhite && r===6) || (!isWhite && r===1)) && !b[r+2*step][c]) moves.push({r: r+2*step, c: c});
+            const s = isWhite ? -1 : 1;
+            if (!b[r+s]?.[c]) {
+                moves.push({r:r+s, c:c});
+                if (((isWhite && r===6) || (!isWhite && r===1)) && !b[r+2*s][c]) moves.push({r:r+2*s, c:c});
             }
-            [-1, 1].forEach(dc => {
-                let tar = b[r+step]?.[c+dc];
-                if (tar && (tar === tar.toUpperCase()) !== isWhite) moves.push({r: r+step, c: c+dc});
+            [-1,1].forEach(dc => {
+                let t = b[r+s]?.[c+dc];
+                if (t && (t === t.toUpperCase()) !== isWhite) moves.push({r:r+s, c:c+dc});
             });
         } else if (dMap[piece]) {
             for (let [dr, dc] of dMap[piece]) {
                 let nr = r+dr, nc = c+dc;
                 while(nr>=0 && nr<8 && nc>=0 && nc<8) {
-                    if (!b[nr][nc]) { moves.push({r: nr, c: nc}); if ("nk".includes(piece)) break; }
-                    else { if ((b[nr][nc] === b[nr][nc].toUpperCase()) !== isWhite) moves.push({r: nr, c: nc}); break; }
+                    if (!b[nr][nc]) { moves.push({r:nr, c:nc}); if ("nk".includes(piece)) break; }
+                    else { if ((b[nr][nc] === b[nr][nc].toUpperCase()) !== isWhite) moves.push({r:nr, c:nc}); break; }
                     nr+=dr; nc+=dc;
                 }
+            }
+            // Рокировка
+            if (piece === 'k') {
+                const cast = isWhite ? state.castling.W : state.castling.B;
+                const row = isWhite ? 7 : 0;
+                if (cast.K && !b[row][5] && !b[row][6]) moves.push({r:row, c:6, type:'castle'});
+                if (cast.Q && !b[row][1] && !b[row][2] && !b[row][3]) moves.push({r:row, c:2, type:'castle'});
             }
         }
         return moves;
     }
 
-    function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
-    function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
-    
-    function resetGame() { 
-        history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white'}];
-        historyIndex = 0; selected = null; validMoves = [];
-        render(); 
+    function checkBot() {
+        const path = debuts[activeDebutName];
+        if (path.length > historyIndex - 1) {
+            const lastMove = history[historyIndex].move;
+            if (lastMove === path[historyIndex - 1]) {
+                if (path.length > historyIndex) {
+                    setTimeout(() => {
+                        const m = path[historyIndex];
+                        executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]));
+                    }, 600);
+                }
+            } else { trainStatusEl.innerText = "❌ Сбились с пути"; activeDebutName = null; }
+        }
+    }
+
+    function getMoveType(fR, fC, tR, tC) {
+        const p = history[historyIndex].board[fR][fC].toLowerCase();
+        if (p === 'k' && Math.abs(fC - tC) > 1) return 'castle';
+        return 'normal';
     }
 
     function saveDebut() {
         const name = document.getElementById('debut-name').value.trim();
-        if (!name) return alert("Введите название дебюта");
-        if (history.length < 2) return alert("Сначала сделайте хотя бы один ход на доске");
-        
-        const movesArray = history.slice(1).map(h => h.move);
-        debuts[name] = movesArray;
-        localStorage.setItem('chess_debuts_v2', JSON.stringify(debuts));
-        document.getElementById('debut-name').value = '';
-        updateDebutListUI();
+        if (!name || history.length < 2) return alert("Сделайте ходы и введите имя!");
+        debuts[name] = history.slice(1).map(h => h.move);
+        localStorage.setItem('chess_debuts_v3', JSON.stringify(debuts));
+        updateListUI();
     }
 
     function deleteDebut(name, e) {
         e.stopPropagation();
-        if (confirm(`Удалить дебют "${name}"?`)) {
-            delete debuts[name];
-            localStorage.setItem('chess_debuts_v2', JSON.stringify(debuts));
-            if (activeDebutName === name) {
-                activeDebutName = null;
-                trainStatusEl.innerText = "Выберите дебют";
-            }
-            updateDebutListUI();
-        }
+        delete debuts[name];
+        localStorage.setItem('chess_debuts_v3', JSON.stringify(debuts));
+        updateListUI();
     }
 
-    function updateDebutListUI() {
+    function updateListUI() {
         debutListEl.innerHTML = '';
-        for (let name in debuts) {
-            const item = document.createElement('div');
-            item.className = `debut-item ${activeDebutName === name ? 'active-debut' : ''}`;
-            item.innerHTML = `
-                <span>${name}</span>
-                <span class="delete-btn" title="Удалить">✕</span>
-            `;
-            item.onclick = () => {
-                activeDebutName = name;
-                resetGame();
-                trainStatusEl.innerText = "Тренажер: " + name + ". Ваш ход!";
-                updateDebutListUI();
-            };
-            item.querySelector('.delete-btn').onclick = (e) => deleteDebut(name, e);
-            debutListEl.appendChild(item);
+        for (let n in debuts) {
+            const el = document.createElement('div');
+            el.className = `debut-item ${activeDebutName === n ? 'active-debut' : ''}`;
+            el.innerHTML = `<span>${n}</span><span class="delete-btn" onclick="deleteDebut('${n}', event)">✕</span>`;
+            el.onclick = () => { activeDebutName = n; resetGame(); trainStatusEl.innerText = "Учим: " + n; };
+            debutListEl.appendChild(el);
         }
     }
 
-    updateDebutListUI();
+    function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
+    function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
+    function resetGame() { history = [history[0]]; historyIndex = 0; render(); }
+
     render();
+    updateListUI();
 </script>
 </body>
 </html>
