@@ -2,101 +2,95 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-select=no">
-    <title>Chess Cloud Trainer</title>
+    <title>Chess Master - SVG & Flip</title>
     <style>
-        :root { 
-            --bg: #121212; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); 
-            --accent: #27ae60; --exam-accent: #2980b9;
-        }
-        body { 
-            display: flex; flex-direction: column; background: var(--bg); color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica; 
-            margin: 0; padding: 10px; align-items: center; min-height: 100vh;
-        }
-
-        /* Адаптивный контейнер */
-        .main-container { display: flex; flex-direction: row; gap: 20px; max-width: 1000px; width: 100%; }
-        @media (max-width: 850px) { .main-container { flex-direction: column; align-items: center; } }
-
+        :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
+        body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
+        #left-pane { display: flex; flex-direction: column; align-items: center; }
+        
         /* Доска */
-        #board-wrapper { position: relative; width: 100%; max-width: 480px; }
         #board { 
-            display: grid; grid-template-columns: repeat(8, 12.5%); grid-template-rows: repeat(8, 12.5%); 
-            width: 100%; aspect-ratio: 1 / 1; border: 4px solid #333; box-sizing: border-box;
-            transition: transform 0.5s ease; touch-action: none;
+            display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); 
+            border: 8px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transition: transform 0.4s ease;
         }
         #board.flipped { transform: rotate(180deg); }
         #board.flipped .piece { transform: rotate(180deg); }
 
-        .square { display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
+        .square { width: 65px; height: 65px; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
         .white-sq { background-color: var(--sq-l); }
         .black-sq { background-color: var(--sq-d); }
-        .selected { background-color: var(--hl) !important; }
-        .can-move::after { content: ""; width: 25%; height: 25%; background: rgba(0,0,0,0.15); border-radius: 50%; position: absolute; }
         
-        /* Фигуры SVG */
+        /* SVG Фигуры */
         .piece { width: 90%; height: 90%; background-size: contain; background-repeat: no-repeat; z-index: 2; pointer-events: none; }
         
-        /* Панель управления */
-        #right-pane { flex: 1; min-width: 320px; background: #222; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+        .selected { background-color: var(--hl) !important; }
+        .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.15); border-radius: 50%; position: absolute; }
         
-        .mode-toggle { display: flex; border-radius: 8px; overflow: hidden; border: 1px solid #444; }
-        .mode-toggle button { flex: 1; padding: 12px; border: none; background: #333; color: #aaa; font-weight: bold; cursor: pointer; }
-        .mode-toggle button.active.record { background: var(--accent); color: #fff; }
-        .mode-toggle button.active.exam { background: var(--exam-accent); color: #fff; }
+        #right-pane { width: 380px; display: flex; flex-direction: column; gap: 15px; background: #252525; padding: 20px; border-radius: 10px; }
+        .mode-toggle { display: flex; border: 2px solid #444; border-radius: 6px; overflow: hidden; }
+        .mode-toggle button { flex: 1; border: none; padding: 12px; background: #333; color: #888; cursor: pointer; font-weight: bold; }
+        .mode-toggle button.active { background: #27ae60; color: white; }
+        .mode-toggle button.active.exam { background: #2980b9; }
 
-        .btn-group { display: flex; gap: 8px; }
-        button.action { flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; background: #444; color: #fff; }
-        button.action:active { transform: scale(0.98); }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 20px;}
+        button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button.action:hover { background: #555; }
+        
+        .save-box { display: flex; flex-direction: column; gap: 8px; background: #1a1a1a; padding: 10px; border-radius: 5px; }
+        input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
+        .side-select { display: flex; gap: 5px; }
+        .side-select button { flex: 1; font-size: 11px; padding: 6px; background: #333; color: white; border: 1px solid #444; cursor: pointer; font-weight: bold; }
+        .side-select button.active { background: #555; border-color: #fff; }
 
-        .list-container { background: #1a1a1a; border-radius: 8px; padding: 10px; height: 200px; overflow-y: auto; border: 1px solid #333; }
-        .debut-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #2a2a2a; }
-        .debut-item:last-child { border: none; }
-        
-        #status-bar { padding: 10px; background: #000; border-radius: 6px; text-align: center; font-size: 14px; font-weight: bold; }
-        
-        input { padding: 12px; background: #111; border: 1px solid #444; border-radius: 8px; color: #fff; width: 100%; box-sizing: border-box; }
+        .list-section { height: 180px; overflow-y: auto; border: 1px solid #333; border-radius: 4px; padding: 5px; margin-bottom: 10px; background: #1a1a1a; }
+        h4 { margin: 10px 0 5px 0; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+        .debut-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #333; cursor: pointer; font-size: 14px; }
+        .debut-item:hover { background: #2a2a2a; }
+        .active-debut { background: #1e374a !important; border-left: 4px solid #2980b9; }
+        .delete-btn { color: #e74c3c; cursor: pointer; font-weight: bold; padding: 0 5px; }
+        #status-bar { padding: 12px; background: #111; border-radius: 4px; font-weight: bold; text-align: center; border: 1px solid #333; min-height: 18px; }
     </style>
 </head>
 <body>
 
-<div id="turn-display" style="font-size: 20px; margin-bottom: 10px;">Ход белых</div>
+<div id="left-pane">
+    <div id="turn-display" style="margin-bottom: 15px; font-size: 22px; font-weight: bold;">Ход белых</div>
+    <div id="board"></div>
+    <div class="controls">
+        <button class="action" onclick="undo()">⬅</button>
+        <button class="action" onclick="redo()">➡</button>
+        <button class="action" onclick="toggleFlip()" style="background: #5c5c5c;">🔃 Переворот</button>
+        <button class="action" onclick="resetGame()" style="background: #c0392b;">Сброс</button>
+    </div>
+</div>
 
-<div class="main-container">
-    <div id="board-wrapper">
-        <div id="board"></div>
-        <div class="btn-group" style="margin-top: 15px;">
-            <button class="action" onclick="undo()">⬅</button>
-            <button class="action" onclick="redo()">➡</button>
-            <button class="action" onclick="resetGame()" style="background: #a33;">СБРОС</button>
-        </div>
+<div id="right-pane">
+    <div class="mode-toggle">
+        <button id="mode-record" class="active" onclick="setMode('record')">ЗАПИСЬ</button>
+        <button id="mode-exam" onclick="setMode('exam')">ЭКЗАМЕН</button>
     </div>
 
-    <div id="right-pane">
-        <div class="mode-toggle">
-            <button id="m-rec" class="active record" onclick="setMode('record')">ЗАПИСЬ</button>
-            <button id="m-exa" onclick="setMode('exam')">ЭКЗАМЕН</button>
+    <div id="status-bar">Режим: Создание вариантов</div>
+    
+    <div id="record-tools" class="save-box">
+        <input type="text" id="debut-name" placeholder="Название (напр. Защита Пирца)">
+        <div class="side-select">
+            <button id="btn-w" class="active" onclick="setSaveSide('W')">Я ЗА БЕЛЫХ</button>
+            <button id="btn-b" onclick="setSaveSide('B')">Я ЗА ЧЕРНЫХ</button>
         </div>
-
-        <div id="status-bar">Режим обучения активен</div>
-
-        <div id="record-box">
-            <input type="text" id="debut-name" placeholder="Название варианта">
-            <div class="btn-group" style="margin-top: 8px;">
-                <button class="action" id="side-w" onclick="setSide('W')" style="border: 2px solid white;">ЗА БЕЛЫХ</button>
-                <button class="action" id="side-b" onclick="setSide('B')">ЗА ЧЕРНЫХ</button>
-            </div>
-            <button class="action" onclick="saveDebut()" style="background: var(--accent); margin-top: 8px; width: 100%;">СОХРАНИТЬ В ОБЛАКО</button>
-        </div>
-
-        <div class="list-container" id="debut-list">
-            </div>
+        <button class="action" onclick="saveDebut()" style="background: #27ae60;">Сохранить вариант</button>
+    </div>
+    
+    <div id="repertoire">
+        <h4>Дебюты за Белых</h4>
+        <div id="list-white" class="list-section"></div>
+        <h4>Дебюты за Черных</h4>
+        <div id="list-black" class="list-section"></div>
     </div>
 </div>
 
 <script>
-    // Ссылки на SVG фигуры (стандартные и четкие)
     const PIECES_SVG = {
         'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
         'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
@@ -113,27 +107,24 @@
     };
 
     const boardEl = document.getElementById('board');
+    const turnEl = document.getElementById('turn-display');
     const statusEl = document.getElementById('status-bar');
-    const debutListEl = document.getElementById('debut-list');
     
-    let history = [{
-        board: [
-            ['r','n','b','q','k','b','n','r'], ['p','p','p','p','p','p','p','p'],
-            ['','','','','','','',''], ['','','','','','','',''],
-            ['','','','','','','',''], ['','','','','','','',''],
-            ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
-        ],
-        turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}, move: null
-    }];
+    const initialBoard = [
+        ['r','n','b','q','k','b','n','r'], ['p','p','p','p','p','p','p','p'],
+        ['','','','','','','',''], ['','','','','','','',''],
+        ['','','','','','','',''], ['','','','','','','',''],
+        ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
+    ];
+
+    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}, move: null}];
     let historyIndex = 0;
     let selected = null;
     let validMoves = [];
     let mode = 'record';
-    let mySide = 'W';
+    let saveSide = 'W';
+    let debuts = JSON.parse(localStorage.getItem('chess_v2_data') || '{"W":{}, "B":{}}');
     let activeDebut = null;
-
-    // Имитация облака (в реальном проекте тут будет Fetch к вашему API)
-    let cloudData = JSON.parse(localStorage.getItem('chess_cloud_v1') || '[]');
 
     function render() {
         boardEl.innerHTML = '';
@@ -148,7 +139,7 @@
                 const char = current[r][c];
                 if (char) {
                     const p = document.createElement('div');
-                    p.className = 'piece';
+                    p.className = `piece`;
                     p.style.backgroundImage = `url(${PIECES_SVG[char]})`;
                     sq.appendChild(p);
                 }
@@ -156,8 +147,29 @@
                 boardEl.appendChild(sq);
             }
         }
-        document.getElementById('turn-display').innerText = `Ход ${history[historyIndex].turn === 'white' ? 'БЕЛЫХ' : 'ЧЕРНЫХ'}`;
-        renderList();
+        turnEl.innerText = `Ход ${history[historyIndex].turn === 'white' ? 'БЕЛЫХ' : 'ЧЕРНЫХ'}`;
+        updateListsUI();
+    }
+
+    function toggleFlip() {
+        boardEl.classList.toggle('flipped');
+    }
+
+    function setSaveSide(s) {
+        saveSide = s;
+        document.getElementById('btn-w').classList.toggle('active', s==='W');
+        document.getElementById('btn-b').classList.toggle('active', s==='B');
+    }
+
+    function setMode(m) {
+        mode = m;
+        document.getElementById('mode-record').className = m === 'record' ? 'active' : '';
+        document.getElementById('mode-exam').className = m === 'exam' ? 'active exam' : '';
+        if (m === 'record') {
+            statusEl.innerText = "Режим: Запись вариантов";
+            statusEl.style.color = "#27ae60";
+            activeDebut = null;
+        }
     }
 
     function onSquareClick(r, c) {
@@ -191,6 +203,8 @@
         }
         newBoard[tR][tC] = piece; newBoard[fR][fC] = '';
         if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
+        if (piece === 'K') newCastling.W = {K:false, Q:false};
+        if (piece === 'k') newCastling.B = {K:false, Q:false};
 
         history = history.slice(0, historyIndex + 1);
         history.push({
@@ -206,30 +220,50 @@
     function checkExam() {
         const path = activeDebut.moves;
         if (history[historyIndex].move !== path[historyIndex - 1]) {
-            statusEl.innerText = "❌ Ошибка! Не тот ход.";
+            statusEl.innerText = "❌ Ошибка! Не по варианту.";
             statusEl.style.color = "#e74c3c";
             return;
         }
         if (path.length > historyIndex) {
-            statusEl.innerText = "Верно! Соперник думает...";
+            statusEl.innerText = "Верно! Соперник ходит...";
             setTimeout(() => {
                 const m = path[historyIndex];
-                executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
-                statusEl.innerText = "Ваш ход!";
+                executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]), true);
+                statusEl.innerText = "Ваш ход...";
+                statusEl.style.color = "#2980b9";
             }, 600);
         } else {
-            statusEl.innerText = "✅ Вариант завершен!";
+            statusEl.innerText = "✅ Вариант полностью пройден!";
+            statusEl.style.color = "#27ae60";
         }
+    }
+
+    function selectDebut(side, name) {
+        activeDebut = { side, name, moves: debuts[side][name] };
+        setMode('exam');
+        resetGame();
+        
+        if (side === 'B') boardEl.classList.add('flipped');
+        else boardEl.classList.remove('flipped');
+
+        statusEl.innerText = `Учим: ${name}`;
+        if (side === 'B' && activeDebut.moves.length > 0) {
+            setTimeout(() => {
+                const m = activeDebut.moves[0];
+                executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]), true);
+            }, 500);
+        }
+    }
+
+    function getMoveType(fR, fC, tR, tC) {
+        const p = history[historyIndex].board[fR][fC].toLowerCase();
+        if (p === 'k' && Math.abs(fC - tC) > 1) return 'castle';
+        return 'normal';
     }
 
     function getValidMoves(r, c, state) {
         const moves = []; const b = state.board; const p = b[r][c].toLowerCase(); const isW = b[r][c] === b[r][c].toUpperCase();
-        const dirs = {
-            'r': [[0,1],[0,-1],[1,0],[-1,0]], 'b': [[1,1],[1,-1],[-1,1],[-1,-1]],
-            'n': [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]],
-            'q': [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]],
-            'k': [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]
-        };
+        const dirs = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
         if (p === 'p') {
             const s = isW ? -1 : 1;
             if (!b[r+s]?.[c]) {
@@ -244,7 +278,7 @@
             for (let [dr, dc] of dirs[p]) {
                 let nr = r+dr, nc = c+dc;
                 while(nr>=0 && nr<8 && nc>=0 && nc<8) {
-                    if (!b[nr][nc]) { moves.push({r:nr, nc:nc, r:nr, c:nc}); if("nk".includes(p)) break; }
+                    if (!b[nr][nc]) { moves.push({r:nr, c:nc}); if("nk".includes(p)) break; }
                     else { if((b[nr][nc] === b[nr][nc].toUpperCase()) !== isW) moves.push({r:nr, c:nc}); break; }
                     nr += dr; nc += dc;
                 }
@@ -258,57 +292,36 @@
         return moves;
     }
 
-    function setMode(m) {
-        mode = m;
-        document.getElementById('m-rec').className = m === 'record' ? 'active record' : '';
-        document.getElementById('m-exa').className = m === 'exam' ? 'active exam' : '';
-        statusEl.innerText = m === 'record' ? "Режим: Запись" : "Выберите вариант";
-    }
-
-    function setSide(s) {
-        mySide = s;
-        document.getElementById('side-w').style.borderColor = s === 'W' ? 'white' : 'transparent';
-        document.getElementById('side-b').style.borderColor = s === 'B' ? 'white' : 'transparent';
-    }
-
     function saveDebut() {
         const name = document.getElementById('debut-name').value.trim();
-        if (!name || history.length < 2) return alert("Введите имя и сделайте ходы");
-        const entry = { name, side: mySide, moves: history.slice(1).map(h => h.move), id: Date.now() };
-        cloudData.push(entry);
-        localStorage.setItem('chess_cloud_v1', JSON.stringify(cloudData));
+        if (!name || history.length < 2) return alert("Введите название и сделайте ходы!");
+        debuts[saveSide][name] = history.slice(1).map(h => h.move);
+        localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
         document.getElementById('debut-name').value = '';
-        renderList();
+        updateListsUI();
     }
 
-    function loadDebut(id) {
-        activeDebut = cloudData.find(d => d.id === id);
-        setMode('exam'); resetGame();
-        boardEl.classList.toggle('flipped', activeDebut.side === 'B');
-        statusEl.innerText = `Экзамен: ${activeDebut.name}`;
-        if (activeDebut.side === 'B') {
-            setTimeout(() => {
-                const m = activeDebut.moves[0];
-                executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
-            }, 500);
+    function deleteDebut(side, name, e) {
+        e.stopPropagation();
+        if(confirm(`Удалить "${name}"?`)) {
+            delete debuts[side][name];
+            localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
+            updateListsUI();
         }
     }
 
-    function renderList() {
-        debutListEl.innerHTML = '';
-        cloudData.forEach(d => {
-            const div = document.createElement('div');
-            div.className = 'debut-item';
-            div.innerHTML = `<span>${d.side === 'W' ? '⚪' : '⚫'} ${d.name}</span> <button onclick="deleteDebut(${d.id})" style="background:none; border:none; color:red; cursor:pointer">✕</button>`;
-            div.onclick = (e) => { if(e.target.tagName !== 'BUTTON') loadDebut(d.id); };
-            debutListEl.appendChild(div);
+    function updateListsUI() {
+        ['W', 'B'].forEach(side => {
+            const container = document.getElementById(side === 'W' ? 'list-white' : 'list-black');
+            container.innerHTML = '';
+            for (let name in debuts[side]) {
+                const el = document.createElement('div');
+                el.className = `debut-item ${activeDebut?.name === name && activeDebut?.side === side ? 'active-debut' : ''}`;
+                el.innerHTML = `<span>${name}</span><span class="delete-btn" onclick="deleteDebut('${side}', '${name}', event)">✕</span>`;
+                el.onclick = () => selectDebut(side, name);
+                container.appendChild(el);
+            }
         });
-    }
-
-    function deleteDebut(id) {
-        cloudData = cloudData.filter(d => d.id !== id);
-        localStorage.setItem('chess_cloud_v1', JSON.stringify(cloudData));
-        renderList();
     }
 
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
@@ -316,6 +329,7 @@
     function resetGame() { history = [history[0]]; historyIndex = 0; selected = null; validMoves = []; render(); }
 
     render();
+    updateListsUI();
 </script>
 </body>
 </html>
