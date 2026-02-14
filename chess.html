@@ -3,52 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шахматы JS - Полная версия</title>
+    <title>Modern Chess JS</title>
     <style>
         :root {
-            --bg-dark: #2c3e50;
-            --sq-white: #dee3e6;
-            --sq-black: #8ca2ad;
-            --hl-select: rgba(241, 196, 15, 0.7);
-            --hl-move: rgba(46, 204, 113, 0.5);
+            --bg-page: #1e1e1e;
+            --sq-light: #ebecd0; /* Светлая клетка */
+            --sq-dark: #779556;  /* Зеленоватая шахматная клетка */
+            --hl-select: rgba(255, 255, 0, 0.5);
+            --hl-move: rgba(0, 0, 0, 0.1);
         }
+
         body {
             display: flex; flex-direction: column; align-items: center;
-            background: var(--bg-dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0; padding-top: 20px;
+            background: var(--bg-page); color: #fff; font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0; padding-top: 40px;
         }
-        #status { margin-bottom: 15px; font-size: 20px; font-weight: bold; }
+
+        #status {
+            margin-bottom: 20px; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;
+            padding: 10px 20px; border-radius: 8px; background: #333;
+        }
+
         #board {
-            display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px);
-            border: 5px solid #34495e; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: grid; grid-template-columns: repeat(8, 70px); grid-template-rows: repeat(8, 70px);
+            border: 8px solid #333; border-radius: 4px; box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            user-select: none;
         }
+
         .square {
-            width: 60px; height: 60px; display: flex; justify-content: center;
-            align-items: center; font-size: 45px; cursor: pointer; position: relative;
+            width: 70px; height: 70px; display: flex; justify-content: center;
+            align-items: center; cursor: pointer; position: relative;
         }
-        .white { background-color: var(--sq-white); }
-        .black { background-color: var(--sq-black); }
+
+        .white-sq { background-color: var(--sq-light); }
+        .black-sq { background-color: var(--sq-dark); }
+
+        /* Фигуры */
+        .piece {
+            font-size: 50px; z-index: 2; transition: all 0.15s ease;
+            /* Тень для объема */
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
+        }
+
+        /* Цвета фигур */
+        .piece.w { color: #ffffff; stroke: black; -webkit-text-stroke: 1.5px black; }
+        .piece.b { color: #000000; }
+
         .selected { background-color: var(--hl-select) !important; }
+
+        /* Маркер доступного хода */
         .can-move::after {
-            content: ""; width: 20px; height: 20px; background: var(--hl-move); border-radius: 50%;
+            content: ""; width: 22px; height: 22px; 
+            background: var(--hl-move); border-radius: 50%;
+            position: absolute; z-index: 1;
         }
-        .piece { z-index: 2; transition: transform 0.2s; }
-        .piece:hover { transform: scale(1.1); }
+        
+        /* Если на клетке враг - выделяем рамкой */
+        .can-move.has-enemy::after {
+            width: 60px; height: 60px; border: 4px solid var(--hl-move);
+            background: none; border-radius: 50%;
+        }
     </style>
 </head>
 <body>
 
     <div id="status">Ход белых</div>
     <div id="board"></div>
-    <p style="color: #bdc3c7; font-size: 0.9rem;">Правила: Рокировка, Взятие на проходе, Превращение пешек включены.</p>
 
 <script>
     const boardEl = document.getElementById('board');
     const statusEl = document.getElementById('status');
     
-    const PIECES = {
+    const PIECES_MAP = {
         'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
-        'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+        'R': '♜', 'N': '♞', 'B': '♝', 'Q': '♛', 'K': '♚', 'P': '♟'
     };
 
     let board = [
@@ -65,28 +93,30 @@
     let turn = 'white';
     let selected = null;
     let validMoves = [];
-    let enPassantTarget = null; 
+    let enPassantTarget = null;
     let castling = { W: {K:true, Q:true}, B: {K:true, Q:true} };
-
-    function init() {
-        render();
-    }
 
     function render() {
         boardEl.innerHTML = '';
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
-                sq.className = `square ${(r+c)%2===0 ? 'white' : 'black'}`;
+                sq.className = `square ${(r+c)%2===0 ? 'white-sq' : 'black-sq'}`;
+                
                 if (selected && selected.r === r && selected.c === c) sq.classList.add('selected');
                 
                 const move = validMoves.find(m => m.r === r && m.c === c);
-                if (move) sq.classList.add('can-move');
+                if (move) {
+                    sq.classList.add('can-move');
+                    if (board[r][c]) sq.classList.add('has-enemy');
+                }
 
                 if (board[r][c]) {
+                    const char = board[r][c];
+                    const isWhite = char === char.toUpperCase();
                     const p = document.createElement('span');
-                    p.className = 'piece';
-                    p.innerText = PIECES[board[r][c]];
+                    p.className = `piece ${isWhite ? 'w' : 'b'}`;
+                    p.innerText = PIECES_MAP[char];
                     sq.appendChild(p);
                 }
 
@@ -135,22 +165,16 @@
 
         if (type === 'p') {
             const dir = isWhite ? -1 : 1;
-            const startRow = isWhite ? 6 : 1;
-            // Вперед
-            if (!board[r+dir][c]) {
+            if (r+dir >=0 && r+dir < 8 && !board[r+dir][c]) {
                 moves.push({r: r+dir, c: c});
-                if (r === startRow && !board[r+2*dir][c]) moves.push({r: r+2*dir, c: c});
+                if (((isWhite && r===6) || (!isWhite && r===1)) && !board[r+2*dir][c]) moves.push({r: r+2*dir, c: c});
             }
-            // Атака
             [[dir, 1], [dir, -1]].forEach(([dr, dc]) => {
                 const nr = r+dr, nc = c+dc;
-                if (nc>=0 && nc<8) {
+                if (nr>=0 && nr<8 && nc>=0 && nc<8) {
                     const target = board[nr][nc];
                     if (target && (isWhite !== (target === target.toUpperCase()))) moves.push({r: nr, c: nc});
-                    // En Passant
-                    if (enPassantTarget && nr === enPassantTarget.r && nc === enPassantTarget.c) {
-                        moves.push({r: nr, c: nc, type: 'ep'});
-                    }
+                    if (enPassantTarget && nr === enPassantTarget.r && nc === enPassantTarget.c) moves.push({r: nr, c: nc, type: 'ep'});
                 }
             });
         } else if (directions[type]) {
@@ -168,7 +192,6 @@
                     nr += dr; nc += dc;
                 }
             }
-            // Рокировка (упрощенно)
             if (type === 'k') {
                 const side = isWhite ? 'W' : 'B';
                 const row = isWhite ? 7 : 0;
@@ -179,43 +202,30 @@
         return moves;
     }
 
-    function executeMove(fR, fC, tR, tC, special) {
+    function executeMove(fR, fC, tR, tC, type) {
         const piece = board[fR][fC];
-        
-        // Обработка спец-ходов
-        if (special === 'ep') {
-            board[fR][tC] = ''; // Удаляем пешку при взятии на проходе
-        }
-        if (special === 'castle') {
-            if (tC === 6) { board[fR][5] = board[fR][7]; board[fR][7] = ''; }
-            if (tC === 2) { board[fR][3] = board[fR][0]; board[fR][0] = ''; }
+        if (type === 'ep') board[fR][tC] = '';
+        if (type === 'castle') {
+            if (tC === 6) { board[tR][5] = board[tR][7]; board[tR][7] = ''; }
+            if (tC === 2) { board[tR][3] = board[tR][0]; board[tR][0] = ''; }
         }
 
-        // Движение фигуры
         board[tR][tC] = piece;
         board[fR][fC] = '';
 
-        // Превращение пешки
-        if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) {
-            board[tR][tC] = piece === 'P' ? 'Q' : 'q';
-        }
-
-        // Сброс прав на рокировку
+        if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) board[tR][tC] = piece === 'P' ? 'Q' : 'q';
         if (piece === 'K') castling.W = {K:false, Q:false};
         if (piece === 'k') castling.B = {K:false, Q:false};
 
-        // En Passant target
-        enPassantTarget = (piece.toLowerCase() === 'p' && Math.abs(tR - fR) === 2) 
-            ? {r: (fR + tR) / 2, c: fC} : null;
+        enPassantTarget = (piece.toLowerCase() === 'p' && Math.abs(tR - fR) === 2) ? {r: (fR + tR) / 2, c: fC} : null;
 
         turn = turn === 'white' ? 'black' : 'white';
         statusEl.innerText = `Ход ${turn === 'white' ? 'белых' : 'черных'}`;
-        selected = null;
-        validMoves = [];
+        selected = null; validMoves = [];
         render();
     }
 
-    init();
+    render();
 </script>
 </body>
 </html>
