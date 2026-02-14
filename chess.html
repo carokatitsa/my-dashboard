@@ -147,6 +147,17 @@ let legalTargets = [];
 let undoStack = [];
 let redoStack = [];
 let autoOpponent = true;
+  // castling state
+let whiteKingMoved = false;
+let blackKingMoved = false;
+let whiteRookAMoved = false; // a1
+let whiteRookHMoved = false; // h1
+let blackRookAMoved = false; // a8
+let blackRookHMoved = false; // h8
+
+// en passant
+let enPassantTarget = null;
+
 
 // Opening trainer state
 let openings = {};
@@ -345,6 +356,35 @@ function makeMove(fromR, fromC, toR, toC){
 
   const piece = board[fromR][fromC];
   const captured = board[toR][toC] || '';
+
+  // =========================
+// handle castling rook move
+// =========================
+if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
+  // king moved two squares => castling
+  if (toC === 6) { // king side
+    // rook: h-file -> f-file
+    board[toR][5] = board[toR][7];
+    board[toR][7] = '';
+  } else if (toC === 2) { // queen side
+    // rook: a-file -> d-file
+    board[toR][3] = board[toR][0];
+    board[toR][0] = '';
+  }
+}
+
+// =========================
+// handle en passant capture
+// =========================
+if (piece.toLowerCase() === 'p') {
+  // pawn moved diagonally into empty square => en passant capture
+  if (fromC !== toC && captured === '') {
+    // remove the pawn that was passed
+    const capR = (turn === 'w') ? (toR + 1) : (toR - 1);
+    board[capR][toC] = '';
+  }
+}
+
   const before = { board: cloneBoard(board), turn, openingIndex };
 // ===== РОКИРОВКА =====
 if(piece.toLowerCase() === 'k'){
