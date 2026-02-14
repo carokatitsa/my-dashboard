@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chess Master - Fix</title>
+    <title>Chess Debut Trainer - Interactive</title>
     <style>
         :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
         body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
@@ -28,7 +28,7 @@
         .debut-item:hover { background: #333; }
         .active-debut { background: #2c3e20 !important; border-left: 4px solid #779556; }
         .delete-btn { color: #e74c3c; cursor: pointer; padding: 0 10px; font-size: 18px; }
-        #training-status { color: #f1c40f; font-weight: bold; min-height: 1.5em; margin-bottom: 10px; }
+        #training-status { color: #f1c40f; font-weight: bold; min-height: 1.5em; margin-bottom: 10px; padding: 10px; background: #111; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -44,11 +44,11 @@
 </div>
 
 <div id="right-pane">
-    <h3>Тренажер дебютов</h3>
-    <div id="training-status">Выберите дебют</div>
+    <h3>Экзаменатор дебютов</h3>
+    <div id="training-status">Выберите вариант из списка</div>
     
-    <input type="text" id="debut-name" placeholder="Название дебюта...">
-    <button onclick="saveDebut()" style="background: #27ae60; margin-top: 5px; flex: none;">Сохранить как новый дебют</button>
+    <input type="text" id="debut-name" placeholder="Название для сохранения...">
+    <button onclick="saveDebut()" style="background: #27ae60; margin-top: 5px; flex: none;">Сохранить текущую партию</button>
     
     <div id="debut-list"></div>
 </div>
@@ -67,26 +67,23 @@
         ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
     ];
 
-    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}}];
+    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}, move: null}];
     let historyIndex = 0;
     let selected = null;
     let validMoves = [];
-    let debuts = JSON.parse(localStorage.getItem('chess_debuts_v3') || '{}');
+    let debuts = JSON.parse(localStorage.getItem('chess_debuts_v4') || '{}');
     let activeDebutName = null;
 
     function render() {
         boardEl.innerHTML = '';
         const current = history[historyIndex];
-        
         for (let r = 0; r < 8; r++) {
             for (let c = 0; c < 8; c++) {
                 const sq = document.createElement('div');
                 sq.className = `square ${(r+c)%2===0 ? 'white-sq' : 'black-sq'}`;
                 if (selected && selected.r === r && selected.c === c) sq.classList.add('selected');
-                
                 const move = validMoves.find(m => m.r === r && m.c === c);
                 if (move) sq.classList.add('can-move');
-
                 if (current.board[r][c]) {
                     const char = current.board[r][c];
                     const p = document.createElement('span');
@@ -122,13 +119,12 @@
         render();
     }
 
-    function executeMove(fR, fC, tR, tC, type) {
+    function executeMove(fR, fC, tR, tC, type, isAuto = false) {
         const current = history[historyIndex];
         let newBoard = JSON.parse(JSON.stringify(current.board));
         let newCastling = JSON.parse(JSON.stringify(current.castling));
         const piece = newBoard[fR][fC];
 
-        // Логика рокировки
         if (type === 'castle') {
             if (tC === 6) { newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; }
             if (tC === 2) { newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; }
@@ -137,16 +133,9 @@
         newBoard[tR][tC] = piece;
         newBoard[fR][fC] = '';
 
-        // Пешка -> Ферзь
         if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
-
-        // Обновление прав рокировки
         if (piece === 'K') newCastling.W = {K:false, Q:false};
         if (piece === 'k') newCastling.B = {K:false, Q:false};
-        if (fR === 7 && fC === 7) newCastling.W.K = false;
-        if (fR === 7 && fC === 0) newCastling.W.Q = false;
-        if (fR === 0 && fC === 7) newCastling.B.K = false;
-        if (fR === 0 && fC === 0) newCastling.B.Q = false;
 
         const nextTurn = current.turn === 'white' ? 'black' : 'white';
         history = history.slice(0, historyIndex + 1);
@@ -155,7 +144,46 @@
         selected = null; validMoves = [];
         render();
 
-        if (activeDebutName) checkBot();
+        // Логика тренажера
+        if (activeDebutName && !isAuto) {
+            checkUserStep();
+        }
+    }
+
+    function checkUserStep() {
+        const debutPath = debuts[activeDebutName];
+        const lastUserMove = history[historyIndex].move;
+        const expectedMove = debutPath[historyIndex - 1];
+
+        if (lastUserMove === expectedMove) {
+            trainStatusEl.style.color = "#2ecc71";
+            trainStatusEl.innerText = "Правильно! Ждем ответ соперника...";
+            
+            // Если есть ответный ход бота в записи
+            if (debutPath.length > historyIndex) {
+                setTimeout(() => {
+                    const botMove = debutPath[historyIndex];
+                    const [fR, fC, tR, tC] = botMove.split('').map(Number);
+                    const type = getMoveType(fR, fC, tR, tC);
+                    executeMove(fR, fC, tR, tC, type, true);
+                    trainStatusEl.style.color = "#f1c40f";
+                    trainStatusEl.innerText = "Ваш ход по варианту...";
+                }, 800);
+            } else {
+                trainStatusEl.innerText = "✅ Вариант успешно завершен!";
+                activeDebutName = null;
+            }
+        } else {
+            trainStatusEl.style.color = "#e74c3c";
+            trainStatusEl.innerText = "❌ Не по плану! Вернитесь назад.";
+            activeDebutName = null;
+        }
+    }
+
+    function getMoveType(fR, fC, tR, tC) {
+        const p = history[historyIndex].board[fR][fC].toLowerCase();
+        if (p === 'k' && Math.abs(fC - tC) > 1) return 'castle';
+        return 'normal';
     }
 
     function getValidMoves(r, c, state) {
@@ -163,7 +191,6 @@
         const b = state.board;
         const piece = b[r][c].toLowerCase();
         const isWhite = b[r][c] === b[r][c].toUpperCase();
-        
         const dMap = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
 
         if (piece === 'p') {
@@ -185,7 +212,6 @@
                     nr+=dr; nc+=dc;
                 }
             }
-            // Рокировка
             if (piece === 'k') {
                 const cast = isWhite ? state.castling.W : state.castling.B;
                 const row = isWhite ? 7 : 0;
@@ -196,39 +222,18 @@
         return moves;
     }
 
-    function checkBot() {
-        const path = debuts[activeDebutName];
-        if (path.length > historyIndex - 1) {
-            const lastMove = history[historyIndex].move;
-            if (lastMove === path[historyIndex - 1]) {
-                if (path.length > historyIndex) {
-                    setTimeout(() => {
-                        const m = path[historyIndex];
-                        executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]));
-                    }, 600);
-                }
-            } else { trainStatusEl.innerText = "❌ Сбились с пути"; activeDebutName = null; }
-        }
-    }
-
-    function getMoveType(fR, fC, tR, tC) {
-        const p = history[historyIndex].board[fR][fC].toLowerCase();
-        if (p === 'k' && Math.abs(fC - tC) > 1) return 'castle';
-        return 'normal';
-    }
-
     function saveDebut() {
         const name = document.getElementById('debut-name').value.trim();
         if (!name || history.length < 2) return alert("Сделайте ходы и введите имя!");
         debuts[name] = history.slice(1).map(h => h.move);
-        localStorage.setItem('chess_debuts_v3', JSON.stringify(debuts));
+        localStorage.setItem('chess_debuts_v4', JSON.stringify(debuts));
         updateListUI();
     }
 
     function deleteDebut(name, e) {
         e.stopPropagation();
         delete debuts[name];
-        localStorage.setItem('chess_debuts_v3', JSON.stringify(debuts));
+        localStorage.setItem('chess_debuts_v4', JSON.stringify(debuts));
         updateListUI();
     }
 
@@ -238,7 +243,7 @@
             const el = document.createElement('div');
             el.className = `debut-item ${activeDebutName === n ? 'active-debut' : ''}`;
             el.innerHTML = `<span>${n}</span><span class="delete-btn" onclick="deleteDebut('${n}', event)">✕</span>`;
-            el.onclick = () => { activeDebutName = n; resetGame(); trainStatusEl.innerText = "Учим: " + n; };
+            el.onclick = () => { activeDebutName = n; resetGame(); trainStatusEl.innerText = "Ваш первый ход!"; };
             debutListEl.appendChild(el);
         }
     }
