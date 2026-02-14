@@ -346,7 +346,17 @@ function makeMove(fromR, fromC, toR, toC){
   const piece = board[fromR][fromC];
   const captured = board[toR][toC] || '';
   const before = { board: cloneBoard(board), turn, openingIndex };
-
+// ===== РОКИРОВКА =====
+if(piece.toLowerCase() === 'k'){
+    if(tryCastling(fromR, fromC, toR, toC)){
+        board[fromR][fromC] = '';
+        board[toR][toC] = piece;
+        turn = (turn === 'w') ? 'b' : 'w';
+        undoStack.push(before);
+        redoStack = [];
+        return { from: rcToSq(fromR,fromC), to: rcToSq(toR,toC), piece, captured };
+    }
+}
   // move
   board[fromR][fromC] = '';
   board[toR][toC] = piece;
@@ -712,6 +722,70 @@ function toggleAutoOpponent(){
   document.getElementById('autoOpp').textContent = autoOpponent ? 'ON' : 'OFF';
   flashStatus(`Auto-opponent: ${autoOpponent ? 'ON' : 'OFF'}`);
 }
+
+  function tryCastling(fr, fc, tr, tc){
+
+    const piece = board[fr][fc];
+    if(!piece || piece.toLowerCase() !== 'k') return false;
+
+    const side = color(piece); // 'w' or 'b'
+
+    // король должен двигаться на 2 клетки
+    if(fr !== tr || Math.abs(tc - fc) !== 2) return false;
+
+    // нельзя рокироваться если под шахом
+    if(isCheck(side)) return false;
+
+    const kingSide = tc > fc;
+
+    const row = fr;
+
+    if(kingSide){
+        // короткая
+        if(!castleRights[side].k) return false;
+        if(board[row][5] !== '' || board[row][6] !== '') return false;
+
+        // нельзя проходить через шах
+        if(squareAttacked(row,5,side) || squareAttacked(row,6,side)) return false;
+
+        // двигаем ладью
+        board[row][5] = board[row][7];
+        board[row][7] = '';
+
+    } else {
+        // длинная
+        if(!castleRights[side].q) return false;
+        if(board[row][1] !== '' || board[row][2] !== '' || board[row][3] !== '') return false;
+
+        if(squareAttacked(row,3,side) || squareAttacked(row,2,side)) return false;
+
+        board[row][3] = board[row][0];
+        board[row][0] = '';
+    }
+
+    // запрещаем дальнейшую рокировку
+    castleRights[side].k = false;
+    castleRights[side].q = false;
+
+    return true;
+}
+  function squareAttacked(r, c, side){
+    const opponent = side === 'w' ? 'b' : 'w';
+
+    for(let i=0;i<8;i++){
+        for(let j=0;j<8;j++){
+            if(board[i][j] && color(board[i][j]) === opponent){
+                const moves = getPseudo(i,j);
+                if(moves.some(m => m.r === r && m.c === c)){
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+
 
 /* =========================
    Init
