@@ -2,57 +2,66 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chess Pro: Debuts & History</title>
+    <title>Chess Pro: Debuts & Training</title>
     <style>
-        :root { --bg: #1e1e1e; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
-        body { display: flex; background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 30px; }
+        :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
+        body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
         #left-pane { display: flex; flex-direction: column; align-items: center; }
-        #board { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); border: 5px solid #333; }
+        #board { display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); border: 8px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .square { width: 65px; height: 65px; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
         .white-sq { background-color: var(--sq-l); }
         .black-sq { background-color: var(--sq-d); }
-        .piece { font-size: 48px; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3)); cursor: pointer; }
+        .piece { font-size: 50px; z-index: 2; filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4)); user-select: none; }
         .piece.w { color: #fff; -webkit-text-stroke: 1.5px #000; }
         .piece.b { color: #000; }
         .selected { background-color: var(--hl) !important; }
-        .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.1); border-radius: 50%; }
+        .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.15); border-radius: 50%; }
         
-        #right-pane { width: 300px; display: flex; flex-direction: column; gap: 15px; }
-        .controls { display: flex; gap: 10px; }
-        button { padding: 8px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; }
-        button:hover { background: #666; }
-        input { padding: 8px; border-radius: 4px; border: none; }
-        #debut-list { background: #333; padding: 10px; border-radius: 5px; height: 200px; overflow-y: auto; }
-        .debut-item { padding: 5px; border-bottom: 1px solid #444; cursor: pointer; font-size: 14px; }
-        .debut-item:hover { background: #444; }
-        .active-debut { border: 1px solid #779556; background: #2c3e20; }
+        #right-pane { width: 350px; display: flex; flex-direction: column; gap: 15px; background: #252525; padding: 20px; border-radius: 10px; }
+        .controls { display: flex; gap: 10px; width: 100%; }
+        button { flex: 1; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button:hover { background: #555; }
+        input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
+        
+        #debut-list { background: #1a1a1a; border-radius: 5px; height: 300px; overflow-y: auto; border: 1px solid #333; }
+        .debut-item { 
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid #333; cursor: pointer; 
+        }
+        .debut-item:hover { background: #333; }
+        .active-debut { background: #2c3e20 !important; border-left: 4px solid #779556; }
+        .delete-btn { color: #e74c3c; padding: 5px 10px; font-weight: bold; border-radius: 3px; }
+        .delete-btn:hover { background: rgba(231, 76, 60, 0.2); }
+        #training-status { color: #f1c40f; font-weight: bold; min-height: 1.2em; }
     </style>
 </head>
 <body>
 
 <div id="left-pane">
-    <div id="status" style="margin-bottom: 10px; font-size: 18px;">Ход белых</div>
+    <div id="status" style="margin-bottom: 15px; font-size: 22px;">Ход белых</div>
     <div id="board"></div>
-    <div class="controls" style="margin-top: 15px;">
+    <div class="controls" style="margin-top: 20px;">
         <button onclick="undo()">⬅ Назад</button>
         <button onclick="redo()">Вперед ➡</button>
-        <button onclick="resetGame()" style="background: #a04040;">Сброс</button>
+        <button onclick="resetGame()" style="background: #c0392b;">Сброс</button>
     </div>
 </div>
 
 <div id="right-pane">
-    <h3>Мои Дебюты</h3>
-    <input type="text" id="debut-name" placeholder="Название дебюта...">
-    <button onclick="saveDebut()" style="background: #27ae60;">Сохранить текущие ходы</button>
+    <h3>Тренажер дебютов</h3>
+    <div id="training-status">Выберите дебют для тренировки</div>
+    
+    <input type="text" id="debut-name" placeholder="Название (напр. Сицилианка)">
+    <button onclick="saveDebut()" style="background: #27ae60;">Сохранить как новый дебют</button>
     
     <div id="debut-list"></div>
-    <div id="training-status" style="color: #f1c40f; font-size: 14px;"></div>
 </div>
 
 <script>
     const boardEl = document.getElementById('board');
     const statusEl = document.getElementById('status');
     const debutListEl = document.getElementById('debut-list');
+    const trainStatusEl = document.getElementById('training-status');
     
     const PIECES_MAP = { 'r':'♜','n':'♞','b':'♝','q':'♛','k':'♚','p':'♟','R':'♜','N':'♞','B':'♝','Q':'♛','K':'♚','P':'♟' };
     const initialBoard = [
@@ -62,14 +71,12 @@
         ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
     ];
 
-    let board = JSON.parse(JSON.stringify(initialBoard));
-    let turn = 'white';
-    let history = [{board: JSON.parse(JSON.stringify(board)), turn: 'white'}];
+    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white'}];
     let historyIndex = 0;
     let selected = null;
     let validMoves = [];
-    let debuts = JSON.parse(localStorage.getItem('chess_debuts') || '{}');
-    let activeDebut = null;
+    let debuts = JSON.parse(localStorage.getItem('chess_debuts_v2') || '{}');
+    let activeDebutName = null;
 
     function render() {
         boardEl.innerHTML = '';
@@ -98,13 +105,12 @@
             }
         }
         statusEl.innerText = `Ход ${currentData.turn === 'white' ? 'белых' : 'черных'}`;
-        updateDebutList();
+        updateDebutListUI();
     }
 
     function onSquareClick(r, c) {
-        if (historyIndex !== history.length - 1) return; // Нельзя ходить, если смотрим историю
-        
         const currentBoard = history[historyIndex].board;
+        const turn = history[historyIndex].turn;
         const piece = currentBoard[r][c];
         const isWhite = piece && piece === piece.toUpperCase();
         const myTurn = (turn === 'white' && isWhite) || (turn === 'black' && piece && !isWhite);
@@ -129,52 +135,77 @@
     function executeMove(fR, fC, tR, tC) {
         let newBoard = JSON.parse(JSON.stringify(history[historyIndex].board));
         const piece = newBoard[fR][fC];
-        
-        // Базовая логика перемещения
         newBoard[tR][tC] = piece;
         newBoard[fR][fC] = '';
         
-        // Превращение пешки
+        // Превращение пешки (всегда в ферзя для простоты)
         if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) {
             newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
         }
 
-        const nextTurn = turn === 'white' ? 'black' : 'white';
+        const nextTurn = history[historyIndex].turn === 'white' ? 'black' : 'white';
+        const moveKey = `${fR}${fC}${tR}${tC}`;
         
-        // Запись в историю
-        const moveStr = `${fR}${fC}${tR}${tC}`;
         history = history.slice(0, historyIndex + 1);
-        history.push({board: newBoard, turn: nextTurn, move: moveStr});
+        history.push({board: newBoard, turn: nextTurn, move: moveKey});
         historyIndex++;
-        turn = nextTurn;
+        
         selected = null;
         validMoves = [];
-        
         render();
 
-        // Если активен дебют и сейчас ход "компьютера" (относительно записанного дебюта)
-        if (activeDebut) {
-            checkDebutMatch();
+        // Проверка ответа компьютера в режиме тренажера
+        if (activeDebutName) {
+            checkBotResponse();
+        }
+    }
+
+    function checkBotResponse() {
+        const debutMoves = debuts[activeDebutName];
+        const currentMovesCount = history.length - 1; // Сколько ходов уже сделано в партии
+
+        // Если мы сделали ход, и в списке дебюта есть следующий ход
+        if (debutMoves.length > currentMovesCount) {
+            // Проверяем, совпадает ли наш последний ход с тем, что записан в дебюте
+            const lastPlayerMove = history[historyIndex].move;
+            const expectedMove = debutMoves[currentMovesCount - 1];
+
+            if (lastPlayerMove === expectedMove) {
+                // Ход совпал! Делаем ответ за бота
+                trainStatusEl.innerText = "Изучаем: " + activeDebutName;
+                setTimeout(() => {
+                    const botMoveStr = debutMoves[currentMovesCount];
+                    const [fR, fC, tR, tC] = botMoveStr.split('').map(Number);
+                    executeMove(fR, fC, tR, tC);
+                }, 600);
+            } else {
+                trainStatusEl.innerText = "❌ Не по плану (свернули с дебюта)";
+                activeDebutName = null;
+            }
+        } else {
+            trainStatusEl.innerText = "✅ Вариант закончен!";
+            activeDebutName = null;
         }
     }
 
     function getValidMoves(r, c, b) {
-        // Упрощенная логика (для краткости оставлена база, аналогичная прошлой)
         const moves = [];
         const piece = b[r][c].toLowerCase();
         const isWhite = b[r][c] === b[r][c].toUpperCase();
-        const dirs = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+        const dMap = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
         
         if (piece === 'p') {
-            const d = isWhite ? -1 : 1;
-            if (!b[r+d]?.[c]) moves.push({r: r+d, c: c});
-            if (((isWhite && r===6) || (!isWhite && r===1)) && !b[r+d][c] && !b[r+2*d][c]) moves.push({r: r+2*d, c: c});
-            for (let dc of [-1, 1]) {
-                let target = b[r+d]?.[c+dc];
-                if (target && (target === target.toUpperCase()) !== isWhite) moves.push({r: r+d, c: c+dc});
+            const step = isWhite ? -1 : 1;
+            if (!b[r+step]?.[c]) {
+                moves.push({r: r+step, c: c});
+                if (((isWhite && r===6) || (!isWhite && r===1)) && !b[r+2*step][c]) moves.push({r: r+2*step, c: c});
             }
-        } else if (dirs[piece]) {
-            for (let [dr, dc] of dirs[piece]) {
+            [-1, 1].forEach(dc => {
+                let tar = b[r+step]?.[c+dc];
+                if (tar && (tar === tar.toUpperCase()) !== isWhite) moves.push({r: r+step, c: c+dc});
+            });
+        } else if (dMap[piece]) {
+            for (let [dr, dc] of dMap[piece]) {
                 let nr = r+dr, nc = c+dc;
                 while(nr>=0 && nr<8 && nc>=0 && nc<8) {
                     if (!b[nr][nc]) { moves.push({r: nr, c: nc}); if ("nk".includes(piece)) break; }
@@ -186,64 +217,61 @@
         return moves;
     }
 
-    // История
-    function undo() { if (historyIndex > 0) { historyIndex--; turn = history[historyIndex].turn; render(); } }
-    function redo() { if (historyIndex < history.length - 1) { historyIndex++; turn = history[historyIndex].turn; render(); } }
+    function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
+    function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
+    
     function resetGame() { 
-        board = JSON.parse(JSON.stringify(initialBoard)); 
-        history = [{board: JSON.parse(JSON.stringify(board)), turn: 'white'}];
-        historyIndex = 0; turn = 'white'; activeDebut = null;
-        document.getElementById('training-status').innerText = '';
+        history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white'}];
+        historyIndex = 0; selected = null; validMoves = [];
         render(); 
     }
 
-    // Дебюты
     function saveDebut() {
-        const name = document.getElementById('debut-name').value;
-        if (!name) return alert("Введите название!");
-        const moves = history.slice(1).map(h => h.move);
-        debuts[name] = moves;
-        localStorage.setItem('chess_debuts', JSON.stringify(debuts));
-        updateDebutList();
+        const name = document.getElementById('debut-name').value.trim();
+        if (!name) return alert("Введите название дебюта");
+        if (history.length < 2) return alert("Сначала сделайте хотя бы один ход на доске");
+        
+        const movesArray = history.slice(1).map(h => h.move);
+        debuts[name] = movesArray;
+        localStorage.setItem('chess_debuts_v2', JSON.stringify(debuts));
+        document.getElementById('debut-name').value = '';
+        updateDebutListUI();
     }
 
-    function updateDebutList() {
+    function deleteDebut(name, e) {
+        e.stopPropagation();
+        if (confirm(`Удалить дебют "${name}"?`)) {
+            delete debuts[name];
+            localStorage.setItem('chess_debuts_v2', JSON.stringify(debuts));
+            if (activeDebutName === name) {
+                activeDebutName = null;
+                trainStatusEl.innerText = "Выберите дебют";
+            }
+            updateDebutListUI();
+        }
+    }
+
+    function updateDebutListUI() {
         debutListEl.innerHTML = '';
         for (let name in debuts) {
-            const div = document.createElement('div');
-            div.className = `debut-item ${activeDebut === name ? 'active-debut' : ''}`;
-            div.innerText = name;
-            div.onclick = () => { activeDebut = name; resetGame(); document.getElementById('training-status').innerText = `Тренажер: ${name}`; };
-            debutListEl.appendChild(div);
+            const item = document.createElement('div');
+            item.className = `debut-item ${activeDebutName === name ? 'active-debut' : ''}`;
+            item.innerHTML = `
+                <span>${name}</span>
+                <span class="delete-btn" title="Удалить">✕</span>
+            `;
+            item.onclick = () => {
+                activeDebutName = name;
+                resetGame();
+                trainStatusEl.innerText = "Тренажер: " + name + ". Ваш ход!";
+                updateDebutListUI();
+            };
+            item.querySelector('.delete-btn').onclick = (e) => deleteDebut(name, e);
+            debutListEl.appendChild(item);
         }
     }
 
-    function checkDebutMatch() {
-        const movesPlayed = history.slice(1).map(h => h.move);
-        const debutMoves = debuts[activeDebut];
-        
-        // Проверяем, идет ли игрок по линии дебюта
-        for (let i = 0; i < movesPlayed.length; i++) {
-            if (movesPlayed[i] !== debutMoves[i]) {
-                document.getElementById('training-status').innerText = "❌ Свернули с дебюта";
-                activeDebut = null;
-                return;
-            }
-        }
-
-        // Если ход игрока совпал, и есть следующий ход компьютера в дебюте
-        if (debutMoves.length > movesPlayed.length) {
-            setTimeout(() => {
-                const nextMove = debutMoves[movesPlayed.length];
-                const [fR, fC, tR, tC] = nextMove.split('').map(Number);
-                executeMove(fR, fC, tR, tC);
-            }, 500);
-        } else {
-            document.getElementById('training-status').innerText = "✅ Дебют завершен!";
-            activeDebut = null;
-        }
-    }
-
+    updateDebutListUI();
     render();
 </script>
 </body>
