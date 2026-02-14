@@ -1,872 +1,221 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Opening Trainer (No Libraries)</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 18px; }
-  h2 { margin: 0 0 10px; }
-  .row { display:flex; gap:14px; flex-wrap: wrap; align-items:flex-start; }
-  .panel { min-width: 320px; max-width: 520px; }
-  .controls { display:flex; gap:8px; flex-wrap: wrap; margin: 10px 0; }
-  button { padding: 7px 12px; cursor: pointer; }
-  select, input, textarea { width: 100%; padding: 8px; box-sizing: border-box; }
-  textarea { height: 120px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .hint { color:#444; font-size: 13px; line-height: 1.35; }
-
-  #board {
-    display: grid;
-    grid-template-columns: repeat(8, 64px);
-    grid-template-rows: repeat(8, 64px);
-    width: 512px;
-    border: 2px solid #111;
-    user-select: none;
-    touch-action: manipulation;
-  }
-  @media (max-width: 560px) {
-    #board { grid-template-columns: repeat(8, 44px); grid-template-rows: repeat(8, 44px); width: 352px; }
-  }
-  .sq {
-    display:flex; align-items:center; justify-content:center;
-    font-size: 42px;
-    cursor: pointer;
-  }
-  @media (max-width: 560px) { .sq { font-size: 30px; } }
-
-  .w { background: #f0d9b5; }
-  .b { background: #b58863; }
-
-  .selected { outline: 3px solid #e11d48; outline-offset: -3px; }
-  .hintmove { box-shadow: inset 0 0 0 4px rgba(34,197,94,.55); }
-  .capture { box-shadow: inset 0 0 0 4px rgba(239,68,68,.55); }
-  .check { box-shadow: inset 0 0 0 4px rgba(59,130,246,.6); }
-
-  .status { margin-top: 8px; font-weight: 600; }
-  .small { font-size: 13px; color:#333; }
-  code { background:#f2f2f2; padding: 1px 5px; border-radius: 6px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шахматы JS - Полная версия</title>
+    <style>
+        :root {
+            --bg-dark: #2c3e50;
+            --sq-white: #dee3e6;
+            --sq-black: #8ca2ad;
+            --hl-select: rgba(241, 196, 15, 0.7);
+            --hl-move: rgba(46, 204, 113, 0.5);
+        }
+        body {
+            display: flex; flex-direction: column; align-items: center;
+            background: var(--bg-dark); color: white; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0; padding-top: 20px;
+        }
+        #status { margin-bottom: 15px; font-size: 20px; font-weight: bold; }
+        #board {
+            display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px);
+            border: 5px solid #34495e; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .square {
+            width: 60px; height: 60px; display: flex; justify-content: center;
+            align-items: center; font-size: 45px; cursor: pointer; position: relative;
+        }
+        .white { background-color: var(--sq-white); }
+        .black { background-color: var(--sq-black); }
+        .selected { background-color: var(--hl-select) !important; }
+        .can-move::after {
+            content: ""; width: 20px; height: 20px; background: var(--hl-move); border-radius: 50%;
+        }
+        .piece { z-index: 2; transition: transform 0.2s; }
+        .piece:hover { transform: scale(1.1); }
+    </style>
 </head>
-
 <body>
-<h2>Opening Trainer (без библиотек)</h2>
 
-<div class="row">
-  <div>
+    <div id="status">Ход белых</div>
     <div id="board"></div>
-    <div class="controls">
-      <button onclick="undoMove()">⬅ Назад</button>
-      <button onclick="redoMove()">Вперёд ➡</button>
-      <button onclick="resetAll()">Reset</button>
-      <button onclick="toggleAutoOpponent()">Auto-opponent: <span id="autoOpp">ON</span></button>
-    </div>
-    <div class="status" id="status">Загрузка…</div>
-    <div class="small" id="substatus"></div>
-  </div>
-
-  <div class="panel">
-    <div class="controls">
-      <select id="openingSelect"></select>
-      <button onclick="applyOpening()">Start Opening</button>
-      <button onclick="deleteOpening()">Delete</button>
-    </div>
-
-    <div class="hint">
-      Формат ходов дебюта: <b>UCI</b> (как в движках), например:
-      <div><code>e2e4 e7e5 g1f3 b8c6 f1b5</code></div>
-      Можно в несколько строк, с пробелами — всё равно поймём.
-      <br><br>
-      ✅ В тренере ход должен совпасть с вариантом — иначе откат.
-      <br>
-      ✅ Если включен Auto-opponent, то после твоего хода программа сама делает ход соперника из варианта.
-    </div>
-
-    <div style="margin-top:10px;">
-      <input id="openingName" placeholder="Название дебюта (например: Catalan mainline)" />
-    </div>
-    <div style="margin-top:8px;">
-      <textarea id="openingMoves" placeholder="Вставь ходы UCI, например:
-d2d4 d7d5 c2c4 e7e6 g1f3 g8f6 g2g3"></textarea>
-    </div>
-    <div class="controls">
-      <button onclick="saveOpening()">💾 Save / Update</button>
-      <button onclick="exportOpenings()">📤 Export</button>
-      <button onclick="importOpenings()">📥 Import</button>
-    </div>
-    <div class="small">Экспорт/импорт — JSON через prompt, чтобы не было файлов/библиотек.</div>
-  </div>
-</div>
+    <p style="color: #bdc3c7; font-size: 0.9rem;">Правила: Рокировка, Взятие на проходе, Превращение пешек включены.</p>
 
 <script>
-/* =========================
-   CHESS ENGINE (Minimal but legal)
-   - Move legality including "king not left in check"
-   - Undo/redo
-   - UCI move input
-   - No castling / no en-passant (можно добавить позже)
-   - Promotion: всегда в ферзя
-========================= */
+    const boardEl = document.getElementById('board');
+    const statusEl = document.getElementById('status');
+    
+    const PIECES = {
+        'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
+        'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
+    };
 
-// Piece codes: 'P','N','B','R','Q','K' for White; lowercase for Black
-const PIECE_UNI = {
-  P:'♙', N:'♘', B:'♗', R:'♖', Q:'♕', K:'♔',
-  p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚'
-};
+    let board = [
+        ['r','n','b','q','k','b','n','r'],
+        ['p','p','p','p','p','p','p','p'],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['','','','','','','',''],
+        ['P','P','P','P','P','P','P','P'],
+        ['R','N','B','Q','K','B','N','R']
+    ];
 
-function cloneBoard(b){ return b.map(r => r.slice()); }
-function inBounds(r,c){ return r>=0 && r<8 && c>=0 && c<8; }
-function isWhite(p){ return p && p === p.toUpperCase(); }
-function isBlack(p){ return p && p === p.toLowerCase(); }
-function sameColor(a,b){ if(!a||!b) return false; return (isWhite(a)&&isWhite(b))||(isBlack(a)&&isBlack(b)); }
+    let turn = 'white';
+    let selected = null;
+    let validMoves = [];
+    let enPassantTarget = null; 
+    let castling = { W: {K:true, Q:true}, B: {K:true, Q:true} };
 
-function sqToRC(sq){
-  // 'a1' -> row=7,col=0 ; 'a8' -> row=0,col=0
-  const file = sq.charCodeAt(0) - 97;
-  const rank = parseInt(sq[1],10);
-  return { r: 8-rank, c: file };
-}
-function rcToSq(r,c){
-  return String.fromCharCode(97+c) + (8-r);
-}
-
-const START = [
-  ['r','n','b','q','k','b','n','r'],
-  ['p','p','p','p','p','p','p','p'],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['','','','','','','',''],
-  ['P','P','P','P','P','P','P','P'],
-  ['R','N','B','Q','K','B','N','R']
-];
-
-let board = cloneBoard(START);
-let turn = 'w'; // 'w' or 'b'
-let selected = null;
-let legalTargets = [];
-let undoStack = [];
-let redoStack = [];
-let autoOpponent = true;
-  // castling state
-let whiteKingMoved = false;
-let blackKingMoved = false;
-let whiteRookAMoved = false; // a1
-let whiteRookHMoved = false; // h1
-let blackRookAMoved = false; // a8
-let blackRookHMoved = false; // h8
-
-// en passant
-let enPassantTarget = null;
-
-
-// Opening trainer state
-let openings = {};
-let currentOpeningName = '';
-let openingLine = [];      // array of UCI moves
-let openingIndex = 0;      // next expected ply (0-based)
-let strictTrainer = true;  // if move not in line => reject
-
-/* =========================
-   Attack / Check helpers
-========================= */
-function findKing(b, side){
-  const target = (side==='w') ? 'K' : 'k';
-  for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(b[r][c]===target) return {r,c};
-  return null;
-}
-
-function isSquareAttacked(b, r, c, bySide){
-  // bySide attacks (bySide==='w' means white pieces attack)
-  const pawnDir = (bySide==='w') ? -1 : 1;
-  const pawn = (bySide==='w') ? 'P' : 'p';
-  const knight = (bySide==='w') ? 'N' : 'n';
-  const bishop = (bySide==='w') ? 'B' : 'b';
-  const rook = (bySide==='w') ? 'R' : 'r';
-  const queen = (bySide==='w') ? 'Q' : 'q';
-  const king = (bySide==='w') ? 'K' : 'k';
-
-  // Pawns
-  for(const dc of [-1,1]){
-    const rr = r - pawnDir;
-    const cc = c - dc;
-    if(inBounds(rr,cc) && b[rr][cc]===pawn) return true;
-  }
-
-  // Knights
-  const kD = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-  for(const [dr,dc] of kD){
-    const rr=r+dr, cc=c+dc;
-    if(inBounds(rr,cc) && b[rr][cc]===knight) return true;
-  }
-
-  // Bishops / Queens diagonals
-  const diag = [[-1,-1],[-1,1],[1,-1],[1,1]];
-  for(const [dr,dc] of diag){
-    let rr=r+dr, cc=c+dc;
-    while(inBounds(rr,cc)){
-      const p=b[rr][cc];
-      if(p){
-        if(p===bishop || p===queen) return true;
-        break;
-      }
-      rr+=dr; cc+=dc;
-    }
-  }
-
-  // Rooks / Queens lines
-  const line = [[-1,0],[1,0],[0,-1],[0,1]];
-  for(const [dr,dc] of line){
-    let rr=r+dr, cc=c+dc;
-    while(inBounds(rr,cc)){
-      const p=b[rr][cc];
-      if(p){
-        if(p===rook || p===queen) return true;
-        break;
-      }
-      rr+=dr; cc+=dc;
-    }
-  }
-
-  // Kings (adjacent)
-  for(let dr=-1;dr<=1;dr++){
-    for(let dc=-1;dc<=1;dc++){
-      if(dr===0 && dc===0) continue;
-      const rr=r+dr, cc=c+dc;
-      if(inBounds(rr,cc) && b[rr][cc]===king) return true;
-    }
-  }
-
-  return false;
-}
-
-function inCheck(b, side){
-  const k = findKing(b, side);
-  if(!k) return false;
-  const attacker = (side==='w') ? 'b' : 'w';
-  return isSquareAttacked(b, k.r, k.c, attacker);
-}
-
-/* =========================
-   Move generation
-========================= */
-function genPseudoMoves(b, r, c){
-  const p = b[r][c];
-  if(!p) return [];
-  const side = isWhite(p) ? 'w' : 'b';
-  const enemy = (side==='w') ? isBlack : isWhite;
-  const moves = [];
-
-  const add = (rr,cc) => { if(inBounds(rr,cc) && !sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); };
-
-  const type = p.toLowerCase();
-  if(type==='p'){
-    const dir = (side==='w') ? -1 : 1;
-    const startRow = (side==='w') ? 6 : 1;
-    // forward 1
-    const r1=r+dir;
-    if(inBounds(r1,c) && b[r1][c]===''){
-      moves.push({from:{r,c},to:{r:r1,c}});
-      // forward 2
-      const r2=r+2*dir;
-      if(r===startRow && inBounds(r2,c) && b[r2][c]==='') moves.push({from:{r,c},to:{r:r2,c}});
-    }
-    // captures
-    for(const dc of [-1,1]){
-      const rr=r+dir, cc=c+dc;
-      if(inBounds(rr,cc) && b[rr][cc]!=='' && enemy(b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}});
-    }
-  }
-
-  if(type==='n'){
-    const kD = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
-    for(const [dr,dc] of kD) add(r+dr,c+dc);
-  }
-
-  if(type==='b' || type==='q'){
-    const diag = [[-1,-1],[-1,1],[1,-1],[1,1]];
-    for(const [dr,dc] of diag){
-      let rr=r+dr, cc=c+dc;
-      while(inBounds(rr,cc)){
-        if(b[rr][cc]===''){ moves.push({from:{r,c},to:{r:rr,c:cc}}); }
-        else { if(!sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); break; }
-        rr+=dr; cc+=dc;
-      }
-    }
-  }
-
-  if(type==='r' || type==='q'){
-    const line = [[-1,0],[1,0],[0,-1],[0,1]];
-    for(const [dr,dc] of line){
-      let rr=r+dr, cc=c+dc;
-      while(inBounds(rr,cc)){
-        if(b[rr][cc]===''){ moves.push({from:{r,c},to:{r:rr,c:cc}}); }
-        else { if(!sameColor(p,b[rr][cc])) moves.push({from:{r,c},to:{r:rr,c:cc}}); break; }
-        rr+=dr; cc+=dc;
-      }
-    }
-  }
-
-  if(type==='k'){
-    for(let dr=-1;dr<=1;dr++){
-      for(let dc=-1;dc<=1;dc++){
-        if(dr===0 && dc===0) continue;
-        add(r+dr,c+dc);
-      }
-    }
-    if(type==='k'){
-    for(let dr=-1;dr<=1;dr++){
-        for(let dc=-1;dc<=1;dc++){
-            if(dr===0 && dc===0) continue;
-            add(r+dr,c+dc);
-        }
+    function init() {
+        render();
     }
 
-    // =====================
-    // CASTLING generation
-    // =====================
-
-    if(side === 'w' && r === 7 && c === 4){
-        // short
-        if(b[7][5]==='' && b[7][6]==='' && b[7][7]==='R'){
-            moves.push({from:{r,c}, to:{r:7,c:6}});
-        }
-        // long
-        if(b[7][1]==='' && b[7][2]==='' && b[7][3]==='' && b[7][0]==='R'){
-            moves.push({from:{r,c}, to:{r:7,c:2}});
-        }
-    }
-
-    if(side === 'b' && r === 0 && c === 4){
-        // short
-        if(b[0][5]==='' && b[0][6]==='' && b[0][7]==='r'){
-            moves.push({from:{r,c}, to:{r:0,c:6}});
-        }
-        // long
-        if(b[0][1]==='' && b[0][2]==='' && b[0][3]==='' && b[0][0]==='r'){
-            moves.push({from:{r,c}, to:{r:0,c:2}});
-        }
-    }
-}
-
-  }
-
-  return moves;
-}
-
-function genLegalMovesForSquare(r,c){
-  const p = board[r][c];
-  if(!p) return [];
-  const side = isWhite(p) ? 'w' : 'b';
-  if(side !== turn) return [];
-  const pseudo = genPseudoMoves(board, r, c);
-
-  // Filter moves that leave king in check
-  const legal = [];
-  for(const m of pseudo){
-    const nb = cloneBoard(board);
-    const moved = nb[r][c];
-    nb[r][c] = '';
-    nb[m.to.r][m.to.c] = moved;
-
-    // Promotion: pawn reaches last rank -> queen
-    if(moved.toLowerCase()==='p'){
-      if((side==='w' && m.to.r===0) || (side==='b' && m.to.r===7)){
-        nb[m.to.r][m.to.c] = (side==='w') ? 'Q' : 'q';
-      }
-    }
-
-    if(!inCheck(nb, side)) legal.push(m);
-  }
-  return legal;
-}
-
-/* =========================
-   Apply move + history
-========================= */
-function makeMove(fromR, fromC, toR, toC){
-  const legal = genLegalMovesForSquare(fromR, fromC);
-  const ok = legal.find(m => m.to.r===toR && m.to.c===toC);
-  if(!ok) return null;
-
-  const piece = board[fromR][fromC];
-  const captured = board[toR][toC] || '';
-
-  // =========================
-// handle castling rook move
-// =========================
-if (piece.toLowerCase() === 'k' && Math.abs(toC - fromC) === 2) {
-  // king moved two squares => castling
-  if (toC === 6) { // king side
-    // rook: h-file -> f-file
-    board[toR][5] = board[toR][7];
-    board[toR][7] = '';
-  } else if (toC === 2) { // queen side
-    // rook: a-file -> d-file
-    board[toR][3] = board[toR][0];
-    board[toR][0] = '';
-  }
-}
-
-// =========================
-// handle en passant capture
-// =========================
-if (piece.toLowerCase() === 'p') {
-  // pawn moved diagonally into empty square => en passant capture
-  if (fromC !== toC && captured === '') {
-    // remove the pawn that was passed
-    const capR = (turn === 'w') ? (toR + 1) : (toR - 1);
-    board[capR][toC] = '';
-  }
-}
-
-  const before = { board: cloneBoard(board), turn, openingIndex };
-// ===== РОКИРОВКА =====
-if(piece.toLowerCase() === 'k'){
-    if(tryCastling(fromR, fromC, toR, toC)){
-        board[fromR][fromC] = '';
-        board[toR][toC] = piece;
-        turn = (turn === 'w') ? 'b' : 'w';
-        undoStack.push(before);
-        redoStack = [];
-        return { from: rcToSq(fromR,fromC), to: rcToSq(toR,toC), piece, captured };
-    }
-}
-  // move
-  board[fromR][fromC] = '';
-  board[toR][toC] = piece;
-
-  // promotion
-  if(piece.toLowerCase()==='p'){
-    if((turn==='w' && toR===0) || (turn==='b' && toR===7)){
-      board[toR][toC] = (turn==='w') ? 'Q' : 'q';
-    }
-  }
-
-  turn = (turn==='w') ? 'b' : 'w';
-
-  // history
-  undoStack.push(before);
-  redoStack = [];
-
-  return { from: rcToSq(fromR,fromC), to: rcToSq(toR,toC), piece, captured };
-}
-
-function undoMove(){
-  if(undoStack.length===0) return;
-  const last = undoStack.pop();
-  const snapshot = { board: cloneBoard(board), turn, openingIndex };
-  redoStack.push(snapshot);
-
-  board = cloneBoard(last.board);
-  turn = last.turn;
-  openingIndex = last.openingIndex;
-
-  selected = null; legalTargets = [];
-  draw();
-}
-
-function redoMove(){
-  if(redoStack.length===0) return;
-  const next = redoStack.pop();
-  const snapshot = { board: cloneBoard(board), turn, openingIndex };
-  undoStack.push(snapshot);
-
-  board = cloneBoard(next.board);
-  turn = next.turn;
-  openingIndex = next.openingIndex;
-
-  selected = null; legalTargets = [];
-  draw();
-}
-
-/* =========================
-   UI board drawing
-========================= */
-const boardEl = document.getElementById('board');
-
-function clearHighlights(){
-  for(const el of boardEl.querySelectorAll('.sq')){
-    el.classList.remove('selected','hintmove','capture','check');
-  }
-}
-
-function draw(){
-  boardEl.innerHTML = '';
-  for(let r=0;r<8;r++){
-    for(let c=0;c<8;c++){
-      const sq = document.createElement('div');
-      sq.className = 'sq ' + (((r+c)%2===0)?'w':'b');
-      sq.dataset.r = r;
-      sq.dataset.c = c;
-      const p = board[r][c];
-      sq.textContent = p ? PIECE_UNI[p] : '';
-      sq.addEventListener('click', onSquareClick);
-      boardEl.appendChild(sq);
-    }
-  }
-
-  // show if side in check
-  if(inCheck(board, turn)){
-    const k = findKing(board, turn);
-    if(k){
-      const el = getSquareEl(k.r,k.c);
-      if(el) el.classList.add('check');
-    }
-  }
-
-  updateStatus();
-  highlightNextExpected();
-}
-
-function getSquareEl(r,c){
-  return boardEl.querySelector(`.sq[data-r="${r}"][data-c="${c}"]`);
-}
-
-function onSquareClick(e){
-  const r = parseInt(e.currentTarget.dataset.r,10);
-  const c = parseInt(e.currentTarget.dataset.c,10);
-  const p = board[r][c];
-
-  // If nothing selected -> select own piece
-  if(!selected){
-    if(!p) return;
-    if(turn==='w' && !isWhite(p)) return;
-    if(turn==='b' && !isBlack(p)) return;
-
-    selected = {r,c};
-    legalTargets = genLegalMovesForSquare(r,c).map(m => m.to);
-
-    clearHighlights();
-    e.currentTarget.classList.add('selected');
-    for(const t of legalTargets){
-      const el = getSquareEl(t.r,t.c);
-      if(!el) continue;
-      if(board[t.r][t.c] !== '') el.classList.add('capture');
-      else el.classList.add('hintmove');
-    }
-    return;
-  }
-
-  // If selected -> attempt move or change selection
-  if(selected){
-    // click same color piece -> change selection
-    if(p && ((turn==='w' && isWhite(p)) || (turn==='b' && isBlack(p)))){
-      selected = null; legalTargets=[];
-      clearHighlights();
-      onSquareClick(e);
-      return;
-    }
-
-    const moved = tryTrainerMove(selected.r, selected.c, r, c);
-    selected = null; legalTargets=[];
-    clearHighlights();
-    if(moved) draw();
-  }
-}
-
-/* =========================
-   Opening trainer logic (UCI)
-========================= */
-function normalizeMoves(text){
-  return text
-    .replace(/[\n\r\t]+/g,' ')
-    .replace(/,+/g,' ')
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-}
-
-function uciFromTo(fromSq,toSq){ return fromSq+toSq; }
-
-function tryTrainerMove(fr,fc,tr,tc){
-  const moveUci = uciFromTo(rcToSq(fr,fc), rcToSq(tr,tc));
-  const expected = openingLine[openingIndex] || null;
-
-  // if trainer active and expects move
-  if(strictTrainer && openingLine.length>0){
-    if(expected && expected !== moveUci){
-      // reject (snapback)
-      flashStatus(`Неправильно: ожидался ${expected}, ты сделал ${moveUci}`);
-      return false;
-    }
-  }
-
-  const mv = makeMove(fr,fc,tr,tc);
-  if(!mv){
-    flashStatus('Нелегальный ход (по правилам).');
-    return false;
-  }
-
-  // advance opening ply if matches
-  if(openingLine.length>0){
-    const exp = openingLine[openingIndex] || null;
-    if(exp === moveUci) openingIndex++;
-  }
-
-  // auto opponent reply
-  if(autoOpponent) maybePlayOpponent();
-
-  return true;
-}
-
-function maybePlayOpponent(){
-  if(openingLine.length===0) return;
-  const next = openingLine[openingIndex];
-  if(!next) return;
-
-  // next move should be by side to move; we just play it if legal
-  const fr = sqToRC(next.slice(0,2));
-  const to = sqToRC(next.slice(2,4));
-  const mv = makeMove(fr.r, fr.c, to.r, to.c);
-  if(mv){
-    openingIndex++;
-  } else {
-    flashStatus(`Вариант содержит нелегальный ход: ${next} (проверь дебют)`);
-  }
-}
-
-/* =========================
-   Status + Next expected highlight
-========================= */
-let statusTimer = null;
-function flashStatus(msg){
-  const st = document.getElementById('status');
-  st.textContent = msg;
-  st.style.color = '#c2410c';
-  clearTimeout(statusTimer);
-  statusTimer = setTimeout(()=>{ st.style.color = '#111'; updateStatus(); }, 1800);
-}
-
-function updateStatus(){
-  const st = document.getElementById('status');
-  const sub = document.getElementById('substatus');
-
-  const sideText = (turn==='w') ? 'Ход белых' : 'Ход чёрных';
-  const checkText = inCheck(board, turn) ? ' — ШАХ!' : '';
-  st.textContent = sideText + checkText;
-
-  if(openingLine.length>0){
-    const next = openingLine[openingIndex] || '(конец варианта)';
-    sub.textContent = `Дебют: ${currentOpeningName || '—'} | следующий ход: ${next} | ply: ${openingIndex}/${openingLine.length}`;
-  } else {
-    sub.textContent = `Дебют не выбран (можешь добавить свой справа).`;
-  }
-}
-
-function highlightNextExpected(){
-  if(openingLine.length===0) return;
-  const next = openingLine[openingIndex];
-  if(!next) return;
-
-  // highlight FROM square of expected move for side to move
-  const fr = sqToRC(next.slice(0,2));
-  const el = getSquareEl(fr.r, fr.c);
-  if(el) el.classList.add('selected');
-}
-
-/* =========================
-   Openings storage
-========================= */
-function defaultOpenings(){
-  return {
-    "Catalan (sample)": "d2d4 d7d5 c2c4 e7e6 g1f3 g8f6 g2g3",
-    "Italian (sample)": "e2e4 e7e5 g1f3 b8c6 f1c4 f8c5",
-    "QGD (sample)": "d2d4 d7d5 c2c4 e7e6 b1c3 g8f6"
-  };
-}
-
-function loadOpenings(){
-  try{
-    const raw = localStorage.getItem('my_openings_v1');
-    openings = raw ? JSON.parse(raw) : defaultOpenings();
-  }catch(e){
-    openings = defaultOpenings();
-  }
-  refreshOpeningSelect();
-}
-
-function saveOpenings(){
-  localStorage.setItem('my_openings_v1', JSON.stringify(openings));
-}
-
-function refreshOpeningSelect(){
-  const sel = document.getElementById('openingSelect');
-  sel.innerHTML = '';
-  const names = Object.keys(openings).sort((a,b)=>a.localeCompare(b));
-  const opt0 = document.createElement('option');
-  opt0.value = '';
-  opt0.textContent = '— выбери дебют —';
-  sel.appendChild(opt0);
-
-  for(const n of names){
-    const o = document.createElement('option');
-    o.value = n;
-    o.textContent = n;
-    sel.appendChild(o);
-  }
-  sel.addEventListener('change', ()=>{
-    const name = sel.value;
-    if(!name) return;
-    document.getElementById('openingName').value = name;
-    document.getElementById('openingMoves').value = openings[name];
-  });
-}
-
-function saveOpening(){
-  const name = document.getElementById('openingName').value.trim();
-  const movesText = document.getElementById('openingMoves').value.trim();
-  if(!name){ flashStatus('Дай название дебюту.'); return; }
-  const moves = normalizeMoves(movesText);
-  if(moves.length===0){ flashStatus('Вставь ходы (UCI).'); return; }
-
-  openings[name] = moves.join(' ');
-  saveOpenings();
-  refreshOpeningSelect();
-  flashStatus('Сохранено ✅');
-}
-
-function deleteOpening(){
-  const name = document.getElementById('openingSelect').value || document.getElementById('openingName').value.trim();
-  if(!name || !openings[name]){ flashStatus('Нечего удалять.'); return; }
-  if(!confirm(`Удалить "${name}"?`)) return;
-  delete openings[name];
-  saveOpenings();
-  refreshOpeningSelect();
-  document.getElementById('openingName').value='';
-  document.getElementById('openingMoves').value='';
-  flashStatus('Удалено.');
-}
-
-function applyOpening(){
-  const sel = document.getElementById('openingSelect').value;
-  const name = sel || document.getElementById('openingName').value.trim();
-  if(!name || !openings[name]){ flashStatus('Выбери дебют из списка.'); return; }
-  currentOpeningName = name;
-  openingLine = normalizeMoves(openings[name]);
-  openingIndex = 0;
-
-  // reset position
-  board = cloneBoard(START);
-  turn = 'w';
-  undoStack = [];
-  redoStack = [];
-  selected = null;
-  legalTargets = [];
-
-  draw();
-  flashStatus(`Старт: ${name}`);
-}
-
-function exportOpenings(){
-  const data = JSON.stringify(openings, null, 2);
-  prompt('Скопируй JSON (экспорт):', data);
-}
-
-function importOpenings(){
-  const raw = prompt('Вставь JSON (импорт):');
-  if(!raw) return;
-  try{
-    const obj = JSON.parse(raw);
-    if(typeof obj !== 'object' || Array.isArray(obj)) throw new Error('bad');
-    openings = obj;
-    saveOpenings();
-    refreshOpeningSelect();
-    flashStatus('Импортировано ✅');
-  }catch(e){
-    flashStatus('Ошибка импорта (JSON).');
-  }
-}
-
-/* =========================
-   Misc controls
-========================= */
-function resetAll(){
-  board = cloneBoard(START);
-  turn = 'w';
-  undoStack = [];
-  redoStack = [];
-  selected = null;
-  legalTargets = [];
-  openingIndex = 0;
-  draw();
-}
-
-function toggleAutoOpponent(){
-  autoOpponent = !autoOpponent;
-  document.getElementById('autoOpp').textContent = autoOpponent ? 'ON' : 'OFF';
-  flashStatus(`Auto-opponent: ${autoOpponent ? 'ON' : 'OFF'}`);
-}
-
-  function tryCastling(fr, fc, tr, tc){
-
-    const piece = board[fr][fc];
-    if(!piece || piece.toLowerCase() !== 'k') return false;
-
-    const side = color(piece); // 'w' or 'b'
-
-    // король должен двигаться на 2 клетки
-    if(fr !== tr || Math.abs(tc - fc) !== 2) return false;
-
-    // нельзя рокироваться если под шахом
-    if(isCheck(side)) return false;
-
-    const kingSide = tc > fc;
-
-    const row = fr;
-
-    if(kingSide){
-        // короткая
-        if(!castleRights[side].k) return false;
-        if(board[row][5] !== '' || board[row][6] !== '') return false;
-
-        // нельзя проходить через шах
-        if(squareAttacked(row,5,side) || squareAttacked(row,6,side)) return false;
-
-        // двигаем ладью
-        board[row][5] = board[row][7];
-        board[row][7] = '';
-
-    } else {
-        // длинная
-        if(!castleRights[side].q) return false;
-        if(board[row][1] !== '' || board[row][2] !== '' || board[row][3] !== '') return false;
-
-        if(squareAttacked(row,3,side) || squareAttacked(row,2,side)) return false;
-
-        board[row][3] = board[row][0];
-        board[row][0] = '';
-    }
-
-    // запрещаем дальнейшую рокировку
-    castleRights[side].k = false;
-    castleRights[side].q = false;
-
-    return true;
-}
-  function squareAttacked(r, c, side){
-    const opponent = side === 'w' ? 'b' : 'w';
-
-    for(let i=0;i<8;i++){
-        for(let j=0;j<8;j++){
-            if(board[i][j] && color(board[i][j]) === opponent){
-                const moves = getPseudo(i,j);
-                if(moves.some(m => m.r === r && m.c === c)){
-                    return true;
+    function render() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const sq = document.createElement('div');
+                sq.className = `square ${(r+c)%2===0 ? 'white' : 'black'}`;
+                if (selected && selected.r === r && selected.c === c) sq.classList.add('selected');
+                
+                const move = validMoves.find(m => m.r === r && m.c === c);
+                if (move) sq.classList.add('can-move');
+
+                if (board[r][c]) {
+                    const p = document.createElement('span');
+                    p.className = 'piece';
+                    p.innerText = PIECES[board[r][c]];
+                    sq.appendChild(p);
                 }
+
+                sq.onclick = () => onSquareClick(r, c);
+                boardEl.appendChild(sq);
             }
         }
     }
-    return false;
-}
 
+    function onSquareClick(r, c) {
+        const piece = board[r][c];
+        const isWhite = piece && piece === piece.toUpperCase();
+        const myTurn = (turn === 'white' && isWhite) || (turn === 'black' && piece && !isWhite);
 
+        if (selected) {
+            const move = validMoves.find(m => m.r === r && m.c === c);
+            if (move) {
+                executeMove(selected.r, selected.c, r, c, move.type);
+                return;
+            }
+        }
 
-/* =========================
-   Init
-========================= */
-document.getElementById('autoOpp').textContent = autoOpponent ? 'ON' : 'OFF';
-loadOpenings();
-draw();
+        if (myTurn) {
+            selected = {r, c};
+            validMoves = getValidMoves(r, c);
+        } else {
+            selected = null;
+            validMoves = [];
+        }
+        render();
+    }
+
+    function getValidMoves(r, c) {
+        const piece = board[r][c];
+        const type = piece.toLowerCase();
+        const isWhite = piece === piece.toUpperCase();
+        const moves = [];
+
+        const directions = {
+            'r': [[0,1],[0,-1],[1,0],[-1,0]],
+            'b': [[1,1],[1,-1],[-1,1],[-1,-1]],
+            'n': [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]],
+            'q': [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]],
+            'k': [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]
+        };
+
+        if (type === 'p') {
+            const dir = isWhite ? -1 : 1;
+            const startRow = isWhite ? 6 : 1;
+            // Вперед
+            if (!board[r+dir][c]) {
+                moves.push({r: r+dir, c: c});
+                if (r === startRow && !board[r+2*dir][c]) moves.push({r: r+2*dir, c: c});
+            }
+            // Атака
+            [[dir, 1], [dir, -1]].forEach(([dr, dc]) => {
+                const nr = r+dr, nc = c+dc;
+                if (nc>=0 && nc<8) {
+                    const target = board[nr][nc];
+                    if (target && (isWhite !== (target === target.toUpperCase()))) moves.push({r: nr, c: nc});
+                    // En Passant
+                    if (enPassantTarget && nr === enPassantTarget.r && nc === enPassantTarget.c) {
+                        moves.push({r: nr, c: nc, type: 'ep'});
+                    }
+                }
+            });
+        } else if (directions[type]) {
+            for (let [dr, dc] of directions[type]) {
+                let nr = r + dr, nc = c + dc;
+                while (nr>=0 && nr<8 && nc>=0 && nc<8) {
+                    const target = board[nr][nc];
+                    if (!target) {
+                        moves.push({r: nr, c: nc});
+                        if (type === 'n' || type === 'k') break;
+                    } else {
+                        if (isWhite !== (target === target.toUpperCase())) moves.push({r: nr, c: nc});
+                        break;
+                    }
+                    nr += dr; nc += dc;
+                }
+            }
+            // Рокировка (упрощенно)
+            if (type === 'k') {
+                const side = isWhite ? 'W' : 'B';
+                const row = isWhite ? 7 : 0;
+                if (castling[side].K && !board[row][5] && !board[row][6]) moves.push({r: row, c: 6, type: 'castle'});
+                if (castling[side].Q && !board[row][1] && !board[row][2] && !board[row][3]) moves.push({r: row, c: 2, type: 'castle'});
+            }
+        }
+        return moves;
+    }
+
+    function executeMove(fR, fC, tR, tC, special) {
+        const piece = board[fR][fC];
+        
+        // Обработка спец-ходов
+        if (special === 'ep') {
+            board[fR][tC] = ''; // Удаляем пешку при взятии на проходе
+        }
+        if (special === 'castle') {
+            if (tC === 6) { board[fR][5] = board[fR][7]; board[fR][7] = ''; }
+            if (tC === 2) { board[fR][3] = board[fR][0]; board[fR][0] = ''; }
+        }
+
+        // Движение фигуры
+        board[tR][tC] = piece;
+        board[fR][fC] = '';
+
+        // Превращение пешки
+        if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) {
+            board[tR][tC] = piece === 'P' ? 'Q' : 'q';
+        }
+
+        // Сброс прав на рокировку
+        if (piece === 'K') castling.W = {K:false, Q:false};
+        if (piece === 'k') castling.B = {K:false, Q:false};
+
+        // En Passant target
+        enPassantTarget = (piece.toLowerCase() === 'p' && Math.abs(tR - fR) === 2) 
+            ? {r: (fR + tR) / 2, c: fC} : null;
+
+        turn = turn === 'white' ? 'black' : 'white';
+        statusEl.innerText = `Ход ${turn === 'white' ? 'белых' : 'черных'}`;
+        selected = null;
+        validMoves = [];
+        render();
+    }
+
+    init();
 </script>
 </body>
 </html>
