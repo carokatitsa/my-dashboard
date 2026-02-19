@@ -1,39 +1,127 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Монеты</title>
-  <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
-    header { background:#111a2e; padding:16px; position:sticky; top:0; }
-    nav a { color:#e8eefc; margin-right:14px; text-decoration:none; font-weight:600; }
-    main { max-width:900px; margin:auto; padding:24px; }
-    .card { background:#111a2e; border-radius:14px; padding:18px; margin:16px 0; }
-    .muted { color:#a9b6d3; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Моя База Монет</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --bg: #121212; --card: #1e1e1e; --gold: #f1c40f; --text: #e0e0e0; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        
+        /* Форма */
+        .admin-panel { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; margin-bottom: 30px; }
+        .inputs { display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-bottom: 15px; }
+        input, textarea { background: #000; border: 1px solid #444; color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        
+        .btn-add { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn-add:hover { background: #d4ac0d; }
+
+        /* Поиск */
+        .search-bar { margin-bottom: 20px; }
+        .search-bar input { border-color: var(--gold); font-size: 16px; }
+
+        /* Галерея */
+        .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .coin-card { background: var(--card); border-radius: 10px; overflow: hidden; border: 1px solid #333; transition: 0.3s; position: relative; }
+        .coin-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+        
+        .coin-img { width: 100%; height: 200px; object-fit: cover; background: #000; cursor: zoom-in; }
+        .coin-info { padding: 15px; }
+        .coin-id { color: var(--gold); font-weight: bold; font-size: 18px; margin-bottom: 8px; }
+        .coin-desc { font-size: 14px; color: #bbb; line-height: 1.4; white-space: pre-wrap; }
+        
+        .del-btn { position: absolute; top: 10px; right: 10px; background: rgba(231, 76, 60, 0.7); color: white; border: none; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; }
+    </style>
 </head>
 <body>
 
-<header>
-  <nav>
-    <a href="index.html">🏠 Главная</a>
-    <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html">📚 Языки</a>
-    <a href="training.html">💪 Тренировки</a>
-  </nav>
-</header>
+<div class="container">
+    <h1>🪙 Мой Аукцион / База Монет</h1>
 
-<main>
-  <h1>🪙 Монеты</h1>
+    <div class="admin-panel">
+        <div class="inputs">
+            <input type="text" id="coinNum" placeholder="Номер (напр. #102)">
+            <input type="text" id="coinUrl" placeholder="Ссылка на фото (URL)">
+        </div>
+        <textarea id="coinDesc" placeholder="Описание монеты..." rows="3"></textarea>
+        <button class="btn-add" onclick="addCoin()">ДОБАВИТЬ В БАЗУ</button>
+    </div>
 
-  <div class="card">
-    <p class="muted">
-      Здесь будет база данных монет с фотографиями.
-      Следующий шаг — подключим базу данных и загрузку фото.
-    </p>
-  </div>
-</main>
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="Поиск по номеру или описанию..." oninput="drawCoins()">
+    </div>
+
+    <div id="coinGrid" class="coin-grid"></div>
+</div>
+
+<script>
+    // ТВОЙ КОНФИГ ИЗ СКРИНШОТА
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
+        authDomain: "my-dashboard-dc67a.firebaseapp.com",
+        projectId: "my-dashboard-dc67a",
+        storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+        messagingSenderId: "710702954120",
+        appId: "1:710702954120:web:90e5e9a158f31d9728913d",
+        measurementId: "G-47TDJGNE9F"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Функция добавления
+    async function addCoin() {
+        const num = document.getElementById('coinNum').value;
+        const url = document.getElementById('coinUrl').value;
+        const desc = document.getElementById('coinDesc').value;
+
+        if(!num || !url) return alert("Нужен номер и ссылка на фото!");
+
+        await db.collection("my_coins").add({
+            number: num,
+            imageUrl: url,
+            description: desc,
+            time: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById('coinNum').value = "";
+        document.getElementById('coinUrl').value = "";
+        document.getElementById('coinDesc').value = "";
+    }
+
+    // Слушаем базу и рисуем карточки
+    db.collection("my_coins").orderBy("time", "desc").onSnapshot(snapshot => {
+        window.allCoins = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        drawCoins();
+    });
+
+    function drawCoins() {
+        const grid = document.getElementById('coinGrid');
+        const search = document.getElementById('search').value.toLowerCase();
+        grid.innerHTML = "";
+
+        window.allCoins.forEach(coin => {
+            if(coin.number.toLowerCase().includes(search) || coin.description.toLowerCase().includes(search)) {
+                grid.innerHTML += `
+                    <div class="coin-card">
+                        <button class="del-btn" onclick="deleteCoin('${coin.id}')">✕</button>
+                        <img src="${coin.imageUrl}" class="coin-img" onclick="window.open(this.src)">
+                        <div class="coin-info">
+                            <div class="coin-id"># ${coin.number}</div>
+                            <div class="coin-desc">${coin.description}</div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    async function deleteCoin(id) {
+        if(confirm("Удалить монету?")) await db.collection("my_coins").doc(id).delete();
+    }
+</script>
 
 </body>
 </html>
