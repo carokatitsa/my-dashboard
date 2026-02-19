@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Pro</title>
+    <title>Coin Archive Pro + Search</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -10,11 +10,15 @@
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Форма (закреплена сверху для удобства правки) */
-        .admin-panel { background: var(--card); padding: 20px; border-radius: 12px; border: 2px solid #333; margin-bottom: 30px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* Панель управления */
+        .admin-panel { background: var(--card); padding: 20px; border-radius: 12px; border: 2px solid #333; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .inputs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         input, textarea, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         
+        /* Поле поиска */
+        .search-container { margin-bottom: 30px; }
+        .search-input { border: 2px solid var(--gold) !important; font-size: 16px !important; background: #111 !important; }
+
         .btn-main { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; transition: 0.3s; }
         .btn-main.edit-mode { background: var(--blue); color: #fff; }
 
@@ -23,10 +27,8 @@
         .coin-card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #333; position: relative; transition: 0.3s; }
         .coin-card:hover { border-color: var(--gold); }
         
-        /* Галерея изображений */
         .coin-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 5px; background: #000; padding: 5px; min-height: 150px; }
-        .coin-gallery img { width: 100%; height: 140px; object-fit: cover; cursor: pointer; border-radius: 4px; transition: 0.2s; }
-        .coin-gallery img:hover { opacity: 0.7; }
+        .coin-gallery img { width: 100%; height: 140px; object-fit: cover; cursor: pointer; border-radius: 4px; }
 
         .coin-info { padding: 20px; }
         .coin-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -34,32 +36,32 @@
         .coin-price { font-size: 18px; font-weight: bold; }
         .coin-desc { color: #bbb; font-size: 14px; line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap; }
 
-        /* Кнопки управления на карточке */
         .card-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-card { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; background: #222; color: #fff; }
-        .btn-card:hover { background: #333; }
-        .btn-del { background: #c0392b; position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 50%; padding: 0; }
+        .btn-del { background: #c0392b; position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 50%; z-index: 5; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 id="headerTitle">🪙 Управление коллекцией</h1>
-
     <div class="admin-panel">
         <div class="inputs-row">
-            <input type="text" id="cNum" placeholder="Номер">
-            <input type="text" id="cPrice" placeholder="Цена (напр. 200 zl)">
+            <input type="text" id="cNum" placeholder="Номер (напр. #102)">
+            <input type="text" id="cPrice" placeholder="Цена (напр. 500 $)">
             <select id="cStatus">
                 <option value="В наличии">В наличии</option>
                 <option value="Продано">Продано</option>
             </select>
         </div>
-        <textarea id="cUrls" placeholder="Ссылки на фото через запятую (аверс, реверс...)" rows="2"></textarea>
-        <textarea id="cDesc" placeholder="Описание..." rows="2" style="margin-top:10px"></textarea>
+        <textarea id="cUrls" placeholder="Ссылки на фото через запятую..." rows="2"></textarea>
+        <textarea id="cDesc" placeholder="Описание монеты..." rows="2" style="margin-top:10px"></textarea>
         
         <button id="mainBtn" class="btn-main" onclick="saveData()">ДОБАВИТЬ В БАЗУ</button>
         <button id="cancelBtn" onclick="resetForm()" style="display:none; background:none; color:gray; border:none; width:100%; margin-top:10px; cursor:pointer;">Отменить редактирование</button>
+        
+        <div class="search-container" style="margin-top: 20px;">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск по номеру, описанию или цене..." oninput="render()">
+        </div>
     </div>
 
     <div id="coinGrid" class="coin-grid"></div>
@@ -79,20 +81,19 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     let currentEditId = null;
+    let allCoinsData = [];
 
-    // Сохранение (и создание, и обновление)
     async function saveData() {
         const data = {
             num: document.getElementById('cNum').value,
             price: document.getElementById('cPrice').value,
             status: document.getElementById('cStatus').value,
-            // Разбиваем строку по запятым в массив ссылок
             imgs: document.getElementById('cUrls').value.split(',').map(s => s.trim()).filter(s => s !== ""),
             desc: document.getElementById('cDesc').value,
             lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        if(!data.num || data.imgs.length === 0) return alert("Заполни номер и добавь хотя бы 1 ссылку!");
+        if(!data.num || data.imgs.length === 0) return alert("Заполни номер и фото!");
 
         if(currentEditId) {
             await db.collection("my_coins").doc(currentEditId).update(data);
@@ -103,17 +104,14 @@
         resetForm();
     }
 
-    // Вход в режим редактирования
     function editCoin(id) {
         const coin = allCoinsData.find(c => c.id === id);
         currentEditId = id;
-        
         document.getElementById('cNum').value = coin.num;
         document.getElementById('cPrice').value = coin.price;
         document.getElementById('cStatus').value = coin.status;
-        document.getElementById('cUrls').value = coin.imgs ? coin.imgs.join(', ') : (coin.imageUrl || "");
+        document.getElementById('cUrls').value = coin.imgs ? coin.imgs.join(', ') : "";
         document.getElementById('cDesc').value = coin.desc;
-
         document.getElementById('mainBtn').innerText = "СОХРАНИТЬ ИЗМЕНЕНИЯ";
         document.getElementById('mainBtn').classList.add('edit-mode');
         document.getElementById('cancelBtn').style.display = "block";
@@ -128,7 +126,6 @@
         document.getElementById('cancelBtn').style.display = "none";
     }
 
-    let allCoinsData = [];
     db.collection("my_coins").orderBy("lastUpdate", "desc").onSnapshot(snap => {
         allCoinsData = snap.docs.map(d => ({id: d.id, ...d.data()}));
         render();
@@ -136,10 +133,15 @@
 
     function render() {
         const grid = document.getElementById('coinGrid');
+        const query = document.getElementById('searchInput').value.toLowerCase(); // Получаем текст поиска
         grid.innerHTML = "";
 
         allCoinsData.forEach(coin => {
-            const photos = coin.imgs || [coin.imageUrl]; // поддержка старых записей
+            // Проверяем, подходит ли монета под поиск
+            const contentString = `${coin.num} ${coin.desc} ${coin.price}`.toLowerCase();
+            if (!contentString.includes(query)) return; 
+
+            const photos = coin.imgs || [];
             let galleryHtml = photos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
 
             grid.innerHTML += `
@@ -156,8 +158,8 @@
                         </div>
                         <div class="coin-desc">${coin.desc}</div>
                         <div class="card-btns">
-                            <button class="btn-card" onclick="editCoin('${coin.id}')">ИЗМЕНИТЬ ДАННЫЕ</button>
-                            <button class="btn-card" onclick="toggleQuickStatus('${coin.id}', '${coin.status}')">СМЕНИТЬ СТАТУС</button>
+                            <button class="btn-card" onclick="editCoin('${coin.id}')">ИЗМЕНИТЬ</button>
+                            <button class="btn-card" onclick="toggleQuickStatus('${coin.id}', '${coin.status}')">СТАТУС</button>
                         </div>
                     </div>
                 </div>
