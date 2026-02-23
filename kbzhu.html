@@ -1,1 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Мой КБЖУ Конструктор</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --bg: #0b0f19; --card: #161b22; --accent: #3fb950; --text: #c9d1d9; --blue: #58a6ff; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; padding: 15px; margin: 0; }
+        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        
+        h2 { border-bottom: 1px solid #30363d; padding-bottom: 10px; color: var(--blue); }
+        .panel { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid #30363d; }
+        
+        /* Инпуты */
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        input { background: #0d1117; border: 1px solid #30363d; color: white; padding: 10px; border-radius: 6px; }
+        .grid-bju { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 
+        /* Кнопки */
+        .btn { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: var(--accent); color: white; width: 100%; }
+        .btn-select { background: var(--blue); color: white; font-size: 12px; }
+
+        /* Списки */
+        .list-item { background: #21262d; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid transparent; }
+        .list-item:hover { border-color: #8b949e; }
+        .info b { display: block; color: white; }
+        .info small { color: #8b949e; }
+
+        /* Итоги дня */
+        .summary-box { background: #23863622; border: 1px solid var(--accent); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); text-align: center; }
+        .summary-box span { display: block; font-weight: bold; font-size: 18px; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="summary-box">
+    <div>Ккал<span id="dayKcal">0</span></div>
+    <div>Б<span id="dayP">0</span></div>
+    <div>Ж<span id="dayF">0</span></div>
+    <div>У<span id="dayC">0</span></div>
+</div>
+
+<div class="container">
+    <div class="section">
+        <h2>📦 База продуктов (на 100г)</h2>
+        <div class="panel">
+            <div class="input-group">
+                <input type="text" id="libName" placeholder="Название (напр. Гречка)">
+                <div class="grid-bju">
+                    <input type="number" id="libP" placeholder="Б">
+                    <input type="number" id="libF" placeholder="Ж">
+                    <input type="number" id="libC" placeholder="У">
+                </div>
+                <button class="btn btn-add" onclick="addToLibrary()">СОХРАНИТЬ В БАЗУ</button>
+            </div>
+            <div id="libraryList"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🍴 Дневник за сегодня</h2>
+        <div id="dayLog"></div>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
+        authDomain: "my-dashboard-dc67a.firebaseapp.com",
+        projectId: "my-dashboard-dc67a",
+        storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+        messagingSenderId: "710702954120",
+        appId: "1:710702954120:web:90e5e9a158f31d9728913d"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 1. Работа с Библиотекой (Базой)
+    async function addToLibrary() {
+        const name = document.getElementById('libName').value;
+        const p = parseFloat(document.getElementById('libP').value) || 0;
+        const f = parseFloat(document.getElementById('libF').value) || 0;
+        const c = parseFloat(document.getElementById('libC').value) || 0;
+
+        if(!name) return alert("Введите название");
+        await db.collection("food_library").add({ name, p, f, c });
+        ['libName', 'libP', 'libF', 'libC'].forEach(id => document.getElementById(id).value = "");
+    }
+
+    // Подписка на библиотеку
+    db.collection("food_library").onSnapshot(snap => {
+        const list = document.getElementById('libraryList');
+        list.innerHTML = "";
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `
+                <div class="list-item">
+                    <div class="info">
+                        <b>${d.name}</b>
+                        <small>Б:${d.p} Ж:${d.f} У:${d.c} (на 100г)</small>
+                    </div>
+                    <button class="btn btn-select" onclick="addEntryToDay('${doc.id}')">➕ Добавить</button>
+                    <button onclick="deleteLib('${doc.id}')" style="background:none; border:none; color:#f85149; cursor:pointer; margin-left:10px;">✕</button>
+                </div>`;
+        });
+    });
+
+    // 2. Добавление из библиотеки в дневник дня
+    async function addEntryToDay(libId) {
+        const weight = prompt("Сколько грамм вы съели?");
+        if (!weight || isNaN(weight)) return;
+
+        const doc = await db.collection("food_library").doc(libId).get();
+        const product = doc.data();
+        const ratio = weight / 100;
+
+        await db.collection("day_logs").add({
+            name: product.name,
+            weight: parseFloat(weight),
+            p: +(product.p * ratio).toFixed(1),
+            f: +(product.f * ratio).toFixed(1),
+            c: +(product.c * ratio).toFixed(1),
+            kcal: +((product.p * 4 + product.f * 9 + product.c * 4) * ratio).toFixed(0),
+            date: new Date().toLocaleDateString(),
+            ts: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    // Подписка на дневник дня
+    db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => {
+        const list = document.getElementById('dayLog');
+        const today = new Date().toLocaleDateString();
+        list.innerHTML = "";
+        
+        let totals = { k:0, p:0, f:0, c:0 };
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            if(d.date === today) {
+                totals.k += d.kcal; totals.p += d.p; totals.f += d.f; totals.c += d.c;
+                list.innerHTML += `
+                    <div class="list-item" style="border-left: 3px solid var(--blue)">
+                        <div class="info">
+                            <b>${d.name} (${d.weight}г)</b>
+                            <small>${d.kcal} ккал | Б:${d.p} Ж:${d.f} У:${d.c}</small>
+                        </div>
+                        <button onclick="deleteLog('${doc.id}')" style="background:none; border:none; color:#f85149; cursor:pointer;">🗑️</button>
+                    </div>`;
+            }
+        });
+
+        document.getElementById('dayKcal').innerText = totals.k.toFixed(0);
+        document.getElementById('dayP').innerText = totals.p.toFixed(1);
+        document.getElementById('dayF').innerText = totals.f.toFixed(1);
+        document.getElementById('dayC').innerText = totals.c.toFixed(1);
+    });
+
+    async function deleteLib(id) { if(confirm("Удалить из базы?")) await db.collection("food_library").doc(id).delete(); }
+    async function deleteLog(id) { await db.collection("day_logs").doc(id).delete(); }
+</script>
+
+</body>
+</html>
