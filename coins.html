@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Pro + Search</title>
+    <title>Coin Archive Pro + Sort</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -10,19 +10,18 @@
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* Панель управления */
         .admin-panel { background: var(--card); padding: 20px; border-radius: 12px; border: 2px solid #333; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .inputs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         input, textarea, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         
-        /* Поле поиска */
-        .search-container { margin-bottom: 30px; }
+        /* Панель поиска и сортировки */
+        .filter-bar { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-top: 20px; }
         .search-input { border: 2px solid var(--gold) !important; font-size: 16px !important; background: #111 !important; }
+        .sort-select { border: 2px solid var(--blue) !important; cursor: pointer; }
 
         .btn-main { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; transition: 0.3s; }
         .btn-main.edit-mode { background: var(--blue); color: #fff; }
 
-        /* Карточка монеты */
         .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
         .coin-card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid #333; position: relative; transition: 0.3s; }
         .coin-card:hover { border-color: var(--gold); }
@@ -46,7 +45,7 @@
 <div class="container">
     <div class="admin-panel">
         <div class="inputs-row">
-            <input type="text" id="cNum" placeholder="Номер (напр. #102)">
+            <input type="text" id="cNum" placeholder="Номер (напр. 102)">
             <input type="text" id="cPrice" placeholder="Цена (напр. 500 $)">
             <select id="cStatus">
                 <option value="В наличии">В наличии</option>
@@ -59,8 +58,13 @@
         <button id="mainBtn" class="btn-main" onclick="saveData()">ДОБАВИТЬ В БАЗУ</button>
         <button id="cancelBtn" onclick="resetForm()" style="display:none; background:none; color:gray; border:none; width:100%; margin-top:10px; cursor:pointer;">Отменить редактирование</button>
         
-        <div class="search-container" style="margin-top: 20px;">
-            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск по номеру, описанию или цене..." oninput="render()">
+        <div class="filter-bar">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Поиск..." oninput="render()">
+            <select id="sortSelect" class="sort-select" onchange="render()">
+                <option value="lastUpdate">Последние изменения</option>
+                <option value="numAsc">По номеру (1-9)</option>
+                <option value="alpha">По алфавиту (А-Я)</option>
+            </select>
         </div>
     </div>
 
@@ -84,8 +88,9 @@
     let allCoinsData = [];
 
     async function saveData() {
+        const numValue = document.getElementById('cNum').value.trim();
         const data = {
-            num: document.getElementById('cNum').value,
+            num: numValue,
             price: document.getElementById('cPrice').value,
             status: document.getElementById('cStatus').value,
             imgs: document.getElementById('cUrls').value.split(',').map(s => s.trim()).filter(s => s !== ""),
@@ -94,6 +99,15 @@
         };
 
         if(!data.num || data.imgs.length === 0) return alert("Заполни номер и фото!");
+
+        // ПРОВЕРКА НА ДУБЛИКАТ НОМЕРА
+        // Проверяем только если это создание новой монеты (currentEditId === null)
+        if(!currentEditId) {
+            const isDuplicate = allCoinsData.some(c => c.num === data.num);
+            if(isDuplicate) {
+                return alert("Ошибка! Монета с номером " + data.num + " уже существует в базе.");
+            }
+        }
 
         if(currentEditId) {
             await db.collection("my_coins").doc(currentEditId).update(data);
@@ -133,14 +147,40 @@
 
     function render() {
         const grid = document.getElementById('coinGrid');
-        const query = document.getElementById('searchInput').value.toLowerCase(); // Получаем текст поиска
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const sortBy = document.getElementById('sortSelect').value;
+        
         grid.innerHTML = "";
 
-        allCoinsData.forEach(coin => {
-            // Проверяем, подходит ли монета под поиск
-            const contentString = `${coin.num} ${coin.desc} ${coin.price}`.toLowerCase();
-            if (!contentString.includes(query)) return; 
+        // Копируем данные для сортировки
+        let filteredData = [...allCoinsData];
 
+        // 1. Фильтрация по поиску
+        if(query) {
+            filteredData = filteredData.filter(coin => {
+                return `${coin.num} ${coin.desc} ${coin.price}`.toLowerCase().includes(query);
+            });
+        }
+
+        // 2. Сортировка
+        filteredData.sort((a, b) => {
+            if (sortBy === 'numAsc') {
+                // Извлекаем только цифры из номера для правильной сортировки (напр. "#10" -> 10)
+                const numA = parseInt(a.num.replace(/\D/g, '')) || 0;
+                const numB = parseInt(b.num.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            } 
+            if (sortBy === 'alpha') {
+                return a.desc.localeCompare(b.desc);
+            }
+            if (sortBy === 'lastUpdate') {
+                // По умолчанию (уже отсортировано базой, но на всякий случай)
+                return 0; 
+            }
+            return 0;
+        });
+
+        filteredData.forEach(coin => {
             const photos = coin.imgs || [];
             let galleryHtml = photos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
 
