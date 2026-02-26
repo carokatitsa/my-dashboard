@@ -2,68 +2,100 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Мой КБЖУ Дневник</title>
+    <title>Pro Nutri Tracker</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0b0f19; --card: #161b22; --accent: #3fb950; --text: #c9d1d9; --blue: #58a6ff; --border: #30363d; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; padding: 15px; margin: 0; }
-        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1.2fr; gap: 25px; }
-        @media (max-width: 850px) { .container { grid-template-columns: 1fr; } }
+        :root { --bg: #0d1117; --card: #161b22; --accent: #238636; --blue: #58a6ff; --text: #c9d1d9; --border: #30363d; --danger: #f85149; }
+        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 400px 1fr; gap: 30px; }
         
-        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--blue); display: flex; justify-content: space-between; align-items: center; }
-        .panel { background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
+        /* Панель целей */
+        .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 30px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .goal-item { text-align: center; }
+        .goal-item label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; }
+        .goal-item input { width: 80px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: var(--blue); border-radius: 4px; padding: 5px; }
+        .progress-mini { height: 4px; background: #30363d; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; }
+
+        /* Панели */
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+        h2 { margin-top: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; color: #fff; }
         
-        input { background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; box-sizing: border-box; }
-        .grid-bju { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+        input, button { font-family: inherit; }
+        .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+        .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .bju-row input { width: 100%; text-align: center; }
 
-        .btn { border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-add { background: var(--accent); color: white; width: 100%; margin-top: 5px; }
-        .btn-select { background: var(--blue); color: white; font-size: 11px; padding: 5px 10px; }
+        .btn { border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-add { background: var(--accent); color: white; width: 100%; font-size: 16px; }
+        .btn-edit-mode { background: var(--blue); color: white; width: 100%; }
 
-        /* Список библиотеки */
-        .lib-scroll { max-height: 400px; overflow-y: auto; margin-top: 15px; }
-        .list-item { background: #21262d; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        /* Библиотека */
+        .lib-list { margin-top: 20px; max-height: 500px; overflow-y: auto; }
+        .lib-card { background: #21262d; border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .lib-card:hover { border-color: var(--blue); }
+        .lib-info b { color: #fff; display: block; }
+        .lib-info small { color: #8b949e; }
+        .lib-actions { display: flex; gap: 8px; }
+
+        /* История (Правая часть) */
+        .day-block { margin-bottom: 25px; }
+        .day-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--blue); display: flex; justify-content: space-between; }
+        .eat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .eat-info { display: flex; align-items: center; gap: 15px; }
+        .eat-circle { width: 40px; height: 40px; background: #30363d; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
         
-        /* История дневника */
-        .day-group { margin-bottom: 30px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #0d1117; }
-        .day-header { background: #21262d; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
-        .day-header b { color: var(--accent); font-size: 1.1rem; }
-        .day-summary-text { font-size: 0.85rem; color: #8b949e; }
-        .log-entry { padding: 10px 15px; border-bottom: 1px solid #1c2128; display: flex; justify-content: space-between; align-items: center; }
-        .log-entry:last-child { border-bottom: none; }
+        .val { color: var(--blue); font-weight: bold; }
+        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; }
 
-        .kcal-badge { background: #3fb95022; color: var(--accent); padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-        .search-bar { width: 100%; margin-bottom: 10px; border-color: var(--blue); }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
+<div class="goals-header">
+    <div class="goal-item">
+        <label>ЦЕЛЬ ККАЛ</label>
+        <input type="number" id="goalK" value="2000" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barK" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <label>БЕЛКИ (г)</label>
+        <input type="number" id="goalP" value="150" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barP" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <label>ЖИРЫ (г)</label>
+        <input type="number" id="goalF" value="70" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barF" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <label>УГЛЕВОДЫ (г)</label>
+        <input type="number" id="goalC" value="200" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barC" class="progress-fill"></div></div>
+    </div>
+</div>
+
 <div class="container">
-    <div class="section">
-        <h2>📦 Мои продукты</h2>
-        <div class="panel">
-            <div class="input-group">
-                <input type="text" id="libName" placeholder="Название продукта" style="width:100%; margin-bottom:10px;">
-                <div class="grid-bju">
-                    <input type="number" id="libP" placeholder="Б">
-                    <input type="number" id="libF" placeholder="Ж">
-                    <input type="number" id="libC" placeholder="У">
-                    <input type="number" id="libK" placeholder="Ккал">
-                </div>
-                <small style="color: #8b949e; display:block; margin-bottom:10px;">* Ккал можно не вводить, посчитаем сами</small>
-                <button class="btn btn-add" onclick="addToLibrary()">СОХРАНИТЬ В БАЗУ</button>
-            </div>
-            
-            <input type="text" id="libSearch" class="search-bar" placeholder="🔍 Поиск по базе..." oninput="renderLibrary()">
-            <div id="libraryList" class="lib-scroll"></div>
+    <div class="panel">
+        <h2 id="formTitle">📦 База продуктов</h2>
+        <input type="text" id="pName" class="main-input" placeholder="Название продукта">
+        <div class="bju-row">
+            <input type="number" id="pP" class="main-input" placeholder="Б">
+            <input type="number" id="pF" class="main-input" placeholder="Ж">
+            <input type="number" id="pC" class="main-input" placeholder="У">
+            <input type="number" id="pK" class="main-input" placeholder="Ккал">
         </div>
+        <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
+        <button id="cancelBtn" style="display:none; width:100%; background:none; color:gray; border:none; margin-top:5px; cursor:pointer;" onclick="resetForm()">Отмена</button>
+
+        <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск по названию..." oninput="renderLibrary()">
+        
+        <div id="libraryList" class="lib-list"></div>
     </div>
 
-    <div class="section">
-        <h2>📜 История питания</h2>
-        <div id="historyContainer"></div>
-    </div>
+    <div id="history"></div>
 </div>
 
 <script>
@@ -75,122 +107,147 @@
         messagingSenderId: "710702954120",
         appId: "1:710702954120:web:90e5e9a158f31d9728913d"
     };
-
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let fullLibrary = [];
+    let library = [];
+    let logs = [];
+    let editId = null;
 
-    // Добавление в библиотеку
-    async function addToLibrary() {
-        const name = document.getElementById('libName').value;
-        const p = parseFloat(document.getElementById('libP').value) || 0;
-        const f = parseFloat(document.getElementById('libF').value) || 0;
-        const c = parseFloat(document.getElementById('libC').value) || 0;
-        let k = parseFloat(document.getElementById('libK').value);
+    // --- ЛОГИКА БАЗЫ ---
+    async function saveToLib() {
+        const name = document.getElementById('pName').value;
+        const p = parseFloat(document.getElementById('pP').value) || 0;
+        const f = parseFloat(document.getElementById('pF').value) || 0;
+        const c = parseFloat(document.getElementById('pC').value) || 0;
+        let k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
 
-        // Авто-расчет Ккал если пусто
-        if (!k) k = (p * 4) + (f * 9) + (c * 4);
+        if(!name) return alert("Введите название!");
 
-        if(!name) return alert("Введите название");
-        await db.collection("food_library").add({ name, p, f, c, k });
-        ['libName', 'libP', 'libF', 'libC', 'libK'].forEach(id => document.getElementById(id).value = "");
+        const data = { name, p, f, c, k: Math.round(k) };
+
+        if(editId) {
+            await db.collection("food_library").doc(editId).update(data);
+            editId = null;
+        } else {
+            await db.collection("food_library").add(data);
+        }
+        resetForm();
     }
 
-    // Рендер библиотеки с поиском
+    function editProduct(id) {
+        const item = library.find(x => x.id === id);
+        document.getElementById('pName').value = item.name;
+        document.getElementById('pP').value = item.p;
+        document.getElementById('pF').value = item.f;
+        document.getElementById('pC').value = item.c;
+        document.getElementById('pK').value = item.k;
+        editId = id;
+        document.getElementById('saveBtn').innerText = "ОБНОВИТЬ ДАННЫЕ";
+        document.getElementById('saveBtn').className = "btn btn-edit-mode";
+        document.getElementById('cancelBtn').style.display = "block";
+    }
+
+    function resetForm() {
+        editId = null;
+        ['pName','pP','pF','pC','pK'].forEach(i => document.getElementById(i).value = "");
+        document.getElementById('saveBtn').innerText = "СОХРАНИТЬ В БАЗУ";
+        document.getElementById('saveBtn').className = "btn btn-add";
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+
+    // --- РЕНДЕР ---
+    db.collection("food_library").onSnapshot(snap => {
+        library = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        renderLibrary();
+    });
+
     function renderLibrary() {
         const query = document.getElementById('libSearch').value.toLowerCase();
         const list = document.getElementById('libraryList');
         list.innerHTML = "";
-        
-        fullLibrary.filter(item => item.name.toLowerCase().includes(query)).forEach(d => {
+        library.filter(i => i.name.toLowerCase().includes(query)).forEach(item => {
             list.innerHTML += `
-                <div class="list-item">
-                    <div class="info">
-                        <b>${d.name}</b>
-                        <small>Б:${d.p} Ж:${d.f} У:${d.c} | <span style="color:var(--accent)">${d.k} ккал</span></small>
+                <div class="lib-card">
+                    <div class="lib-info">
+                        <b>${item.name}</b>
+                        <small>Б:${item.p} Ж:${item.f} У:${item.c} | <span class="val">${item.k}ккал</span></small>
                     </div>
-                    <div>
-                        <button class="btn btn-select" onclick="addEntryToDay('${d.id}')">➕</button>
-                        <button onclick="deleteLib('${d.id}')" style="background:none; border:none; color:#f85149; cursor:pointer; margin-left:5px;">✕</button>
+                    <div class="lib-actions">
+                        <button class="btn btn-select" onclick="addToDay('${item.id}')">➕</button>
+                        <button class="btn btn-select" style="background:#30363d" onclick="editProduct('${item.id}')">✏️</button>
                     </div>
                 </div>`;
         });
     }
 
-    db.collection("food_library").onSnapshot(snap => {
-        fullLibrary = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-        renderLibrary();
-    });
-
-    // Добавление в дневник
-    async function addEntryToDay(libId) {
-        const weight = prompt("Вес порции (в граммах)?", "100");
-        if (!weight || isNaN(weight)) return;
-
-        const product = fullLibrary.find(i => i.id === libId);
-        const ratio = weight / 100;
-
+    async function addToDay(id) {
+        const weight = prompt("Вес порции (грамм)?", "100");
+        if(!weight) return;
+        const p = library.find(x => x.id === id);
+        const r = weight / 100;
         await db.collection("day_logs").add({
-            name: product.name,
-            weight: parseFloat(weight),
-            p: +(product.p * ratio).toFixed(1),
-            f: +(product.f * ratio).toFixed(1),
-            c: +(product.c * ratio).toFixed(1),
-            kcal: +(product.k * ratio).toFixed(0),
+            name: p.name, w: weight,
+            p: +(p.p*r).toFixed(1), f: +(p.f*r).toFixed(1), c: +(p.c*r).toFixed(1), k: +(p.k*r).toFixed(0),
             date: new Date().toLocaleDateString('ru-RU'),
             ts: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
 
-    // Рендер истории (группировка по датам)
     db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => {
-        const container = document.getElementById('historyContainer');
-        container.innerHTML = "";
-        
-        const groups = {};
-        snap.forEach(doc => {
-            const d = doc.data();
-            if (!groups[d.date]) groups[d.date] = { items: [], totalK: 0, totalP: 0, totalF: 0, totalC: 0 };
-            groups[d.date].items.push({id: doc.id, ...d});
-            groups[d.date].totalK += d.kcal;
-            groups[d.date].totalP += d.p;
-            groups[d.date].totalF += d.f;
-            groups[d.date].totalC += d.c;
-        });
-
-        for (const date in groups) {
-            const g = groups[date];
-            let itemsHtml = g.items.map(item => `
-                <div class="log-entry">
-                    <div>
-                        <b>${item.name}</b> <small style="color:#8b949e">(${item.weight}г)</small><br>
-                        <small>Б:${item.p} Ж:${item.f} У:${item.c}</small>
-                    </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="kcal-badge">${item.kcal}</span>
-                        <button onclick="deleteLog('${item.id}')" style="background:none; border:none; color:#f85149; cursor:pointer;">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-
-            container.innerHTML += `
-                <div class="day-group">
-                    <div class="day-header">
-                        <b>${date}</b>
-                        <div class="day-summary-text">
-                            К:${g.totalK.toFixed(0)} Б:${g.totalP.toFixed(1)} Ж:${g.totalF.toFixed(1)} У:${g.totalC.toFixed(1)}
-                        </div>
-                    </div>
-                    ${itemsHtml}
-                </div>
-            `;
-        }
+        logs = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        renderHistory();
     });
 
-    async function deleteLib(id) { if(confirm("Удалить из базы?")) await db.collection("food_library").doc(id).delete(); }
-    async function deleteLog(id) { await db.collection("day_logs").doc(id).delete(); }
-</script>
+    function renderHistory() {
+        const container = document.getElementById('history');
+        container.innerHTML = "";
+        const today = new Date().toLocaleDateString('ru-RU');
+        const groups = {};
+        let t = { k:0, p:0, f:0, c:0 };
 
+        logs.forEach(l => {
+            if(!groups[l.date]) groups[l.date] = [];
+            groups[l.date].push(l);
+            if(l.date === today) { t.k += l.k; t.p += l.p; t.f += l.f; t.c += l.c; }
+        });
+
+        // Обновление прогресс-баров (Цели)
+        const updateBar = (id, cur, goalId) => {
+            const goal = document.getElementById(goalId).value;
+            const perc = Math.min((cur / goal) * 100, 100);
+            document.getElementById(id).style.width = perc + "%";
+            document.getElementById(id).style.background = perc >= 100 ? "#f85149" : "#238636";
+        };
+        updateBar('barK', t.k, 'goalK');
+        updateBar('barP', t.p, 'goalP');
+        updateBar('barF', t.f, 'goalF');
+        updateBar('barC', t.c, 'goalC');
+
+        for (const date in groups) {
+            let dayHtml = `<div class="day-block"><div class="day-title"><span>📅 ${date === today ? 'Сегодня' : date}</span></div>`;
+            groups[date].forEach(item => {
+                dayHtml += `
+                    <div class="eat-card">
+                        <div class="eat-info">
+                            <div class="eat-circle">🥗</div>
+                            <div>
+                                <b style="color:#fff">${item.name}</b> <small>— ${item.w}г</small><br>
+                                <small>Б:${item.p} Ж:${item.f} У:${item.c}</small>
+                            </div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span class="val">${item.k} ккал</span>
+                            <button class="del-btn" onclick="deleteLog('${item.id}')">×</button>
+                        </div>
+                    </div>`;
+            });
+            dayHtml += `</div>`;
+            container.innerHTML += dayHtml;
+        }
+    }
+
+    async function deleteLog(id) { if(confirm("Удалить запись?")) await db.collection("day_logs").doc(id).delete(); }
+</script>
 </body>
 </html>
