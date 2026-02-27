@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v2.1</title>
+    <title>Pro Nutri Tracker v2.2</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -12,10 +12,13 @@
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 380px 1fr; gap: 20px; width: 100%; }
         
         /* Цели */
-        .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; width: 100%; }
+        .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; width: 100%; }
         .goal-item { text-align: center; }
-        .goal-item input { width: 70px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: var(--blue); border-radius: 4px; padding: 5px; font-size: 14px; }
-        .progress-mini { height: 4px; background: #30363d; border-radius: 2px; margin-top: 8px; overflow: hidden; }
+        .goal-label-row { display: flex; justify-content: center; align-items: baseline; gap: 5px; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #8b949e; }
+        .current-val { font-size: 16px; color: var(--blue); }
+        .current-val.overlimit { color: var(--danger); }
+        .goal-item input { width: 70px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: var(--text); border-radius: 4px; padding: 3px; font-size: 13px; margin-top: 5px; }
+        .progress-mini { height: 6px; background: #30363d; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; }
 
         /* База продуктов */
@@ -23,9 +26,7 @@
         .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
         .bju-row input { width: 100%; padding: 8px; text-align: center; }
-        
         .portion-check { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 13px; color: var(--gold); cursor: pointer; }
-
         .btn { border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; }
         .btn-add { background: var(--accent); color: white; width: 100%; }
         .btn-edit-mode { background: var(--blue); color: white; width: 100%; }
@@ -55,10 +56,26 @@
 <body>
 
 <div class="goals-header">
-    <div class="goal-item"><label>ККАЛ</label><br><input type="number" id="goalK" value="2300" oninput="renderHistory()"><div class="progress-mini"><div id="barK" class="progress-fill"></div></div></div>
-    <div class="goal-item"><label>БЕЛКИ</label><br><input type="number" id="goalP" value="170" oninput="renderHistory()"><div class="progress-mini"><div id="barP" class="progress-fill"></div></div></div>
-    <div class="goal-item"><label>ЖИРЫ</label><br><input type="number" id="goalF" value="70" oninput="renderHistory()"><div class="progress-mini"><div id="barF" class="progress-fill"></div></div></div>
-    <div class="goal-item"><label>УГЛЕВОДЫ</label><br><input type="number" id="goalC" value="240" oninput="renderHistory()"><div class="progress-mini"><div id="barC" class="progress-fill"></div></div></div>
+    <div class="goal-item">
+        <div class="goal-label-row">ККАЛ <span id="curK" class="current-val">0</span></div>
+        <input type="number" id="goalK" value="2300" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barK" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <div class="goal-label-row">БЕЛКИ <span id="curP" class="current-val">0</span></div>
+        <input type="number" id="goalP" value="170" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barP" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <div class="goal-label-row">ЖИРЫ <span id="curF" class="current-val">0</span></div>
+        <input type="number" id="goalF" value="70" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barF" class="progress-fill"></div></div>
+    </div>
+    <div class="goal-item">
+        <div class="goal-label-row">УГЛЕВОДЫ <span id="curC" class="current-val">0</span></div>
+        <input type="number" id="goalC" value="240" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barC" class="progress-fill"></div></div>
+    </div>
 </div>
 
 <div class="container">
@@ -87,7 +104,6 @@
 </div>
 
 <script>
-    // Тот же конфиг Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -139,9 +155,7 @@
     }
 
     async function deleteFromLib(id) {
-        if(confirm("Удалить этот продукт из базы навсегда?")) {
-            await db.collection("food_library").doc(id).delete();
-        }
+        if(confirm("Удалить этот продукт из базы навсегда?")) await db.collection("food_library").doc(id).delete();
     }
 
     function resetForm() {
@@ -168,7 +182,7 @@
                 <div class="lib-card ${item.isPortion ? 'is-portion' : ''}">
                     <div class="lib-info">
                         <b>${item.name}</b>
-                        <small>Б:${item.p} Ж:${item.f} У:${item.c} | <span class="val">${displayKcal} ккал</span></small>
+                        <small>Б:${item.p} Ж:${item.f} У:${item.c} | <span class="val">${displayKcal}</span></small>
                     </div>
                     <div class="lib-actions">
                         <button class="btn btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">＋</button>
@@ -182,30 +196,15 @@
     async function addToDay(id) {
         const p = library.find(x => x.id === id);
         let finalData = { ...p };
-
         if (!p.isPortion) {
             const w = prompt("Сколько грамм?", "100");
             if (!w) return;
             const weight = parseFloat(w);
             const r = weight / 100;
-            finalData = {
-                name: p.name,
-                p: +(p.p * r).toFixed(1),
-                f: +(p.f * r).toFixed(1),
-                c: +(p.c * r).toFixed(1),
-                k: +(p.k * r).toFixed(0),
-                w: weight
-            };
-        } else {
-            finalData.w = "порция";
-        }
-
+            finalData = { name: p.name, p: +(p.p * r).toFixed(1), f: +(p.f * r).toFixed(1), c: +(p.c * r).toFixed(1), k: +(p.k * r).toFixed(0), w: weight };
+        } else { finalData.w = "порция"; }
         delete finalData.id;
-        await db.collection("day_logs").add({
-            ...finalData,
-            date: new Date().toLocaleDateString('ru-RU'),
-            ts: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await db.collection("day_logs").add({ ...finalData, date: new Date().toLocaleDateString('ru-RU'), ts: firebase.firestore.FieldValue.serverTimestamp() });
     }
 
     db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => {
@@ -224,23 +223,28 @@
             if(!groups[l.date]) groups[l.date] = [];
             groups[l.date].push(l);
             if(l.date === today) { 
-                t.k += Number(l.k) || 0; 
-                t.p += Number(l.p) || 0; 
-                t.f += Number(l.f) || 0; 
-                t.c += Number(l.c) || 0; 
+                t.k += Number(l.k) || 0; t.p += Number(l.p) || 0; 
+                t.f += Number(l.f) || 0; t.c += Number(l.c) || 0; 
             }
         });
 
-        const updateBar = (id, cur, goalId) => {
-            const goal = document.getElementById(goalId).value;
+        const updateGoal = (idCur, idBar, cur, idGoal) => {
+            const goal = parseFloat(document.getElementById(idGoal).value) || 1;
+            const elCur = document.getElementById(idCur);
+            elCur.innerText = Math.round(cur);
+            if (cur > goal) elCur.classList.add('overlimit');
+            else elCur.classList.remove('overlimit');
+            
             const perc = Math.min((cur / goal) * 100, 100);
-            document.getElementById(id).style.width = perc + "%";
-            document.getElementById(id).style.background = perc >= 100 ? "#f85149" : "#238636";
+            const bar = document.getElementById(idBar);
+            bar.style.width = perc + "%";
+            bar.style.background = cur > goal ? "var(--danger)" : "var(--accent)";
         };
-        updateBar('barK', t.k, 'goalK');
-        updateBar('barP', t.p, 'goalP');
-        updateBar('barF', t.f, 'goalF');
-        updateBar('barC', t.c, 'goalC');
+
+        updateGoal('curK', 'barK', t.k, 'goalK');
+        updateGoal('curP', 'barP', t.p, 'goalP');
+        updateGoal('curF', 'barF', t.f, 'goalF');
+        updateGoal('curC', 'barC', t.c, 'goalC');
 
         for (const date in groups) {
             let dayHtml = `<div class="day-block"><div class="day-title">📅 ${date === today ? 'Сегодня' : date}</div>`;
