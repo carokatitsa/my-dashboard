@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v2.5 - Final</title>
+    <title>Pro Nutri Tracker v2.6</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -11,13 +11,13 @@
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 380px 1fr; gap: 20px; width: 100%; }
         
-        /* Цели и Прогресс */
-        .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; width: 100%; }
+        /* Цели и Прогресс в шапке */
+        .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; }
         .goal-item { text-align: center; }
-        .goal-label-row { display: flex; justify-content: center; align-items: baseline; gap: 5px; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #8b949e; }
+        .goal-label-row { display: flex; justify-content: center; align-items: baseline; gap: 5px; margin-bottom: 5px; font-size: 11px; font-weight: bold; color: #8b949e; }
         .current-val { font-size: 16px; color: var(--blue); }
         .current-val.overlimit { color: var(--danger); }
-        .goal-item input { width: 75px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: #fff; border-radius: 4px; padding: 4px; font-size: 13px; margin-top: 5px; }
+        .goal-item input { width: 100%; max-width: 80px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: #fff; border-radius: 4px; padding: 4px; font-size: 13px; margin-top: 5px; }
         .progress-mini { height: 6px; background: #30363d; border-radius: 3px; margin-top: 10px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; }
 
@@ -27,34 +27,37 @@
         .stat-box { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
         .stat-box big { display: block; font-size: 24px; font-weight: bold; margin: 5px 0; }
 
-        /* База продуктов */
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; width: 100%; height: fit-content; }
+        /* Левая панель */
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; width: 100%; height: fit-content; display: flex; flex-direction: column; }
         .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-        .bju-row input { width: 100%; padding: 8px; text-align: center; }
-        .portion-check { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 13px; color: var(--gold); cursor: pointer; }
+        .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; }
+        
+        .portion-check { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; font-size: 12px; color: var(--gold); cursor: pointer; }
 
         .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; font-size: 14px; width: 100%; }
         .btn-add { background: var(--accent); color: white; }
-        .btn-finish { background: var(--gold); color: #000; font-size: 16px; margin-top: 10px; }
+        .btn-finish { background: var(--gold); color: #000; font-size: 14px; margin-top: 20px; box-shadow: 0 4px 12px rgba(241, 196, 15, 0.15); }
+        .btn-finish:hover { background: #d4ac0d; transform: translateY(-1px); }
 
-        .lib-list { margin-top: 20px; max-height: 400px; overflow-y: auto; }
+        /* База продуктов (Библиотека) */
+        .lib-list { margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
         .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .lib-card.is-portion { border-left: 4px solid var(--gold); }
-        .lib-info { overflow: hidden; }
-        .lib-info b { color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .lib-info { overflow: hidden; margin-right: 10px; }
+        .lib-info b { color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; }
         .lib-actions { display: flex; gap: 5px; flex-shrink: 0; }
-        .btn-sm { padding: 5px 8px; font-size: 12px; background: #30363d; color: #fff; width: auto; }
+        .btn-sm { padding: 5px 8px; font-size: 12px; background: #30363d; color: #fff; width: auto; border-radius: 4px; }
 
-        /* Дневник */
+        /* Правая колонка: Дневник */
         .day-block { margin-bottom: 25px; width: 100%; }
         .day-title { font-size: 1rem; font-weight: bold; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid var(--blue); }
         .eat-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 20px; }
+        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 20px; padding: 0 5px; }
 
         @media (max-width: 900px) { 
             .container { grid-template-columns: 1fr; }
-            .goals-header { grid-template-columns: repeat(2, 1fr); }
+            .goals-header { grid-template-columns: repeat(2, 2fr); }
         }
     </style>
 </head>
@@ -94,7 +97,9 @@
         <div class="progress-mini"><div id="barF" class="progress-fill"></div></div>
     </div>
     <div class="goal-item">
-        <button class="btn btn-finish" onclick="finishDay()">✅ ДЕНЬ ОКОНЧЕН</button>
+        <div class="goal-label-row">УГЛЕВОДЫ <span id="curC" class="current-val">0</span></div>
+        <input type="number" id="goalC" value="240" oninput="renderHistory()">
+        <div class="progress-mini"><div id="barC" class="progress-fill"></div></div>
     </div>
 </div>
 
@@ -112,8 +117,10 @@
         <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
         <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer;" onclick="resetForm()">Отмена</button>
         
-        <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск..." oninput="renderLibrary()">
+        <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск в базе..." oninput="renderLibrary()">
         <div id="libraryList" class="lib-list"></div>
+
+        <button class="btn btn-finish" onclick="finishDay()">✅ ЗАВЕРШИТЬ ДЕНЬ</button>
     </div>
 
     <div id="history"></div>
@@ -136,7 +143,7 @@
     let totals = { k:0, p:0, f:0, c:0 };
     let editId = null;
 
-    // --- ЛОГИКА БАЗЫ ДАННЫХ ---
+    // --- БАЗА ПРОДУКТОВ ---
     async function saveToLib() {
         const name = document.getElementById('pName').value;
         const p = parseFloat(document.getElementById('pP').value) || 0;
@@ -182,7 +189,7 @@
         document.getElementById('cancelBtn').style.display = "none";
     }
 
-    // --- РЕНДЕР И ЛОГИ ---
+    // --- ОТОБРАЖЕНИЕ ---
     db.collection("food_library").onSnapshot(snap => {
         library = snap.docs.map(d => ({id: d.id, ...d.data()}));
         renderLibrary();
@@ -197,12 +204,12 @@
                 <div class="lib-card ${item.isPortion ? 'is-portion' : ''}">
                     <div class="lib-info">
                         <b>${item.name}</b>
-                        <small>Б:${item.p} Ж:${item.f} | <span class="val">${item.k}</span></small>
+                        <small>Б:${item.p} Ж:${item.f} К:${item.k}</small>
                     </div>
                     <div class="lib-actions">
-                        <button class="btn btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">＋</button>
-                        <button class="btn btn-sm" onclick="editProduct('${item.id}')">✏️</button>
-                        <button class="btn btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
+                        <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">＋</button>
+                        <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
+                        <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
                     </div>
                 </div>`;
         });
@@ -251,6 +258,7 @@
         updateGoal('curK', 'barK', totals.k, 'goalK');
         updateGoal('curP', 'barP', totals.p, 'goalP');
         updateGoal('curF', 'barF', totals.f, 'goalF');
+        updateGoal('curC', 'barC', totals.c, 'goalC');
 
         for (const date in groups) {
             let dayHtml = `<div class="day-block"><div class="day-title">📅 ${date === today ? 'Сегодня' : date}</div>`;
@@ -268,30 +276,28 @@
         }
     }
 
-    async function deleteLog(id) { if(confirm("Удалить?")) await db.collection("day_logs").doc(id).delete(); }
+    async function deleteLog(id) { if(confirm("Удалить запись?")) await db.collection("day_logs").doc(id).delete(); }
 
-    // --- ЛОГИКА ИТОГОВ ДНЯ ---
+    // --- ИТОГИ ДНЯ ---
     async function finishDay() {
         const goalK = parseFloat(document.getElementById('goalK').value) || 2300;
         const goalP = parseFloat(document.getElementById('goalP').value) || 170;
         
-        // Жир: дефицит калорий сравниваем с целью
         const diff = goalK - totals.k;
         const fatChange = (diff / 7.7).toFixed(1);
         
         const resFat = document.getElementById('fatResult');
         resFat.innerText = (fatChange >= 0 ? "-" : "+") + Math.abs(fatChange) + "г";
         resFat.style.color = fatChange >= 0 ? "var(--accent)" : "var(--danger)";
-        document.getElementById('fatDesc').innerText = fatChange >= 0 ? "Сожжено жира" : "Прибавка жира";
+        document.getElementById('fatDesc').innerText = fatChange >= 0 ? "Жира сожжено" : "Жира в плюс";
 
-        // Мышцы: белок + калории
         let mStat = "⚖️ ПОДДЕРЖКА";
-        let mDesc = "Белок в норме, но мало калорий";
+        let mDesc = "Белок в норме, энергии маловато";
         let mCol = "var(--blue)";
 
         if (totals.p >= goalP) {
-            if (totals.k >= (goalK - 150)) { mStat = "💪 РОСТ"; mDesc = "Идеально для мышц!"; mCol = "var(--accent)"; }
-        } else { mStat = "⚠️ УБЫЛЬ"; mDesc = "Мало белка — горят мышцы"; mCol = "var(--danger)"; }
+            if (totals.k >= (goalK - 200)) { mStat = "💪 РОСТ"; mDesc = "Условия для мышц созданы!"; mCol = "var(--accent)"; }
+        } else { mStat = "⚠️ УБЫЛЬ"; mDesc = "Мало белка!"; mCol = "var(--danger)"; }
 
         document.getElementById('muscleResult').innerText = mStat;
         document.getElementById('muscleResult').style.color = mCol;
