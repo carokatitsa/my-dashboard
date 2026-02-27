@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v3.0</title>
+    <title>Pro Nutri Tracker v3.1</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -49,18 +49,18 @@
         
         .day-stats-brief { 
             font-size: 11px; 
-            color: #fff; 
+            color: var(--grey-text); 
             background: #2d333b; 
             padding: 4px 12px; 
             border-radius: 6px; 
             display: flex; 
             gap: 12px;
             border: 1px solid var(--border);
-            font-weight: 600; /* Жирный текст для всей строки КБЖУ */
         }
-        .day-stats-brief b { color: #fff; } /* Ккал и БЖУ теперь одинаково яркие */
-        .stat-val-pos { color: var(--danger); } /* Перебор - красный */
-        .stat-val-neg { color: #56d364; } /* Дефицит - зеленый */
+        /* Выделение значений КБЖУ белым и жирным */
+        .day-stats-brief b { color: #ffffff; font-weight: 700; } 
+        .stat-val-pos { color: var(--danger) !important; } /* Красный для плюса (жир пришел) */
+        .stat-val-neg { color: #56d364 !important; } /* Зеленый для минуса (жир ушел) */
 
         .eat-list { padding: 10px; display: block; }
         .eat-list.collapsed { display: none; }
@@ -160,22 +160,6 @@
     db.collection("daily_summaries").onSnapshot(snap => { summaries = {}; snap.forEach(doc => { summaries[doc.data().date] = doc.data(); }); renderHistory(); });
     db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => { logs = snap.docs.map(d => ({id: d.id, ...d.data()})); renderHistory(); });
 
-    function renderLibrary() {
-        const q = document.getElementById('libSearch').value.toLowerCase();
-        const list = document.getElementById('libraryList');
-        list.innerHTML = "";
-        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
-            list.innerHTML += `<div class="lib-card">
-                <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
-                <div class="lib-actions">
-                    <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
-                    <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
-                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
-                </div>
-            </div>`;
-        });
-    }
-
     function renderHistory() {
         const container = document.getElementById('history');
         const today = new Date().toLocaleDateString('ru-RU');
@@ -208,13 +192,12 @@
             const s = summaries[date];
             let brief = "";
             if (s) {
-                // Если разница отрицательная (дефицит), пишем минус и красим в зеленый
-                const isDeficit = s.fatChange <= 0;
-                const fatClass = isDeficit ? 'stat-val-neg' : 'stat-val-pos';
+                const fatClass = s.fatChange <= 0 ? 'stat-val-neg' : 'stat-val-pos';
+                const fatSign = s.fatChange > 0 ? '+' : ''; 
                 brief = `<div class="day-stats-brief">
                     <span><b>${Math.round(s.totals.k)}</b> ккал</span>
                     <span>Б:<b>${Math.round(s.totals.p)}</b> Ж:<b>${Math.round(s.totals.f)}</b> У:<b>${Math.round(s.totals.c)}</b></span>
-                    <span class="${fatClass}"><b>${s.fatChange > 0 ? '+' : ''}${s.fatChange}г жира</b></span>
+                    <span class="${fatClass}"><b>${fatSign}${s.fatChange}г жира</b></span>
                     <span>${s.muscleStatus}</span>
                 </div>`;
             } else if (isToday) { brief = `<div class="day-stats-brief">В процессе...</div>`; }
@@ -236,21 +219,12 @@
         container.innerHTML = html;
     }
 
-    function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
-
-    function closeSummary() { 
-        document.getElementById('summaryDisplay').style.display = 'none'; 
-        const today = new Date().toLocaleDateString('ru-RU');
-        const todayList = document.getElementById(`list-${today}`);
-        if(todayList) todayList.classList.add('collapsed');
-    }
-
     async function finishDay() {
         const gK = parseFloat(document.getElementById('goalK').value) || 2300;
         const gP = parseFloat(document.getElementById('goalP').value) || 170;
         
-        // ФИКС МАТЕМАТИКИ: (Съеденное - Цель) / 7.7
-        // Если съел 2200 при цели 2300, разница -100. Жир = -12.9г.
+        // РАСЧЕТ: (Съеденное - Цель) / 7.7
+        // Если съел 2200 при цели 2300 -> -100 / 7.7 = -12.9 (минус!)
         const kcalDiff = totals.k - gK; 
         const fatChange = (kcalDiff / 7.7).toFixed(1); 
         
@@ -278,8 +252,49 @@
         });
     }
 
-    async function saveToLib() { /* ... */ } // функция из предыдущих версий
-    // (Остальные функции addToDay, editProduct и т.д. без изменений)
+    // Вспомогательные функции (без изменений)
+    function renderLibrary() {
+        const q = document.getElementById('libSearch').value.toLowerCase();
+        const list = document.getElementById('libraryList');
+        list.innerHTML = "";
+        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
+            list.innerHTML += `<div class="lib-card">
+                <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
+                <div class="lib-actions">
+                    <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
+                    <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
+                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
+                </div>
+            </div>`;
+        });
+    }
+    async function saveToLib() {
+        const name = document.getElementById('pName').value;
+        const p = parseFloat(document.getElementById('pP').value) || 0;
+        const f = parseFloat(document.getElementById('pF').value) || 0;
+        const c = parseFloat(document.getElementById('pC').value) || 0;
+        const k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
+        const isPortion = document.getElementById('pIsPortion').checked;
+        if(!name) return;
+        const data = { name, p, f, c, k: Math.round(k), isPortion };
+        if(editId) { await db.collection("food_library").doc(editId).update(data); editId = null; }
+        else { await db.collection("food_library").add(data); }
+        resetForm();
+    }
+    function resetForm() {
+        editId = null;
+        ['pName','pP','pF','pC','pK'].forEach(i => document.getElementById(i).value = "");
+        document.getElementById('pIsPortion').checked = false;
+        document.getElementById('saveBtn').innerText = "СОХРАНИТЬ В БАЗУ";
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+    function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
+    function closeSummary() { 
+        document.getElementById('summaryDisplay').style.display = 'none'; 
+        const today = new Date().toLocaleDateString('ru-RU');
+        const todayList = document.getElementById(`list-${today}`);
+        if(todayList) todayList.classList.add('collapsed');
+    }
     async function addToDay(id) {
         isDayFinished = false;
         const p = library.find(x => x.id === id);
@@ -297,19 +312,6 @@
         document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
         document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
         editId = id; document.getElementById('saveBtn').innerText = "ОБНОВИТЬ"; document.getElementById('cancelBtn').style.display = "block";
-    }
-    function saveToLib() {
-        const name = document.getElementById('pName').value;
-        const p = parseFloat(document.getElementById('pP').value) || 0;
-        const f = parseFloat(document.getElementById('pF').value) || 0;
-        const c = parseFloat(document.getElementById('pC').value) || 0;
-        const k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
-        const isPortion = document.getElementById('pIsPortion').checked;
-        if(!name) return;
-        const data = { name, p, f, c, k: Math.round(k), isPortion };
-        if(editId) { db.collection("food_library").doc(editId).update(data); editId = null; }
-        else { db.collection("food_library").add(data); }
-        resetForm();
     }
 </script>
 </body>
