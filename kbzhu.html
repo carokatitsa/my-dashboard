@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v3.1</title>
+    <title>Pro Nutri Tracker v3.2</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -21,35 +21,38 @@
         .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; width: 0%; }
 
         /* Отчет */
-        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
+        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; z-index: 1000; position: relative; }
         .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .stat-box { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
         .stat-box big { display: block; font-size: 24px; font-weight: bold; margin: 5px 0; }
 
-        /* Панель */
+        /* Панель управления */
         .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: fit-content; position: sticky; top: 15px; }
         .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
         .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px; }
         
-        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-add { background: var(--accent); color: white; }
         .btn-finish { background: var(--gold); color: #000; margin-top: 20px; font-size: 14px; }
 
-        /* Библиотека */
+        /* База продуктов (Фикс кнопок) */
         .lib-list { margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .lib-actions { display: flex; gap: 4px; }
-        .btn-sm { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; }
+        .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+        .lib-info { flex: 1; overflow: hidden; }
+        .lib-info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #fff; }
+        .lib-actions { display: flex; gap: 5px; flex-shrink: 0; }
+        .btn-sm { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
 
         /* История */
         .day-block { margin-bottom: 15px; background: #161b22; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
         .day-header { background: #1c2128; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .day-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         
+        /* Строка КБЖУ в истории */
         .day-stats-brief { 
             font-size: 11px; 
-            color: var(--grey-text); 
+            color: #ccc; 
             background: #2d333b; 
             padding: 4px 12px; 
             border-radius: 6px; 
@@ -57,10 +60,9 @@
             gap: 12px;
             border: 1px solid var(--border);
         }
-        /* Выделение значений КБЖУ белым и жирным */
-        .day-stats-brief b { color: #ffffff; font-weight: 700; } 
-        .stat-val-pos { color: var(--danger) !important; } /* Красный для плюса (жир пришел) */
-        .stat-val-neg { color: #56d364 !important; } /* Зеленый для минуса (жир ушел) */
+        .day-stats-brief b { color: #ffffff; font-weight: 800; } /* Белые и жирные БЖУ */
+        .stat-val-pos { color: var(--danger) !important; } /* Плюс - красный (жир +) */
+        .stat-val-neg { color: #56d364 !important; } /* Минус - зеленый (жир -) */
 
         .eat-list { padding: 10px; display: block; }
         .eat-list.collapsed { display: none; }
@@ -138,6 +140,7 @@
 </div>
 
 <script>
+    // --- КОНФИГ FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -156,10 +159,29 @@
     let editId = null;
     let isDayFinished = false;
 
+    // --- ПОЛУЧЕНИЕ ДАННЫХ ---
     db.collection("food_library").onSnapshot(snap => { library = snap.docs.map(d => ({id: d.id, ...d.data()})); renderLibrary(); });
     db.collection("daily_summaries").onSnapshot(snap => { summaries = {}; snap.forEach(doc => { summaries[doc.data().date] = doc.data(); }); renderHistory(); });
     db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => { logs = snap.docs.map(d => ({id: d.id, ...d.data()})); renderHistory(); });
 
+    // --- ОТРИСОВКА БАЗЫ ---
+    function renderLibrary() {
+        const q = document.getElementById('libSearch').value.toLowerCase();
+        const list = document.getElementById('libraryList');
+        list.innerHTML = "";
+        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
+            list.innerHTML += `<div class="lib-card">
+                <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
+                <div class="lib-actions">
+                    <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
+                    <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
+                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
+                </div>
+            </div>`;
+        });
+    }
+
+    // --- ОТРИСОВКА ИСТОРИИ И ШАПКИ ---
     function renderHistory() {
         const container = document.getElementById('history');
         const today = new Date().toLocaleDateString('ru-RU');
@@ -169,9 +191,12 @@
         logs.forEach(l => {
             if(!groups[l.date]) groups[l.date] = [];
             groups[l.date].push(l);
-            if(l.date === today) { totals.k += Number(l.k); totals.p += Number(l.p); totals.f += Number(l.f); totals.c += Number(l.c); }
+            if(l.date === today) { 
+                totals.k += Number(l.k); totals.p += Number(l.p); totals.f += Number(l.f); totals.c += Number(l.c); 
+            }
         });
 
+        // Обнуление шапки если нажата кнопка финиша
         const displayK = isDayFinished ? 0 : totals.k;
         const displayP = isDayFinished ? 0 : totals.p;
         const displayF = isDayFinished ? 0 : totals.f;
@@ -191,16 +216,23 @@
             const isToday = date === today;
             const s = summaries[date];
             let brief = "";
+            
             if (s) {
-                const fatClass = s.fatChange <= 0 ? 'stat-val-neg' : 'stat-val-pos';
-                const fatSign = s.fatChange > 0 ? '+' : ''; 
+                // ПРОВЕРКА ЗНАКА ЖИРА ДЛЯ ЦВЕТА
+                const fatVal = parseFloat(s.fatChange);
+                const isNegative = fatVal < 0;
+                const fatClass = isNegative ? 'stat-val-neg' : 'stat-val-pos';
+                const sign = fatVal > 0 ? "+" : ""; 
+
                 brief = `<div class="day-stats-brief">
                     <span><b>${Math.round(s.totals.k)}</b> ккал</span>
                     <span>Б:<b>${Math.round(s.totals.p)}</b> Ж:<b>${Math.round(s.totals.f)}</b> У:<b>${Math.round(s.totals.c)}</b></span>
-                    <span class="${fatClass}"><b>${fatSign}${s.fatChange}г жира</b></span>
+                    <span class="${fatClass}"><b>${sign}${fatVal}г жира</b></span>
                     <span>${s.muscleStatus}</span>
                 </div>`;
-            } else if (isToday) { brief = `<div class="day-stats-brief">В процессе...</div>`; }
+            } else if (isToday) { 
+                brief = `<div class="day-stats-brief">В процессе...</div>`; 
+            }
 
             html += `<div class="day-block">
                 <div class="day-header" onclick="toggleDay('${date}')">
@@ -219,21 +251,26 @@
         container.innerHTML = html;
     }
 
+    // --- ФИНАЛ ДНЯ ---
     async function finishDay() {
         const gK = parseFloat(document.getElementById('goalK').value) || 2300;
         const gP = parseFloat(document.getElementById('goalP').value) || 170;
         
-        // РАСЧЕТ: (Съеденное - Цель) / 7.7
-        // Если съел 2200 при цели 2300 -> -100 / 7.7 = -12.9 (минус!)
+        // РАСЧЕТ ДЕФИЦИТА: (Съел - Цель). Если 2200 - 2300 = -100.
         const kcalDiff = totals.k - gK; 
-        const fatChange = (kcalDiff / 7.7).toFixed(1); 
+        const fatChange = parseFloat((kcalDiff / 7.7).toFixed(1)); 
         
         let mStat = "УДЕРЖАНИЕ";
-        if (totals.p >= gP) { mStat = (totals.k >= (gK - 200)) ? "РОСТ 💪" : "СОХРАНЕНИЕ"; }
-        else { mStat = "УБЫЛЬ ⚠️"; }
+        if (totals.p >= gP) { 
+            mStat = (totals.k >= (gK - 200)) ? "РОСТ 💪" : "СОХРАНЕНИЕ"; 
+        } else { 
+            mStat = "УБЫЛЬ ⚠️"; 
+        }
 
-        document.getElementById('fatResult').innerText = (fatChange > 0 ? "+" : "") + fatChange + "г";
-        document.getElementById('fatResult').style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
+        // Всплывающая карточка
+        const fatResEl = document.getElementById('fatResult');
+        fatResEl.innerText = (fatChange > 0 ? "+" : "") + fatChange + "г";
+        fatResEl.style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
         document.getElementById('fatDesc').innerText = fatChange <= 0 ? "Жира сожжено" : "Жир в запас";
         document.getElementById('muscleResult').innerText = mStat;
         
@@ -243,6 +280,7 @@
         document.getElementById('summaryDisplay').style.display = 'block';
         window.scrollTo({top: 0, behavior: 'smooth'});
 
+        // Сохранение в Firebase
         await db.collection("daily_summaries").doc(new Date().toLocaleDateString('ru-RU')).set({
             date: new Date().toLocaleDateString('ru-RU'),
             totals: {...totals},
@@ -252,22 +290,7 @@
         });
     }
 
-    // Вспомогательные функции (без изменений)
-    function renderLibrary() {
-        const q = document.getElementById('libSearch').value.toLowerCase();
-        const list = document.getElementById('libraryList');
-        list.innerHTML = "";
-        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
-            list.innerHTML += `<div class="lib-card">
-                <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
-                <div class="lib-actions">
-                    <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
-                    <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
-                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
-                </div>
-            </div>`;
-        });
-    }
+    // --- ФУНКЦИИ БАЗЫ ---
     async function saveToLib() {
         const name = document.getElementById('pName').value;
         const p = parseFloat(document.getElementById('pP').value) || 0;
@@ -281,6 +304,21 @@
         else { await db.collection("food_library").add(data); }
         resetForm();
     }
+
+    async function addToDay(id) {
+        isDayFinished = false; 
+        const p = library.find(x => x.id === id);
+        let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
+        if (!w) return;
+        let d = { ...p, w: w === "порция" ? w : parseFloat(w) };
+        if (!p.isPortion) { 
+            const r = parseFloat(w)/100; 
+            d.p=+(p.p*r).toFixed(1); d.f=+(p.f*r).toFixed(1); d.c=+(p.c*r).toFixed(1); d.k=+(p.k*r).toFixed(0); 
+        }
+        delete d.id; 
+        await db.collection("day_logs").add({ ...d, date: new Date().toLocaleDateString('ru-RU'), ts: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+
     function resetForm() {
         editId = null;
         ['pName','pP','pF','pC','pK'].forEach(i => document.getElementById(i).value = "");
@@ -288,30 +326,24 @@
         document.getElementById('saveBtn').innerText = "СОХРАНИТЬ В БАЗУ";
         document.getElementById('cancelBtn').style.display = "none";
     }
-    function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
-    function closeSummary() { 
-        document.getElementById('summaryDisplay').style.display = 'none'; 
-        const today = new Date().toLocaleDateString('ru-RU');
-        const todayList = document.getElementById(`list-${today}`);
-        if(todayList) todayList.classList.add('collapsed');
-    }
-    async function addToDay(id) {
-        isDayFinished = false;
-        const p = library.find(x => x.id === id);
-        let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
-        if (!w) return;
-        let d = { ...p, w: w === "порция" ? w : parseFloat(w) };
-        if (!p.isPortion) { const r = parseFloat(w)/100; d.p=+(p.p*r).toFixed(1); d.f=+(p.f*r).toFixed(1); d.c=+(p.c*r).toFixed(1); d.k=+(p.k*r).toFixed(0); }
-        delete d.id; await db.collection("day_logs").add({ ...d, date: new Date().toLocaleDateString('ru-RU'), ts: firebase.firestore.FieldValue.serverTimestamp() });
-    }
+
     async function deleteLog(id) { if(confirm("Удалить?")) await db.collection("day_logs").doc(id).delete(); }
     async function deleteFromLib(id) { if(confirm("Удалить из базы?")) await db.collection("food_library").doc(id).delete(); }
+    
     function editProduct(id) {
         const i = library.find(x => x.id === id);
         document.getElementById('pName').value = i.name; document.getElementById('pP').value = i.p;
         document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
         document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
         editId = id; document.getElementById('saveBtn').innerText = "ОБНОВИТЬ"; document.getElementById('cancelBtn').style.display = "block";
+    }
+
+    function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
+    function closeSummary() { 
+        document.getElementById('summaryDisplay').style.display = 'none'; 
+        const today = new Date().toLocaleDateString('ru-RU');
+        const list = document.getElementById(`list-${today}`);
+        if(list) list.classList.add('collapsed');
     }
 </script>
 </body>
