@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v2.7 - Ultimate</title>
+    <title>Pro Nutri Tracker v2.8</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -22,40 +22,43 @@
         .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; }
 
         /* Отчет дня */
-        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
+        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; z-index: 100; position: relative; }
         .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .stat-box { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
         .stat-box big { display: block; font-size: 24px; font-weight: bold; margin: 5px 0; }
 
         /* Панель управления */
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: fit-content; }
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: fit-content; position: sticky; top: 15px; }
         .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
-        .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; }
-        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
+        .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px; }
+        
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-add { background: var(--accent); color: white; }
-        .btn-finish { background: var(--gold); color: #000; margin-top: 20px; }
+        .btn-finish { background: var(--gold); color: #000; margin-top: 20px; font-size: 14px; }
+        .btn-finish:hover { transform: scale(1.02); }
 
-        /* Библиотека */
-        .lib-list { margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
-        .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-sm { padding: 5px 8px; font-size: 12px; background: #30363d; color: #fff; width: auto; border-radius: 4px; border: none; cursor: pointer; margin-left: 4px; }
+        /* Библиотека и Кнопки (Фикс съезжания) */
+        .lib-list { margin-top: 15px; max-height: 450px; overflow-y: auto; padding-right: 5px; }
+        .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .lib-info { overflow: hidden; flex: 1; }
+        .lib-info b { color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+        .lib-actions { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
+        .btn-sm { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; transition: 0.2s; }
+        .btn-sm:hover { opacity: 0.8; }
 
-        /* Дневник и сворачивание */
-        .day-block { margin-bottom: 15px; background: rgba(255,255,255,0.02); border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
+        /* Дневник */
+        .day-block { margin-bottom: 15px; background: #161b22; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
         .day-header { 
             background: #1c2128; padding: 12px 15px; cursor: pointer; 
             display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 1px solid transparent; transition: 0.2s;
         }
-        .day-header:hover { background: #21262d; }
-        .day-header.active { border-bottom-color: var(--border); }
-        .day-info { font-size: 14px; display: flex; align-items: center; gap: 15px; }
-        .day-stats-brief { font-size: 12px; color: var(--blue); background: #0d1117; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border); }
-        .eat-list { display: block; padding: 10px; }
+        .day-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .day-stats-brief { font-size: 11px; color: var(--blue); background: #0d1117; padding: 4px 12px; border-radius: 15px; border: 1px solid var(--border); display: flex; gap: 8px; }
+        .eat-list { padding: 10px; display: block; }
         .eat-list.collapsed { display: none; }
-        .eat-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; }
+        .eat-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; }
 
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .goals-header { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -107,16 +110,18 @@
         <h2 style="margin: 0 0 15px 0; font-size: 18px;">📦 База продуктов</h2>
         <input type="text" id="pName" class="main-input" placeholder="Название блюда">
         <div class="bju-row">
-            <input type="number" id="pP" class="main-input" placeholder="Б">
-            <input type="number" id="pF" class="main-input" placeholder="Ж">
-            <input type="number" id="pC" class="main-input" placeholder="У">
-            <input type="number" id="pK" class="main-input" placeholder="Ккал">
+            <input type="number" id="pP" placeholder="Б">
+            <input type="number" id="pF" placeholder="Ж">
+            <input type="number" id="pC" placeholder="У">
+            <input type="number" id="pK" placeholder="Ккал">
         </div>
-        <label class="portion-check"><input type="checkbox" id="pIsPortion"> Целая порция (не спрашивать вес)</label>
+        <label style="font-size:12px; color:var(--gold); display:flex; align-items:center; gap:5px; margin-bottom:15px; cursor:pointer;">
+            <input type="checkbox" id="pIsPortion"> Целая порция
+        </label>
         <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
-        <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer;" onclick="resetForm()">Отмена</button>
+        <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer; width:100%;" onclick="resetForm()">Отмена</button>
         
-        <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск в базе..." oninput="renderLibrary()">
+        <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск..." oninput="renderLibrary()">
         <div id="libraryList" class="lib-list"></div>
 
         <button class="btn btn-finish" onclick="finishDay()">✅ ЗАВЕРШИТЬ ДЕНЬ</button>
@@ -126,7 +131,6 @@
 </div>
 
 <script>
-    // КОНФИГУРАЦИЯ FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -140,18 +144,18 @@
 
     let library = [];
     let logs = [];
-    let summaries = {}; // Хранилище итогов из БД
+    let summaries = {};
     let totals = { k:0, p:0, f:0, c:0 };
     let editId = null;
 
-    // --- ЛОГИКА БАЗЫ ---
+    // --- БАЗА ---
     async function saveToLib() {
         const name = document.getElementById('pName').value;
         const p = parseFloat(document.getElementById('pP').value) || 0;
         const f = parseFloat(document.getElementById('pF').value) || 0;
         const c = parseFloat(document.getElementById('pC').value) || 0;
+        const k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
         const isPortion = document.getElementById('pIsPortion').checked;
-        let k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
         if(!name) return;
         const data = { name, p, f, c, k: Math.round(k), isPortion };
         if(editId) { await db.collection("food_library").doc(editId).update(data); editId = null; }
@@ -167,41 +171,21 @@
         document.getElementById('cancelBtn').style.display = "none";
     }
 
-    // --- ЧТЕНИЕ ДАННЫХ ---
-    db.collection("food_library").onSnapshot(snap => {
-        library = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        renderLibrary();
-    });
+    // --- ДАННЫЕ ---
+    db.collection("food_library").onSnapshot(snap => { library = snap.docs.map(d => ({id: d.id, ...d.data()})); renderLibrary(); });
+    db.collection("daily_summaries").onSnapshot(snap => { summaries = {}; snap.forEach(doc => { summaries[doc.data().date] = doc.data(); }); renderHistory(); });
+    db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => { logs = snap.docs.map(d => ({id: d.id, ...d.data()})); renderHistory(); });
 
-    // Слушатель для итогов (summaries), чтобы выводить их в заголовки дат
-    db.collection("daily_summaries").onSnapshot(snap => {
-        summaries = {};
-        snap.forEach(doc => {
-            const data = doc.data();
-            summaries[data.date] = data;
-        });
-        renderHistory();
-    });
-
-    db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => {
-        logs = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        renderHistory();
-    });
-
-    // --- РЕНДЕР ---
     function renderLibrary() {
-        const query = document.getElementById('libSearch').value.toLowerCase();
+        const q = document.getElementById('libSearch').value.toLowerCase();
         const list = document.getElementById('libraryList');
         list.innerHTML = "";
-        library.filter(i => i.name.toLowerCase().includes(query)).forEach(item => {
+        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
             list.innerHTML += `
                 <div class="lib-card">
-                    <div class="lib-info">
-                        <b>${item.name}</b>
-                        <small>Б:${item.p} Ж:${item.f} К:${item.k}</small>
-                    </div>
+                    <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
                     <div class="lib-actions">
-                        <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">＋</button>
+                        <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
                         <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
                         <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
                     </div>
@@ -221,121 +205,100 @@
             if(l.date === today) { totals.k += Number(l.k); totals.p += Number(l.p); totals.f += Number(l.f); totals.c += Number(l.c); }
         });
 
-        // Обновляем прогресс-бары в шапке
-        const updateHeader = (idCur, idBar, cur, idGoal) => {
-            const goal = parseFloat(document.getElementById(idGoal).value) || 1;
-            document.getElementById(idCur).innerText = Math.round(cur);
-            document.getElementById(idBar).style.width = Math.min((cur/goal)*100, 100) + "%";
-            document.getElementById(idBar).style.background = cur > goal ? "var(--danger)" : "var(--accent)";
+        // Прогресс шапки
+        const up = (idC, idB, cur, idG) => {
+            const g = parseFloat(document.getElementById(idG).value) || 1;
+            document.getElementById(idC).innerText = Math.round(cur);
+            document.getElementById(idB).style.width = Math.min((cur/g)*100, 100) + "%";
+            document.getElementById(idB).style.background = cur > g ? "var(--danger)" : "var(--accent)";
         };
-        updateHeader('curK', 'barK', totals.k, 'goalK');
-        updateHeader('curP', 'barP', totals.p, 'goalP');
-        updateHeader('curF', 'barF', totals.f, 'goalF');
-        updateHeader('curC', 'barC', totals.c, 'goalC');
+        up('curK', 'barK', totals.k, 'goalK'); up('curP', 'barP', totals.p, 'goalP');
+        up('curF', 'barF', totals.f, 'goalF'); up('curC', 'barC', totals.c, 'goalC');
 
-        let finalHtml = "";
+        let html = "";
         for (const date in groups) {
-            const isToday = (date === today);
-            const sumData = summaries[date];
-            
-            // Формируем строку итога для заголовка
-            let briefStats = "";
-            if (sumData) {
-                briefStats = `<div class="day-stats-brief">
-                    ${Math.round(sumData.totals.k)} ккал | Жир: ${sumData.fatChange > 0 ? '+'+sumData.fatChange : sumData.fatChange}г | ${sumData.muscleStatus}
+            const isToday = date === today;
+            const s = summaries[date];
+            let brief = "";
+            if (s) {
+                brief = `<div class="day-stats-brief">
+                    <span>${Math.round(s.totals.k)}ккал</span>
+                    <span>Б:${Math.round(s.totals.p)} Ж:${Math.round(s.totals.f)} У:${Math.round(s.totals.c)}</span>
+                    <span style="color:${s.fatChange <= 0 ? 'var(--accent)' : 'var(--danger)'}">${s.fatChange > 0 ? '+' : ''}${s.fatChange}г жира</span>
+                    <span>${s.muscleStatus}</span>
                 </div>`;
-            } else if (isToday) {
-                briefStats = `<div class="day-stats-brief">${Math.round(totals.k)} ккал (в процессе)</div>`;
-            }
+            } else if (isToday) { brief = `<div class="day-stats-brief">${Math.round(totals.k)} ккал | В процессе...</div>`; }
 
-            finalHtml += `
+            html += `
                 <div class="day-block">
-                    <div class="day-header ${isToday ? 'active' : ''}" onclick="toggleDay('${date}')">
-                        <div class="day-info">
-                            <span style="font-weight:bold; color:${isToday ? 'var(--blue)' : '#fff'}">📅 ${isToday ? 'СЕГОДНЯ' : date}</span>
-                            ${briefStats}
-                        </div>
-                        <span>${isToday ? '▼' : '▶'}</span>
+                    <div class="day-header" onclick="toggleDay('${date}')">
+                        <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?'СЕГОДНЯ':date}</b>${brief}</div>
+                        <span style="font-size:10px">${isToday?'▼':'▶'}</span>
                     </div>
-                    <div id="list-${date}" class="eat-list ${!isToday ? 'collapsed' : ''}">
-                        ${groups[date].map(item => `
+                    <div id="list-${date}" class="eat-list ${!isToday?'collapsed':''}">
+                        ${groups[date].map(i => `
                             <div class="eat-card">
-                                <div style="overflow:hidden; flex:1;">
-                                    <b style="color:#fff; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</b>
-                                    <small>${item.w}${typeof item.w==='number'?'г':''} | Б:${item.p} Ж:${item.f} К:${item.k}</small>
-                                </div>
-                                <button class="del-btn" onclick="deleteLog('${item.id}')">×</button>
+                                <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
+                                <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
                             </div>
                         `).join('')}
                     </div>
                 </div>`;
         }
-        container.innerHTML = finalHtml;
+        container.innerHTML = html;
     }
 
-    // --- УПРАВЛЕНИЕ ВИДОМ ---
-    function toggleDay(date) {
-        const list = document.getElementById(`list-${date}`);
-        list.classList.toggle('collapsed');
-    }
-
-    function closeSummary() {
-        document.getElementById('summaryDisplay').style.display = 'none';
-        // Сворачиваем сегодняшний список после закрытия отчета
-        const today = new Date().toLocaleDateString('ru-RU');
-        const todayList = document.getElementById(`list-${today}`);
+    function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
+    function closeSummary() { 
+        document.getElementById('summaryDisplay').style.display = 'none'; 
+        const todayList = document.getElementById(`list-${new Date().toLocaleDateString('ru-RU')}`);
         if(todayList) todayList.classList.add('collapsed');
     }
 
-    // --- ЛОГИКА ИТОГОВ ---
     async function finishDay() {
-        const goalK = parseFloat(document.getElementById('goalK').value) || 2300;
-        const goalP = parseFloat(document.getElementById('goalP').value) || 170;
-        const diff = goalK - totals.k;
-        const fatChange = (diff / 7.7).toFixed(1);
+        const gK = parseFloat(document.getElementById('goalK').value) || 2300;
+        const gP = parseFloat(document.getElementById('goalP').value) || 170;
         
-        let mStat = "ПОДДЕРЖКА";
-        if (totals.p >= goalP) { mStat = (totals.k >= (goalK - 200)) ? "РОСТ 💪" : "УДЕРЖАНИЕ"; }
+        // ФИКС ФОРМУЛЫ: Дефицит = съеденное минус цель. 2200 - 2300 = -100ккал.
+        const kcalDiff = totals.k - gK; 
+        const fatChange = (kcalDiff / 7.7).toFixed(1); // Отрицательно = худеем
+        
+        let mStat = "УДЕРЖАНИЕ";
+        if (totals.p >= gP) { mStat = (totals.k >= (gK - 200)) ? "РОСТ 💪" : "СОХРАНЕНИЕ"; }
         else { mStat = "УБЫЛЬ ⚠️"; }
 
-        // Показ окна
-        document.getElementById('fatResult').innerText = (fatChange >= 0 ? "-" : "+") + Math.abs(fatChange) + "г";
-        document.getElementById('fatResult').style.color = fatChange >= 0 ? "var(--accent)" : "var(--danger)";
+        document.getElementById('fatResult').innerText = (fatChange > 0 ? "+" : "") + fatChange + "г";
+        document.getElementById('fatResult').style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
+        document.getElementById('fatDesc').innerText = fatChange <= 0 ? "Жира сожжено" : "Жир в запас";
         document.getElementById('muscleResult').innerText = mStat;
         document.getElementById('summaryDisplay').style.display = 'block';
         window.scrollTo({top: 0, behavior: 'smooth'});
 
-        // Сохранение итогов в отдельную коллекцию навсегда
         await db.collection("daily_summaries").doc(new Date().toLocaleDateString('ru-RU')).set({
             date: new Date().toLocaleDateString('ru-RU'),
-            totals: totals,
-            fatChange: -fatChange, // сохраняем как изменение веса
+            totals: {...totals},
+            fatChange: fatChange,
             muscleStatus: mStat,
             ts: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
 
-    // Вспомогательные функции
+    // Вспомогательные
     async function addToDay(id) {
         const p = library.find(x => x.id === id);
-        let w = p.isPortion ? "порция" : prompt("Сколько грамм?", "100");
+        let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
         if (!w) return;
-        let finalData = { ...p, w: w === "порция" ? w : parseFloat(w) };
-        if (!p.isPortion) {
-            const r = parseFloat(w) / 100;
-            finalData.p = +(p.p*r).toFixed(1); finalData.f = +(p.f*r).toFixed(1); finalData.c = +(p.c*r).toFixed(1); finalData.k = +(p.k*r).toFixed(0);
-        }
-        delete finalData.id;
-        await db.collection("day_logs").add({ ...finalData, date: new Date().toLocaleDateString('ru-RU'), ts: firebase.firestore.FieldValue.serverTimestamp() });
+        let d = { ...p, w: w === "порция" ? w : parseFloat(w) };
+        if (!p.isPortion) { const r = parseFloat(w)/100; d.p=+(p.p*r).toFixed(1); d.f=+(p.f*r).toFixed(1); d.c=+(p.c*r).toFixed(1); d.k=+(p.k*r).toFixed(0); }
+        delete d.id; await db.collection("day_logs").add({ ...d, date: new Date().toLocaleDateString('ru-RU'), ts: firebase.firestore.FieldValue.serverTimestamp() });
     }
-    async function deleteLog(id) { if(confirm("Удалить запись?")) await db.collection("day_logs").doc(id).delete(); }
+    async function deleteLog(id) { if(confirm("Удалить?")) await db.collection("day_logs").doc(id).delete(); }
     async function deleteFromLib(id) { if(confirm("Удалить из базы?")) await db.collection("food_library").doc(id).delete(); }
     function editProduct(id) {
-        const item = library.find(x => x.id === id);
-        document.getElementById('pName').value = item.name;
-        document.getElementById('pP').value = item.p; document.getElementById('pF').value = item.f;
-        document.getElementById('pC').value = item.c; document.getElementById('pK').value = item.k;
-        document.getElementById('pIsPortion').checked = item.isPortion;
+        const i = library.find(x => x.id === id);
+        document.getElementById('pName').value = i.name; document.getElementById('pP').value = i.p;
+        document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
+        document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
         editId = id; document.getElementById('saveBtn').innerText = "ОБНОВИТЬ"; document.getElementById('cancelBtn').style.display = "block";
     }
 </script>
