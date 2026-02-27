@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v2.8</title>
+    <title>Pro Nutri Tracker v2.9</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --accent: #238636; --blue: #58a6ff; --text: #c9d1d9; --border: #30363d; --danger: #f85149; --gold: #f1c40f; }
+        :root { --bg: #0d1117; --card: #161b22; --accent: #238636; --blue: #58a6ff; --text: #c9d1d9; --border: #30363d; --danger: #f85149; --gold: #f1c40f; --grey-text: #8b949e; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 380px 1fr; gap: 20px; width: 100%; }
@@ -14,51 +14,57 @@
         /* Шапка КБЖУ */
         .goals-header { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
         .goal-item { text-align: center; }
-        .goal-label-row { display: flex; justify-content: center; align-items: baseline; gap: 5px; margin-bottom: 5px; font-size: 11px; font-weight: bold; color: #8b949e; }
+        .goal-label-row { display: flex; justify-content: center; align-items: baseline; gap: 5px; margin-bottom: 5px; font-size: 11px; font-weight: bold; color: var(--grey-text); }
         .current-val { font-size: 16px; color: var(--blue); }
-        .current-val.overlimit { color: var(--danger); }
         .goal-item input { width: 100%; max-width: 80px; text-align: center; font-weight: bold; background: #0d1117; border: 1px solid var(--border); color: #fff; border-radius: 4px; padding: 4px; font-size: 13px; margin-top: 5px; }
         .progress-mini { height: 6px; background: #30363d; border-radius: 3px; margin-top: 10px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; }
+        .progress-fill { height: 100%; background: var(--accent); transition: 0.3s; width: 0%; }
 
-        /* Отчет дня */
-        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; z-index: 100; position: relative; }
+        /* Отчет */
+        .summary-card { background: linear-gradient(145deg, #1c2128, #161b22); border: 2px solid var(--gold); border-radius: 12px; padding: 20px; margin-bottom: 20px; display: none; }
         .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; }
         .stat-box { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
         .stat-box big { display: block; font-size: 24px; font-weight: bold; margin: 5px 0; }
 
-        /* Панель управления */
+        /* Панель */
         .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; height: fit-content; position: sticky; top: 15px; }
         .main-input { width: 100%; background: #0d1117; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 14px; }
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
         .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px; }
         
-        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-add { background: var(--accent); color: white; }
         .btn-finish { background: var(--gold); color: #000; margin-top: 20px; font-size: 14px; }
-        .btn-finish:hover { transform: scale(1.02); }
 
-        /* Библиотека и Кнопки (Фикс съезжания) */
-        .lib-list { margin-top: 15px; max-height: 450px; overflow-y: auto; padding-right: 5px; }
+        /* Библиотека */
+        .lib-list { margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
         .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .lib-info { overflow: hidden; flex: 1; }
-        .lib-info b { color: #fff; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
-        .lib-actions { display: flex; gap: 4px; flex-shrink: 0; align-items: center; }
-        .btn-sm { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; transition: 0.2s; }
-        .btn-sm:hover { opacity: 0.8; }
+        .lib-actions { display: flex; gap: 4px; }
+        .btn-sm { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; }
 
-        /* Дневник */
+        /* История (Фикс дизайна заголовка) */
         .day-block { margin-bottom: 15px; background: #161b22; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
-        .day-header { 
-            background: #1c2128; padding: 12px 15px; cursor: pointer; 
-            display: flex; justify-content: space-between; align-items: center;
+        .day-header { background: #1c2128; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .day-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        
+        /* Стилизация КБЖУ в заголовке */
+        .day-stats-brief { 
+            font-size: 11px; 
+            color: #eee; 
+            background: #2d333b; /* Темно-серый фон для контраста с синей датой */
+            padding: 3px 10px; 
+            border-radius: 6px; 
+            display: flex; 
+            gap: 10px;
+            border: 1px solid var(--border);
         }
-        .day-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .day-stats-brief { font-size: 11px; color: var(--blue); background: #0d1117; padding: 4px 12px; border-radius: 15px; border: 1px solid var(--border); display: flex; gap: 8px; }
+        .stat-val-pos { color: var(--danger); }
+        .stat-val-neg { color: #56d364; }
+
         .eat-list { padding: 10px; display: block; }
         .eat-list.collapsed { display: none; }
         .eat-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
-        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; }
+        .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; }
 
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .goals-header { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -71,18 +77,18 @@
         <div class="stat-box">
             <small>ИЗМЕНЕНИЕ ЖИРА</small>
             <big id="fatResult">0г</big>
-            <span id="fatDesc" style="font-size: 11px; color: #8b949e;"></span>
+            <span id="fatDesc" style="font-size: 11px; color: var(--grey-text);"></span>
         </div>
         <div class="stat-box">
             <small>СТАТУС МЫШЦ</small>
             <big id="muscleResult" style="font-size: 18px;">—</big>
-            <span id="muscleDesc" style="font-size: 11px; color: #8b949e;"></span>
+            <span id="muscleDesc" style="font-size: 11px; color: var(--grey-text);"></span>
         </div>
     </div>
     <button class="btn" style="background:none; color:var(--blue); margin-top:15px;" onclick="closeSummary()">Закрыть отчет</button>
 </div>
 
-<div class="goals-header">
+<div class="goals-header" id="mainHeader">
     <div class="goal-item">
         <div class="goal-label-row">ККАЛ <span id="curK" class="current-val">0</span></div>
         <input type="number" id="goalK" value="2300" oninput="renderHistory()">
@@ -147,6 +153,7 @@
     let summaries = {};
     let totals = { k:0, p:0, f:0, c:0 };
     let editId = null;
+    let isDayFinished = false; // Флаг завершения дня
 
     // --- БАЗА ---
     async function saveToLib() {
@@ -181,15 +188,14 @@
         const list = document.getElementById('libraryList');
         list.innerHTML = "";
         library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
-            list.innerHTML += `
-                <div class="lib-card">
-                    <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
-                    <div class="lib-actions">
-                        <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
-                        <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
-                        <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
-                    </div>
-                </div>`;
+            list.innerHTML += `<div class="lib-card">
+                <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
+                <div class="lib-actions">
+                    <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
+                    <button class="btn-sm" onclick="editProduct('${item.id}')">✏️</button>
+                    <button class="btn-sm" style="background:var(--danger)" onclick="deleteFromLib('${item.id}')">🗑️</button>
+                </div>
+            </div>`;
         });
     }
 
@@ -205,15 +211,20 @@
             if(l.date === today) { totals.k += Number(l.k); totals.p += Number(l.p); totals.f += Number(l.f); totals.c += Number(l.c); }
         });
 
-        // Прогресс шапки
+        // ОБНУЛЯЕМ ШАПКУ ЕСЛИ ДЕНЬ ЗАКОНЧЕН, ИНАЧЕ ПОКАЗЫВАЕМ СТАТУ
+        const displayK = isDayFinished ? 0 : totals.k;
+        const displayP = isDayFinished ? 0 : totals.p;
+        const displayF = isDayFinished ? 0 : totals.f;
+        const displayC = isDayFinished ? 0 : totals.c;
+
         const up = (idC, idB, cur, idG) => {
             const g = parseFloat(document.getElementById(idG).value) || 1;
             document.getElementById(idC).innerText = Math.round(cur);
             document.getElementById(idB).style.width = Math.min((cur/g)*100, 100) + "%";
             document.getElementById(idB).style.background = cur > g ? "var(--danger)" : "var(--accent)";
         };
-        up('curK', 'barK', totals.k, 'goalK'); up('curP', 'barP', totals.p, 'goalP');
-        up('curF', 'barF', totals.f, 'goalF'); up('curC', 'barC', totals.c, 'goalC');
+        up('curK', 'barK', displayK, 'goalK'); up('curP', 'barP', displayP, 'goalP');
+        up('curF', 'barF', displayF, 'goalF'); up('curC', 'barC', displayC, 'goalC');
 
         let html = "";
         for (const date in groups) {
@@ -221,47 +232,47 @@
             const s = summaries[date];
             let brief = "";
             if (s) {
+                const fatClass = s.fatChange <= 0 ? 'stat-val-neg' : 'stat-val-pos';
                 brief = `<div class="day-stats-brief">
-                    <span>${Math.round(s.totals.k)}ккал</span>
+                    <span><b>${Math.round(s.totals.k)}</b> ккал</span>
                     <span>Б:${Math.round(s.totals.p)} Ж:${Math.round(s.totals.f)} У:${Math.round(s.totals.c)}</span>
-                    <span style="color:${s.fatChange <= 0 ? 'var(--accent)' : 'var(--danger)'}">${s.fatChange > 0 ? '+' : ''}${s.fatChange}г жира</span>
+                    <span class="${fatClass}">${s.fatChange > 0 ? '+' : ''}${s.fatChange}г жира</span>
                     <span>${s.muscleStatus}</span>
                 </div>`;
-            } else if (isToday) { brief = `<div class="day-stats-brief">${Math.round(totals.k)} ккал | В процессе...</div>`; }
+            } else if (isToday) { brief = `<div class="day-stats-brief">В процессе...</div>`; }
 
-            html += `
-                <div class="day-block">
-                    <div class="day-header" onclick="toggleDay('${date}')">
-                        <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?'СЕГОДНЯ':date}</b>${brief}</div>
-                        <span style="font-size:10px">${isToday?'▼':'▶'}</span>
-                    </div>
-                    <div id="list-${date}" class="eat-list ${!isToday?'collapsed':''}">
-                        ${groups[date].map(i => `
-                            <div class="eat-card">
-                                <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
-                                <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>`;
+            html += `<div class="day-block">
+                <div class="day-header" onclick="toggleDay('${date}')">
+                    <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?'СЕГОДНЯ':date}</b>${brief}</div>
+                    <span style="font-size:10px">${isToday?'▼':'▶'}</span>
+                </div>
+                <div id="list-${date}" class="eat-list ${!isToday?'collapsed':''}">
+                    ${groups[date].map(i => `
+                        <div class="eat-card">
+                            <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
+                            <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
+                        </div>`).join('')}
+                </div>
+            </div>`;
         }
         container.innerHTML = html;
     }
 
     function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
+
     function closeSummary() { 
         document.getElementById('summaryDisplay').style.display = 'none'; 
-        const todayList = document.getElementById(`list-${new Date().toLocaleDateString('ru-RU')}`);
+        const today = new Date().toLocaleDateString('ru-RU');
+        const todayList = document.getElementById(`list-${today}`);
         if(todayList) todayList.classList.add('collapsed');
+        // После закрытия отчета оставляем шапку обнуленной
     }
 
     async function finishDay() {
         const gK = parseFloat(document.getElementById('goalK').value) || 2300;
         const gP = parseFloat(document.getElementById('goalP').value) || 170;
-        
-        // ФИКС ФОРМУЛЫ: Дефицит = съеденное минус цель. 2200 - 2300 = -100ккал.
         const kcalDiff = totals.k - gK; 
-        const fatChange = (kcalDiff / 7.7).toFixed(1); // Отрицательно = худеем
+        const fatChange = (kcalDiff / 7.7).toFixed(1); 
         
         let mStat = "УДЕРЖАНИЕ";
         if (totals.p >= gP) { mStat = (totals.k >= (gK - 200)) ? "РОСТ 💪" : "СОХРАНЕНИЕ"; }
@@ -271,6 +282,10 @@
         document.getElementById('fatResult').style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
         document.getElementById('fatDesc').innerText = fatChange <= 0 ? "Жира сожжено" : "Жир в запас";
         document.getElementById('muscleResult').innerText = mStat;
+        
+        isDayFinished = true; // Сеттим флаг обнуления шапки
+        renderHistory(); // Перерисовываем с нулями вверху
+
         document.getElementById('summaryDisplay').style.display = 'block';
         window.scrollTo({top: 0, behavior: 'smooth'});
 
@@ -283,8 +298,9 @@
         });
     }
 
-    // Вспомогательные
+    // Служебные
     async function addToDay(id) {
+        isDayFinished = false; // Если добавили еду — день снова "в процессе"
         const p = library.find(x => x.id === id);
         let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
         if (!w) return;
