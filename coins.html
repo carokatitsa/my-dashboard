@@ -2,23 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Pro + Advanced Filters</title>
+    <title>Coin Archive Pro + Sales Analytics</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0a0a0a; --card: #161616; --gold: #f1c40f; --text: #e0e0e0; --blue: #3498db; --green: #2ecc71; }
+        :root { --bg: #0a0a0a; --card: #161616; --gold: #f1c40f; --text: #e0e0e0; --blue: #3498db; --green: #2ecc71; --red: #e74c3c; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
+        /* Статистика */
+        .stats-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .stat-card b { display: block; font-size: 24px; color: var(--gold); }
+        .stat-card span { font-size: 12px; color: #888; text-transform: uppercase; }
+
         .admin-panel { background: var(--card); padding: 20px; border-radius: 12px; border: 2px solid #333; margin-bottom: 20px; position: sticky; top: 10px; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .inputs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         input, textarea, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; font-size: 14px; }
         
-        /* Панель фильтров */
         .filter-bar { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid #333; }
         .search-input { border: 1px solid var(--gold) !important; }
         .filter-select { border: 1px solid var(--blue) !important; cursor: pointer; }
-        .status-select-filter { border: 1px solid var(--green) !important; }
 
         .btn-main { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; font-size: 16px; transition: 0.3s; }
         .btn-main.edit-mode { background: var(--blue); color: #fff; }
@@ -38,16 +42,32 @@
 
         .card-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .btn-card { padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 12px; background: #222; color: #fff; }
-        .btn-del { background: #c0392b; position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 50%; z-index: 5; line-height: 30px; text-align: center; }
+        .btn-del { background: var(--red); position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 50%; z-index: 5; line-height: 30px; text-align: center; }
+        
+        .sale-badge { background: rgba(46, 204, 113, 0.1); border: 1px dashed var(--green); padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="stats-panel" id="statsPanel" style="display: none;">
+        <div class="stat-card">
+            <span id="statTitle">Всего выручка</span>
+            <b id="totalRevenue">0</b>
+        </div>
+        <div class="stat-card">
+            <span>Продано штук</span>
+            <b id="totalSoldQty">0</b>
+        </div>
+        <div class="stat-box-small" style="display: flex; flex-direction: column; justify-content: center;">
+            <div style="text-align: center;">Средний чек: <span id="avgCheck" style="color: var(--blue); font-weight: bold;">0</span></div>
+        </div>
+    </div>
+
     <div class="admin-panel">
         <div class="inputs-row">
             <input type="text" id="cNum" placeholder="Номер (напр. 102)">
-            <input type="text" id="cPrice" placeholder="Цена (напр. 500 $)">
+            <input type="text" id="cPrice" placeholder="Базовая цена (напр. 500)">
             <select id="cStatus">
                 <option value="В наличии">В наличии</option>
                 <option value="Продано">Продано</option>
@@ -69,7 +89,7 @@
                 <option value="alpha">По алфавиту (А-Я)</option>
             </select>
 
-            <select id="filterStatus" class="filter-select status-select-filter" onchange="render()">
+            <select id="filterStatus" class="filter-select" onchange="render()">
                 <option value="all">Все статусы</option>
                 <option value="В наличии">В наличии</option>
                 <option value="Продано">Продано</option>
@@ -109,11 +129,6 @@
 
         if(!data.num || data.imgs.length === 0) return alert("Заполни номер и фото!");
 
-        if(!currentEditId) {
-            const isDuplicate = allCoinsData.some(c => c.num === data.num);
-            if(isDuplicate) return alert("Ошибка! Номер " + data.num + " уже есть в базе.");
-        }
-
         if(currentEditId) {
             await db.collection("my_coins").doc(currentEditId).update(data);
             currentEditId = null;
@@ -121,6 +136,130 @@
             await db.collection("my_coins").add(data);
         }
         resetForm();
+    }
+
+    db.collection("my_coins").orderBy("lastUpdate", "desc").onSnapshot(snap => {
+        allCoinsData = snap.docs.map(d => ({id: d.id, ...d.data()}));
+        render();
+    });
+
+    function render() {
+        const grid = document.getElementById('coinGrid');
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const sortBy = document.getElementById('sortSelect').value;
+        const filterStatus = document.getElementById('filterStatus').value;
+        
+        grid.innerHTML = "";
+
+        // Показываем статистику только если выбран фильтр "Продано"
+        const statsPanel = document.getElementById('statsPanel');
+        if(filterStatus === "Продано") {
+            statsPanel.style.display = "grid";
+            updateStats(allCoinsData.filter(c => c.status === "Продано"));
+        } else {
+            statsPanel.style.display = "none";
+        }
+
+        let filteredData = [...allCoinsData];
+
+        if(filterStatus !== "all") {
+            filteredData = filteredData.filter(coin => coin.status === filterStatus);
+        }
+
+        if(query) {
+            filteredData = filteredData.filter(coin => {
+                return `${coin.num} ${coin.desc} ${coin.price}`.toLowerCase().includes(query);
+            });
+        }
+
+        filteredData.sort((a, b) => {
+            const numA = parseInt(a.num.replace(/\D/g, '')) || 0;
+            const numB = parseInt(b.num.replace(/\D/g, '')) || 0;
+            if (sortBy === 'numAsc') return numA - numB;
+            if (sortBy === 'numDesc') return numB - numA;
+            if (sortBy === 'alpha') return (a.desc || "").localeCompare(b.desc || "");
+            return 0;
+        });
+
+        filteredData.forEach(coin => {
+            const photos = coin.imgs || [];
+            let galleryHtml = photos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
+            
+            let saleInfoHtml = "";
+            if(coin.status === "Продано" && coin.saleTotal) {
+                saleInfoHtml = `
+                    <div class="sale-badge">
+                        💰 Продано: <b>${coin.saleTotal}</b> (${coin.saleQty} шт. по ${coin.salePrice})
+                    </div>
+                `;
+            }
+
+            grid.innerHTML += `
+                <div class="coin-card">
+                    <button class="btn-card btn-del" onclick="deleteCoin('${coin.id}')">✕</button>
+                    <div class="coin-gallery">${galleryHtml}</div>
+                    <div class="coin-info">
+                        <div class="coin-title-row">
+                            <span class="coin-id"># ${coin.num}</span>
+                            <span class="coin-price">${coin.price}</span>
+                        </div>
+                        <div style="color:${coin.status === 'Продано' ? 'var(--red)' : 'var(--green)'}; font-weight:bold;">
+                            ${coin.status}
+                        </div>
+                        ${saleInfoHtml}
+                        <div class="coin-desc" style="margin-top:10px">${coin.desc}</div>
+                        <div class="card-btns">
+                            <button class="btn-card" onclick="editCoin('${coin.id}')">ИЗМЕНИТЬ</button>
+                            <button class="btn-card" onclick="toggleQuickStatus('${coin.id}', '${coin.status}', '${coin.price}')">СТАТУС</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function updateStats(soldCoins) {
+        let totalRev = 0;
+        let totalQty = 0;
+
+        soldCoins.forEach(c => {
+            totalRev += parseFloat(c.saleTotal || 0);
+            totalQty += parseInt(c.saleQty || 0);
+        });
+
+        document.getElementById('totalRevenue').innerText = totalRev.toFixed(2);
+        document.getElementById('totalSoldQty').innerText = totalQty;
+        document.getElementById('avgCheck').innerText = totalQty > 0 ? (totalRev / totalQty).toFixed(2) : 0;
+    }
+
+    async function toggleQuickStatus(id, stat, currentPrice) {
+        if (stat === 'В наличии') {
+            // Переход в "Продано" — запрашиваем данные
+            const qty = prompt("Сколько штук продано?", "1");
+            if (qty === null) return;
+            
+            const pricePerOne = prompt("Цена за 1 шт?", currentPrice.replace(/\D/g, ''));
+            if (pricePerOne === null) return;
+
+            const total = parseFloat(qty) * parseFloat(pricePerOne);
+
+            await db.collection("my_coins").doc(id).update({
+                status: 'Продано',
+                saleQty: qty,
+                salePrice: pricePerOne,
+                saleTotal: total
+            });
+        } else {
+            // Возврат в "В наличии" — сброс данных о продаже
+            if(confirm("Вернуть монету в наличие? Данные о продаже будут удалены.")) {
+                await db.collection("my_coins").doc(id).update({
+                    status: 'В наличии',
+                    saleQty: firebase.firestore.FieldValue.delete(),
+                    salePrice: firebase.firestore.FieldValue.delete(),
+                    saleTotal: firebase.firestore.FieldValue.delete()
+                });
+            }
+        }
     }
 
     function editCoin(id) {
@@ -143,76 +282,6 @@
         document.getElementById('mainBtn').innerText = "ДОБАВИТЬ В БАЗУ";
         document.getElementById('mainBtn').classList.remove('edit-mode');
         document.getElementById('cancelBtn').style.display = "none";
-    }
-
-    db.collection("my_coins").orderBy("lastUpdate", "desc").onSnapshot(snap => {
-        allCoinsData = snap.docs.map(d => ({id: d.id, ...d.data()}));
-        render();
-    });
-
-    function render() {
-        const grid = document.getElementById('coinGrid');
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const sortBy = document.getElementById('sortSelect').value;
-        const filterStatus = document.getElementById('filterStatus').value;
-        
-        grid.innerHTML = "";
-
-        let filteredData = [...allCoinsData];
-
-        // 1. Фильтр по статусу
-        if(filterStatus !== "all") {
-            filteredData = filteredData.filter(coin => coin.status === filterStatus);
-        }
-
-        // 2. Фильтр по поиску
-        if(query) {
-            filteredData = filteredData.filter(coin => {
-                return `${coin.num} ${coin.desc} ${coin.price}`.toLowerCase().includes(query);
-            });
-        }
-
-        // 3. Сортировка
-        filteredData.sort((a, b) => {
-            const numA = parseInt(a.num.replace(/\D/g, '')) || 0;
-            const numB = parseInt(b.num.replace(/\D/g, '')) || 0;
-
-            if (sortBy === 'numAsc') return numA - numB;
-            if (sortBy === 'numDesc') return numB - numA;
-            if (sortBy === 'alpha') return a.desc.localeCompare(b.desc);
-            return 0; // lastUpdate оставляем как есть из базы
-        });
-
-        filteredData.forEach(coin => {
-            const photos = coin.imgs || [];
-            let galleryHtml = photos.map(url => `<img src="${url}" onclick="window.open('${url}')">`).join('');
-
-            grid.innerHTML += `
-                <div class="coin-card">
-                    <button class="btn-card btn-del" onclick="deleteCoin('${coin.id}')">✕</button>
-                    <div class="coin-gallery">${galleryHtml}</div>
-                    <div class="coin-info">
-                        <div class="coin-title-row">
-                            <span class="coin-id"># ${coin.num}</span>
-                            <span class="coin-price">${coin.price}</span>
-                        </div>
-                        <div style="color:${coin.status === 'Продано' ? '#e74c3c' : '#2ecc71'}; font-weight:bold; margin-bottom:10px;">
-                            ${coin.status}
-                        </div>
-                        <div class="coin-desc">${coin.desc}</div>
-                        <div class="card-btns">
-                            <button class="btn-card" onclick="editCoin('${coin.id}')">ИЗМЕНИТЬ</button>
-                            <button class="btn-card" onclick="toggleQuickStatus('${coin.id}', '${coin.status}')">СТАТУС</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
-    async function toggleQuickStatus(id, stat) {
-        const next = stat === 'В наличии' ? 'Продано' : 'В наличии';
-        await db.collection("my_coins").doc(id).update({status: next});
     }
 
     async function deleteCoin(id) {
