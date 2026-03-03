@@ -2,72 +2,72 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Power Log AI v2.0</title>
+    <title>Power Log AI v2.5</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f1c40f; --text: #c9d1d9; --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica; padding: 15px; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
         
-        /* Стили карточек */
-        .workout-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; }
+        .workout-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         
-        input, select { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+        input:focus { border-color: var(--gold); outline: none; }
         
-        .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; margin-bottom: 8px; align-items: center; }
-        .btn-add-set { background: none; border: 1px dashed var(--blue); color: var(--blue); padding: 8px; cursor: pointer; width: 100%; border-radius: 6px; margin-bottom: 15px; }
+        .set-row { display: grid; grid-template-columns: 1fr 1fr 45px; gap: 10px; margin-bottom: 12px; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-add-set { background: rgba(88, 166, 255, 0.1); border: 1px dashed var(--blue); color: var(--blue); padding: 10px; cursor: pointer; width: 100%; border-radius: 8px; margin-bottom: 20px; transition: 0.3s; }
+        .btn-add-set:hover { background: rgba(88, 166, 255, 0.2); }
         
-        .btn-save { background: var(--green); color: #fff; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; }
+        .btn-save { background: var(--green); color: #fff; border: none; padding: 18px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.3s; box-shadow: 0 4px 14px rgba(35, 134, 54, 0.4); }
+        .btn-save:hover { filter: brightness(1.2); transform: translateY(-2px); }
         
-        /* Аналитика */
-        .ai-card { background: rgba(88, 166, 255, 0.1); border: 1px solid var(--blue); padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
-        .advice-up { color: var(--green); font-weight: bold; }
-        
-        .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; margin-top: 15px; }
-        .ex-tag { background: #21262d; padding: 4px 8px; border-radius: 4px; font-size: 12px; border: 1px solid var(--border); }
+        .ai-card { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; margin-top: 20px; display: none; }
+        .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-top: 10px; }
+        .drop-label { color: var(--red); font-size: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center">🏋️ AI Тренировка</h2>
+    <h2 style="text-align:center">🏋️ AI ТРЕНИРОВКА v2.5</h2>
 
     <div class="workout-box">
-        <div class="input-group">
-            <label>Упражнение</label>
-            <input type="text" id="exName" placeholder="Напр: Жим лежа" list="exList">
-            <datalist id="exList">
-                <option value="Жим обычный">
-                <option value="Грудь в тренажере">
-                <option value="Жим в наклоне">
-                <option value="Брусья">
-                <option value="Трицепс кнут">
-            </datalist>
-        </div>
+        <label>Упражнение</label>
+        <input type="text" id="exName" placeholder="Напр: Жим обычный" list="exList">
+        <datalist id="exList">
+            <option value="Жим обычный">
+            <option value="Грудь на сиденьи">
+            <option value="Жим в наклоне">
+            <option value="Брусья">
+            <option value="Трицепс кнут">
+        </datalist>
 
-        <label>Подходы (Вес | Повторы)</label>
+        <label>Вес (кг) | Повторы</label>
         <div id="setsContainer">
             <div class="set-row">
                 <input type="number" class="set-w" placeholder="кг">
                 <input type="number" class="set-r" placeholder="раз">
-                <button style="color:var(--red); border:none; background:none;" onclick="this.parentElement.remove()">✕</button>
+                <button style="color:var(--red); border:none; background:none; cursor:pointer; font-size:20px;" onclick="this.parentElement.remove()">×</button>
             </div>
         </div>
+        
         <button class="btn-add-set" onclick="addSetField()">+ Добавить подход</button>
 
+        <button id="saveBtn" class="btn-save" onclick="saveExercise()">СОХРАНИТЬ УПРАЖНЕНИЕ</button>
+
         <div id="aiFeedback" class="ai-card"></div>
-        
-        <button class="btn-save" onclick="saveExercise()">СОХРАНИТЬ УПРАЖНЕНИЕ</button>
     </div>
 
-    <h3 style="color:var(--gold)">Прогресс за сегодня</h3>
+    <h3 style="color:var(--gold); margin-left: 10px;">Прогресс сегодня</h3>
     <div id="todayList"></div>
 </div>
 
 <script>
+    // ТВОИ НАСТРОЙКИ FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -79,93 +79,89 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    let lastWorkoutData = null;
-
     function addSetField() {
         const div = document.createElement('div');
         div.className = 'set-row';
         div.innerHTML = `
             <input type="number" class="set-w" placeholder="кг">
             <input type="number" class="set-r" placeholder="раз">
-            <button style="color:var(--red); border:none; background:none;" onclick="this.parentElement.remove()">✕</button>
+            <button style="color:var(--red); border:none; background:none; cursor:pointer; font-size:20px;" onclick="this.parentElement.remove()">×</button>
         `;
         document.getElementById('setsContainer').appendChild(div);
     }
 
     async function saveExercise() {
-        const name = document.getElementById('exName').value;
-        const weights = document.getElementsByClassName('set-w');
-        const reps = document.getElementsByClassName('set-r');
+        const name = document.getElementById('exName').value.trim();
+        const wInputs = document.getElementsByClassName('set-w');
+        const rInputs = document.getElementsByClassName('set-r');
         
         let sets = [];
-        let maxWeight = 0;
-
-        for(let i=0; i<weights.length; i++) {
-            if(weights[i].value) {
-                const w = parseFloat(weights[i].value);
-                const r = parseInt(reps[i].value);
-                sets.push({w, r});
-                if(w > maxWeight) maxWeight = w;
+        for(let i=0; i < wInputs.length; i++) {
+            const w = parseFloat(wInputs[i].value);
+            const r = parseInt(rInputs[i].value);
+            if(!isNaN(w) && !isNaN(r)) {
+                // Если текущий вес меньше предыдущего в этой же тренировке - это дропсет
+                let isDrop = (i > 0 && w < parseFloat(wInputs[i-1].value));
+                sets.push({w, r, isDrop});
             }
         }
 
-        if(!name || sets.length === 0) return alert("Заполни упражнение и подходы!");
+        if(!name || sets.length === 0) {
+            alert("Впиши название и хотя бы один подход!");
+            return;
+        }
 
         const today = new Date().toLocaleDateString('ru-RU');
         
-        // 1. Ищем историю этого упражнения для анализа
+        // Поиск истории для AI анализа
         const historySnap = await db.collection("gym_logs")
             .where("name", "==", name)
             .orderBy("ts", "desc")
             .limit(1)
             .get();
 
-        let advice = "Первая тренировка! Установим базу.";
+        let advice = "Первая запись. Сделаем это упражнение твоей коронкой!";
         if(!historySnap.empty) {
-            const last = historySnap.docs[0].data();
-            advice = analyzeProgress(sets, last.sets);
+            advice = analyzeProgress(sets, historySnap.docs[0].data().sets);
         }
 
-        // 2. Сохраняем
+        // Сохранение в базу
         await db.collection("gym_logs").add({
             name,
             sets,
-            maxWeight,
             date: today,
             ts: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 3. Показываем совет
+        // Вывод AI совета
         const fb = document.getElementById('aiFeedback');
         fb.style.display = "block";
-        fb.innerHTML = `🤖 <b>AI Анализ:</b> ${advice}`;
+        fb.innerHTML = `<span style="color:var(--gold)">🤖 AI ТРЕНЕР:</span><br><small>${advice}</small>`;
         
         loadToday();
-        alert("Упражнение записано!");
+        alert("Данные в базе, бро!");
     }
 
-    function analyzeProgress(currentSets, lastSets) {
-        const currentMax = Math.max(...currentSets.map(s => s.w));
-        const lastMax = Math.max(...lastSets.map(s => s.w));
-        
-        const currentTotalReps = currentSets.reduce((sum, s) => sum + s.r, 0);
-        const lastTotalReps = lastSets.reduce((sum, s) => sum + s.r, 0);
+    function analyzeProgress(curr, prev) {
+        const currMax = Math.max(...curr.map(s => s.w));
+        const prevMax = Math.max(...prev.map(s => s.w));
+        const hadDrop = curr.some(s => s.isDrop);
 
-        if (currentMax > lastMax) {
-            return `<span class="advice-up">МОЩНО! Ты поднял новый вес (${currentMax}кг). Закрепи его 2 тренировки.</span>`;
-        }
-        
-        if (currentMax === lastMax) {
-            const currentRepsAtMax = currentSets.filter(s => s.w === currentMax).reduce((sum, s) => sum + s.r, 0);
-            const lastRepsAtMax = lastSets.filter(s => s.w === lastMax).reduce((sum, s) => sum + s.r, 0);
+        let text = "";
 
-            if (currentRepsAtMax > lastRepsAtMax) {
-                return `<span class="advice-up">Прогресс! Сделал больше повторов. На следующей тренировке добавь +2.5 кг.</span>`;
-            }
-            return "Вес тот же. Попробуй накинуть 1-2 повторения в каждом подходе.";
+        if (currMax > prevMax) {
+            text = `КРАСАВА! Новый рекорд: ${currMax}кг. `;
+        } else if (currMax === prevMax) {
+            text = `Вес держишь. `;
+        } else {
+            text = `Сегодня работаем на технику. `;
         }
 
-        return "Вес ниже прошлого. Возможно, нужен отдых. Не форсируй.";
+        if(hadDrop) {
+            text += "Вижу дропсеты — это отлично! Ты выжимаешь мышцу до конца, это даст крутой памп и рост объема. ";
+        }
+
+        return text + "Продолжай в том же темпе!";
     }
 
     async function loadToday() {
@@ -181,8 +177,10 @@
             const d = doc.data();
             list.innerHTML += `
                 <div class="history-card">
-                    <b>${d.name}</b> <br>
-                    <small>${d.sets.map(s => `${s.w}x${s.r}`).join(' → ')}</small>
+                    <b style="color:var(--blue)">${d.name}</b><br>
+                    <div style="margin-top:5px; font-size:13px">
+                        ${d.sets.map(s => `<span>${s.w}кг × ${s.r} ${s.isDrop ? '<b style="color:var(--red)">DS</b>' : ''}</span>`).join(' → ')}
+                    </div>
                 </div>
             `;
         });
