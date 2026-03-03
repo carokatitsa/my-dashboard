@@ -3,74 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Coach v3.0</title>
-    
+    <title>Gym AI v3.1</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-
     <style>
         :root { --bg: #0d1117; --card: #161b22; --gold: #f1c40f; --text: #c9d1d9; --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; }
-        body { background: var(--bg); color: var(--text); font-family: -apple-system, system-ui, sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; }
-        
-        .workout-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 25px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { text-align: center; color: var(--gold); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
-        
-        label { display: block; font-size: 11px; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; }
-        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 16px; margin-bottom: 15px; }
-        input:focus { border-color: var(--gold); outline: none; }
-        
-        .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .set-row input { margin-bottom: 0; }
-        
-        .btn-add { background: rgba(88, 166, 255, 0.1); border: 1px dashed var(--blue); color: var(--blue); padding: 10px; cursor: pointer; width: 100%; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
-        .btn-save { background: var(--green); color: #fff; border: none; padding: 18px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.3s; }
-        .btn-save:disabled { background: #444; opacity: 0.7; }
-
-        .ai-feedback { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 10px; margin-top: 20px; display: none; font-size: 14px; }
-        
-        .history-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 15px; margin-top: 10px; }
-        .ds-badge { color: var(--red); font-weight: bold; font-size: 11px; margin-left: 5px; border: 1px solid var(--red); padding: 1px 4px; border-radius: 3px; }
-        .progress-title { color: var(--gold); margin-top: 40px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+        .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; margin-bottom: 10px; }
+        .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); }
+        .btn-save { background: var(--green); color: #fff; }
+        .item { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🏋️ AI ТРЕНИРОВКА</h2>
-
-    <div class="workout-box">
-        <label>Упражнение</label>
-        <input type="text" id="exName" placeholder="Напр: Жим обычный" list="exList">
-        <datalist id="exList">
-            <option value="Жим обычный">
-            <option value="Грудь на сиденьи">
-            <option value="Жим в наклоне">
-            <option value="Брусья">
-            <option value="Трицепс кнут">
-        </datalist>
-
-        <label>Вес (кг) | Повторы</label>
+    <h2 style="text-align:center; color:var(--gold)">🏋️ ТРЕНИРОВКА</h2>
+    <div class="box">
+        <input type="text" id="exName" placeholder="Упражнение (напр. Жим)">
         <div id="setsContainer">
             <div class="set-row">
                 <input type="number" class="set-w" placeholder="кг">
                 <input type="number" class="set-r" placeholder="раз">
-                <button style="color:var(--red); border:none; background:none; font-size:20px; cursor:pointer;" onclick="this.parentElement.remove()">×</button>
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--red);">✕</button>
             </div>
         </div>
-        
-        <button class="btn-add" onclick="addSetField()">+ ДОБАВИТЬ ПОДХОД</button>
-        <button id="saveBtn" class="btn-save" onclick="saveExercise()">СОХРАНИТЬ УПРАЖНЕНИЕ</button>
-
-        <div id="aiFeedback" class="ai-feedback"></div>
+        <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
+        <button id="saveBtn" class="btn btn-save" onclick="saveData()">СОХРАНИТЬ</button>
     </div>
-
-    <h3 class="progress-title">Сегодняшний прогресс</h3>
-    <div id="todayList"></div>
+    <div id="list"></div>
 </div>
 
 <script>
-    // ТВОИ КЛЮЧИ FIREBASE
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -80,147 +48,58 @@
         appId: "1:710702954120:web:90e5e9a158f31d9728913d"
     };
 
-    // Инициализация
-    if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-    }
+    firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    function addSetField() {
+    function addSet() {
         const div = document.createElement('div');
         div.className = 'set-row';
-        div.innerHTML = `
-            <input type="number" class="set-w" placeholder="кг">
-            <input type="number" class="set-r" placeholder="раз">
-            <button style="color:var(--red); border:none; background:none; font-size:20px; cursor:pointer;" onclick="this.parentElement.remove()">×</button>
-        `;
+        div.innerHTML = `<input type="number" class="set-w" placeholder="кг"><input type="number" class="set-r" placeholder="раз"><button onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--red);">✕</button>`;
         document.getElementById('setsContainer').appendChild(div);
     }
 
-    async function saveExercise() {
-        const name = document.getElementById('exName').value.trim();
-        const wInputs = document.getElementsByClassName('set-w');
-        const rInputs = document.getElementsByClassName('set-r');
-        const saveBtn = document.getElementById('saveBtn');
+    async function saveData() {
+        const name = document.getElementById('exName').value;
+        const w = document.getElementsByClassName('set-w');
+        const r = document.getElementsByClassName('set-r');
+        const btn = document.getElementById('saveBtn');
         
         let sets = [];
-        for(let i=0; i < wInputs.length; i++) {
-            const w = parseFloat(wInputs[i].value);
-            const r = parseInt(rInputs[i].value);
-            if(!isNaN(w) && !isNaN(r)) {
-                let isDrop = (i > 0 && w < parseFloat(wInputs[i-1].value));
-                sets.push({ weight: w, reps: r, drop: isDrop });
-            }
+        for(let i=0; i<w.length; i++) {
+            if(w[i].value && r[i].value) sets.push({w: w[i].value, r: r[i].value});
         }
 
-        if(!name || sets.length === 0) {
-            alert("Бро, заполни название и хотя бы один подход!");
-            return;
-        }
+        if(!name || sets.length === 0) return alert("Заполни поля!");
 
-        saveBtn.disabled = true;
-        saveBtn.innerText = "АНАЛИЗИРУЮ...";
+        btn.disabled = true;
+        btn.innerText = "СВЯЗЬ С БАЗОЙ...";
 
         try {
-            // 1. Ищем историю для совета
-            const historySnap = await db.collection("gym_logs")
-                .where("name", "==", name)
-                .orderBy("ts", "desc")
-                .limit(1)
-                .get();
-
-            let advice = "Первая запись этого упражнения. Теперь я буду следить за твоим ростом!";
-            if(!historySnap.empty) {
-                advice = generateAIAdvice(sets, historySnap.docs[0].data().sets);
-            }
-
-            // 2. Сохраняем в базу
+            // Упрощенная отправка без сложных проверок
             await db.collection("gym_logs").add({
                 name: name,
                 sets: sets,
-                date: new Date().toLocaleDateString('ru-RU'),
                 ts: firebase.firestore.FieldValue.serverTimestamp()
             });
-
-            // 3. Выводим AI вердикт
-            const feedback = document.getElementById('aiFeedback');
-            feedback.style.display = "block";
-            feedback.innerHTML = `<b style="color:var(--gold)">🤖 AI ТРЕНЕР:</b><br>${advice}`;
-
-            // Очистка
-            document.getElementById('exName').value = "";
-            document.getElementById('setsContainer').innerHTML = `
-                <div class="set-row">
-                    <input type="number" class="set-w" placeholder="кг">
-                    <input type="number" class="set-r" placeholder="раз">
-                    <button style="color:var(--red); border:none; background:none; font-size:20px; cursor:pointer;" onclick="this.parentElement.remove()">×</button>
-                </div>
-            `;
-            
-            loadTodayEntries();
-
-        } catch (e) {
-            console.error(e);
-            alert("Ошибка базы данных! Проверь правила Firestore.");
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.innerText = "СОХРАНИТЬ УПРАЖНЕНИЕ";
+            alert("Готово, бро!");
+            location.reload();
+        } catch (err) {
+            console.error(err);
+            alert("Ошибка! Открой консоль (F12) и посмотри текст ошибки.");
+            btn.disabled = false;
+            btn.innerText = "СОХРАНИТЬ";
         }
     }
 
-    function generateAIAdvice(curr, prev) {
-        const currMax = Math.max(...curr.map(s => s.weight));
-        const prevMax = Math.max(...prev.map(s => s.weight));
-        const hasDrop = curr.some(s => s.drop);
-
-        let msg = "";
-        if (currMax > prevMax) {
-            msg = `🔥 Рекорд! Ты добавил вес. Закрепи эти ${currMax}кг на следующей неделе. `;
-        } else if (currMax === prevMax) {
-            const currReps = curr.find(s => s.weight === currMax).reps;
-            const prevReps = prev.find(s => s.weight === prevMax).reps;
-            if (currReps > prevReps) {
-                msg = `📈 Прогресс в повторах! Пора накинуть +2.5кг в следующий раз. `;
-            } else {
-                msg = `💪 Вес тот же. Постарайся сделать на 1-2 раза больше. `;
-            }
-        } else {
-            msg = `🔧 Работаем на технику и памп. `;
-        }
-
-        if(hasDrop) msg += "Дропсеты в конце — это мощно для объема мышц!";
-        return msg;
+    async function load() {
+        const snap = await db.collection("gym_logs").orderBy("ts", "desc").limit(10).get();
+        const list = document.getElementById('list');
+        snap.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `<div class="item"><b>${d.name}</b><br><small>${d.sets.map(s => s.w+'кг x '+s.r).join(' | ')}</small></div>`;
+        });
     }
-
-    async function loadTodayEntries() {
-        const today = new Date().toLocaleDateString('ru-RU');
-        try {
-            const snap = await db.collection("gym_logs")
-                .where("date", "==", today)
-                .orderBy("ts", "desc")
-                .get();
-            
-            const list = document.getElementById('todayList');
-            list.innerHTML = "";
-            
-            snap.forEach(doc => {
-                const d = doc.data();
-                const setsLine = d.sets.map(s => `
-                    <span>${s.weight}кг×${s.reps}${s.drop ? '<span class="ds-badge">DS</span>' : ''}</span>
-                `).join(' → ');
-
-                list.innerHTML += `
-                    <div class="history-card">
-                        <b style="color:var(--blue);">${d.name}</b>
-                        <div style="margin-top:8px; font-size:14px; color:#8b949e;">${setsLine}</div>
-                    </div>
-                `;
-            });
-        } catch(e) { console.log("Еще нет записей за сегодня"); }
-    }
-
-    window.onload = loadTodayEntries;
+    load();
 </script>
-
 </body>
 </html>
