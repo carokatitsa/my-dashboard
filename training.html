@@ -3,39 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gym AI v3.1</title>
+    <title>AI Gym Coach Pro</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --gold: #f1c40f; --text: #c9d1d9; --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; }
+        :root { --bg: #0a0a0a; --card: #161b22; --gold: #f1c40f; --text: #e0e0e0; --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; margin: 0; }
         .container { max-width: 500px; margin: 0 auto; }
-        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 10px; margin-bottom: 10px; }
-        .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); }
-        .btn-save { background: var(--green); color: #fff; }
-        .item { background: var(--card); border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-top: 10px; }
+        
+        /* Форма ввода */
+        .workout-box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); }
+        h2 { text-align: center; color: var(--gold); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
+        
+        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
+        input:focus { border-color: var(--gold); outline: none; }
+        
+        .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 8px; }
+        .btn { border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: rgba(88, 166, 255, 0.1); border: 1px dashed var(--blue); color: var(--blue); margin-bottom: 15px; }
+        .btn-save { background: var(--green); color: #fff; font-size: 16px; }
+        .btn-save:disabled { opacity: 0.5; }
+
+        /* AI Совет */
+        #aiAdvice { background: #000; border: 1px solid var(--gold); padding: 12px; border-radius: 8px; margin-top: 15px; font-size: 13px; display: none; line-height: 1.4; }
+
+        /* Список */
+        .history-card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-top: 12px; position: relative; }
+        .ex-name { color: var(--gold); font-size: 18px; display: block; margin-bottom: 8px; }
+        .set-line { font-size: 14px; color: #8b949e; }
+        .ds-tag { color: var(--red); font-weight: bold; font-size: 10px; border: 1px solid var(--red); padding: 1px 3px; border-radius: 3px; margin-left: 4px; }
+        
+        .controls { position: absolute; top: 12px; right: 10px; display: flex; gap: 8px; }
+        .btn-mini { background: none; border: none; cursor: pointer; font-size: 14px; padding: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align:center; color:var(--gold)">🏋️ ТРЕНИРОВКА</h2>
-    <div class="box">
-        <input type="text" id="exName" placeholder="Упражнение (напр. Жим)">
+    <h2>🏋️ AI ТРЕНИРОВКА</h2>
+
+    <div class="workout-box">
+        <input type="text" id="exName" placeholder="Название (напр. Жим обычный)" list="exList">
+        <datalist id="exList">
+            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Жим в наклоне">
+            <option value="Брусья"><option value="Трицепс кнут"><option value="Трицепс на низ">
+        </datalist>
+
         <div id="setsContainer">
             <div class="set-row">
                 <input type="number" class="set-w" placeholder="кг">
                 <input type="number" class="set-r" placeholder="раз">
-                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--red);">✕</button>
+                <button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none; font-size:20px;">×</button>
             </div>
         </div>
+
         <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
-        <button id="saveBtn" class="btn btn-save" onclick="saveData()">СОХРАНИТЬ</button>
+        <button id="saveBtn" class="btn btn-save" onclick="saveData()">СОХРАНИТЬ РЕЗУЛЬТАТ</button>
+
+        <div id="aiAdvice"></div>
     </div>
-    <div id="list"></div>
+
+    <h3 style="margin-top:25px; color:var(--gold); border-bottom: 1px solid var(--border); padding-bottom: 5px;">Сегодняшний лог</h3>
+    <div id="logList"></div>
 </div>
 
 <script>
@@ -48,58 +77,129 @@
         appId: "1:710702954120:web:90e5e9a158f31d9728913d"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    let editId = null;
 
-    function addSet() {
+    function addSet(w = '', r = '') {
         const div = document.createElement('div');
         div.className = 'set-row';
-        div.innerHTML = `<input type="number" class="set-w" placeholder="кг"><input type="number" class="set-r" placeholder="раз"><button onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--red);">✕</button>`;
+        div.innerHTML = `<input type="number" class="set-w" value="${w}" placeholder="кг"><input type="number" class="set-r" value="${r}" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none; font-size:20px;">×</button>`;
         document.getElementById('setsContainer').appendChild(div);
     }
 
     async function saveData() {
-        const name = document.getElementById('exName').value;
-        const w = document.getElementsByClassName('set-w');
-        const r = document.getElementsByClassName('set-r');
+        const name = document.getElementById('exName').value.trim();
+        const wInputs = document.getElementsByClassName('set-w');
+        const rInputs = document.getElementsByClassName('set-r');
         const btn = document.getElementById('saveBtn');
         
         let sets = [];
-        for(let i=0; i<w.length; i++) {
-            if(w[i].value && r[i].value) sets.push({w: w[i].value, r: r[i].value});
+        for(let i=0; i<wInputs.length; i++) {
+            let weight = parseFloat(wInputs[i].value);
+            let reps = parseInt(rInputs[i].value);
+            if(weight && reps) {
+                let isDrop = (i > 0 && weight < parseFloat(wInputs[i-1].value));
+                sets.push({ weight, reps, isDrop });
+            }
         }
 
-        if(!name || sets.length === 0) return alert("Заполни поля!");
+        if(!name || sets.length === 0) return alert("Бро, введи упражнение и подходы!");
 
         btn.disabled = true;
-        btn.innerText = "СВЯЗЬ С БАЗОЙ...";
-
+        
         try {
-            // Упрощенная отправка без сложных проверок
-            await db.collection("gym_logs").add({
-                name: name,
-                sets: sets,
+            // AI Анализ перед сохранением
+            const history = await db.collection("gym_logs").where("name", "==", name).orderBy("ts", "desc").limit(1).get();
+            let advice = "Первый раз делаешь? Удачи!";
+            if(!history.empty) advice = runAI(sets, history.docs[0].data().sets);
+
+            const data = {
+                name, sets, 
+                date: new Date().toLocaleDateString('ru-RU'),
                 ts: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            alert("Готово, бро!");
-            location.reload();
-        } catch (err) {
-            console.error(err);
-            alert("Ошибка! Открой консоль (F12) и посмотри текст ошибки.");
-            btn.disabled = false;
-            btn.innerText = "СОХРАНИТЬ";
+            };
+
+            if(editId) {
+                await db.collection("gym_logs").doc(editId).update(data);
+                editId = null;
+                btn.innerText = "СОХРАНИТЬ РЕЗУЛЬТАТ";
+            } else {
+                await db.collection("gym_logs").add(data);
+            }
+
+            document.getElementById('aiAdvice').style.display = 'block';
+            document.getElementById('aiAdvice').innerHTML = `🤖 <b>AI Тренер:</b> ${advice}`;
+            
+            // Сброс формы
+            document.getElementById('exName').value = '';
+            document.getElementById('setsContainer').innerHTML = `<div class="set-row"><input type="number" class="set-w" placeholder="кг"><input type="number" class="set-r" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none; font-size:20px;">×</button></div>`;
+            loadLogs();
+        } catch (e) { alert("Ошибка! Глянь в консоль."); console.log(e); }
+        btn.disabled = false;
+    }
+
+    function runAI(curr, prev) {
+        const cMax = Math.max(...curr.map(s => s.weight));
+        const pMax = Math.max(...prev.map(s => s.weight));
+        const cReps = curr.find(s => s.weight === cMax).reps;
+        const pReps = prev.find(s => s.weight === pMax).reps;
+        const hasDS = curr.some(s => s.isDrop);
+
+        let msg = "";
+        if(cMax > pMax) msg = `Мощно! Ты добавил вес (+${cMax-pMax}кг). Закрепи этот результат. `;
+        else if(cMax === pMax) {
+            if(cReps > pReps) msg = `Прогресс в повторах! В прошлый раз было ${pReps}, сегодня ${cReps}. На следующей тренировке добавляй 2.5кг. `;
+            else msg = `Вес тот же. Попробуй в следующий раз сделать на 1-2 повтора больше. `;
+        } else msg = `Вес ниже обычного. Хорошая работа на технику. `;
+
+        if(hasDS) msg += "Дропсеты в конце отлично добьют мышцу для объема!";
+        return msg;
+    }
+
+    async function loadLogs() {
+        const today = new Date().toLocaleDateString('ru-RU');
+        const snap = await db.collection("gym_logs").where("date", "==", today).get();
+        const list = document.getElementById('logList');
+        list.innerHTML = "";
+        
+        // Сортируем вручную по времени (т.к. индекс может еще не создаться)
+        const docs = snap.docs.sort((a,b) => b.data().ts - a.data().ts);
+
+        docs.forEach(doc => {
+            const d = doc.data();
+            list.innerHTML += `
+                <div class="history-card">
+                    <span class="ex-name">${d.name}</span>
+                    <div class="set-line">${d.sets.map(s => `${s.weight}кг×${s.reps}${s.isDrop?'<span class="ds-tag">DS</span>':''}`).join(' → ')}</div>
+                    <div class="controls">
+                        <button class="btn-mini" onclick="editEx('${doc.id}')">✏️</button>
+                        <button class="btn-mini" onclick="deleteEx('${doc.id}')">🗑️</button>
+                    </div>
+                </div>`;
+        });
+    }
+
+    async function editEx(id) {
+        const doc = await db.collection("gym_logs").doc(id).get();
+        const d = doc.data();
+        document.getElementById('exName').value = d.name;
+        const cont = document.getElementById('setsContainer');
+        cont.innerHTML = "";
+        d.sets.forEach(s => addSet(s.weight, s.reps));
+        editId = id;
+        document.getElementById('saveBtn').innerText = "ОБНОВИТЬ ДАННЫЕ";
+        window.scrollTo(0,0);
+    }
+
+    async function deleteEx(id) {
+        if(confirm("Удалить это упражнение?")) {
+            await db.collection("gym_logs").doc(id).delete();
+            loadLogs();
         }
     }
 
-    async function load() {
-        const snap = await db.collection("gym_logs").orderBy("ts", "desc").limit(10).get();
-        const list = document.getElementById('list');
-        snap.forEach(doc => {
-            const d = doc.data();
-            list.innerHTML += `<div class="item"><b>${d.name}</b><br><small>${d.sets.map(s => s.w+'кг x '+s.r).join(' | ')}</small></div>`;
-        });
-    }
-    load();
+    window.onload = loadLogs;
 </script>
 </body>
 </html>
