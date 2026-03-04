@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Coach v4.2</title>
+    <title>AI Gym Coach v4.3</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -25,6 +25,7 @@
         .btns { position: absolute; top: 15px; right: 10px; }
         .btn-m { background: none; border: none; cursor: pointer; filter: grayscale(1); margin-left: 10px; }
         .summary { background: rgba(88, 166, 255, 0.1); border: 1px solid var(--blue); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 14px; }
+        .auto-fill-hint { font-size: 11px; color: var(--blue); margin-top: -10px; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -40,7 +41,8 @@
         <input type="date" id="exDate">
 
         <label>Упражнение</label>
-        <input type="text" id="exName" placeholder="Напр: Жим лежа" list="exList">
+        <input type="text" id="exName" placeholder="Выберите или впишите..." list="exList" oninput="checkHistory(this.value)">
+        <span class="auto-fill-hint" id="fillHint"></span>
         <datalist id="exList">
             <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья"><option value="Присед">
         </datalist>
@@ -58,7 +60,7 @@
         <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
     </div>
 
-    <h3 id="listHeader" style="color:var(--gold)">Результаты за сегодня</h3>
+    <h3 id="listHeader" style="color:var(--gold)">Результаты</h3>
     <div id="list"></div>
 </div>
 
@@ -76,11 +78,8 @@
     const db = firebase.firestore();
     let editId = null;
 
-    // Установка сегодняшней даты в поле при загрузке
     const setTodayDate = () => {
-        const d = new Date();
-        const dateStr = d.toISOString().split('T')[0];
-        document.getElementById('exDate').value = dateStr;
+        document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
     };
 
     function addSet(w='', r='') {
@@ -88,6 +87,26 @@
         div.className = 'set-row';
         div.innerHTML = `<input type="number" class="sw" value="${w}" placeholder="кг"><input type="number" class="sr" value="${r}" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>`;
         document.getElementById('sets').appendChild(div);
+    }
+
+    // ГЛАВНАЯ ФУНКЦИЯ: Автоподтягивание данных
+    async function checkHistory(name) {
+        if (name.length < 3 || editId) return; // Не ищем, если редактируем или имя слишком короткое
+
+        const snap = await db.collection("gym_logs").where("name", "==", name).get();
+        if (!snap.empty) {
+            const history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
+            const last = history[0]; // Берем самую последнюю запись
+
+            document.getElementById('fillHint').innerText = `✨ Подтянуты данные за ${last.date}`;
+            
+            // Очищаем текущие поля подходов и вставляем старые
+            const setsContainer = document.getElementById('sets');
+            setsContainer.innerHTML = "";
+            last.sets.forEach(s => addSet(s.w, s.r));
+        } else {
+            document.getElementById('fillHint').innerText = "";
+        }
     }
 
     async function save() {
@@ -111,18 +130,16 @@
             }
         }
 
-        if(!name || !date || sets.length === 0) return alert("Заполни дату, название и подходы!");
+        if(!name || !date || sets.length === 0) return alert("Заполни всё!");
         btn.disabled = true;
 
         try {
             const snap = await db.collection("gym_logs").where("name", "==", name).get();
             let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
-            
-            // Сравниваем с последней записью, у которой дата не совпадает с выбранной в инпуте
             let lastEx = history.find(h => h.date !== date);
 
-            let advice = "Первая запись для анализа в будущем!";
-            let verdict = "База упражнения создана. Жду прогресса!";
+            let advice = "Первая запись!";
+            let verdict = "База создана.";
 
             if(lastEx) {
                 const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
@@ -130,21 +147,21 @@
 
                 if(curMaxW > pMaxW) {
                     advice = `🔥 РЕКОРД ВЕСА! +${curMaxW-pMaxW}кг.`;
-                    verdict = `Ты мощнее, чем в прошлый раз (${pMaxW}кг). Закрепи результат!`;
+                    verdict = `Ты мощнее, чем в прошлый раз (${pMaxW}кг).`;
                 } else if(curMaxW === pMaxW) {
                     if(curMaxR > pMaxR) {
                         advice = `📈 ПРОГРЕСС В ПОВТОРАХ! +${curMaxR-pMaxR} раз.`;
-                        verdict = `При том же весе ты сделал больше раз. Накинь +2.5кг в следующий раз!`;
+                        verdict = `При том же весе ты сделал больше раз.`;
                     } else if (curMaxR < pMaxR) {
-                        advice = `⚠️ СПАД. На ${pMaxR-curMaxR} раз меньше.`;
-                        verdict = `Сегодня тяжелее обычного. Отдохни и восстановись.`;
+                        advice = `⚠️ СПАД.`;
+                        verdict = `Сегодня тяжелее обычного. Отдохни.`;
                     } else {
                         advice = `💪 СТАБИЛЬНОСТЬ.`;
-                        verdict = `Повторил результат прошлого раза. Попробуй экстра-повтор!`;
+                        verdict = `Повторил результат прошлого раза.`;
                     }
                 } else {
-                    advice = `🧘 ТЕХНИЧЕСКАЯ РАБОТА.`;
-                    verdict = `Вес меньше пикового (${pMaxW}кг). Работаем над техникой.`;
+                    advice = `🧘 ТЕХНИКА.`;
+                    verdict = `Вес меньше пикового (${pMaxW}кг).`;
                 }
             }
 
@@ -158,9 +175,11 @@
             }
 
             document.getElementById('aiBox').style.display = 'block';
-            document.getElementById('aiBox').innerHTML = `🤖 <b>AI ВЕРДИКТ:</b> ${advice}<br>👉 ${verdict}`;
+            document.getElementById('aiBox').innerHTML = `🤖 <b>AI:</b> ${advice}<br>👉 ${verdict}`;
             
+            // Полный сброс формы после сохранения
             document.getElementById('exName').value = '';
+            document.getElementById('fillHint').innerText = "";
             document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
             load();
         } catch (e) { alert("Ошибка!"); console.log(e); }
@@ -174,7 +193,6 @@
         const list = document.getElementById('list');
         list.innerHTML = "";
         
-        // Показываем записи только за выбранную дату
         const docs = snap.docs
             .filter(d => d.data().date === selectedDate)
             .sort((a,b) => b.data().ts - a.data().ts);
@@ -189,7 +207,6 @@
             stats.innerHTML = `📊 <b>Всего:</b> ${docs.length} упр. | <b>Объем:</b> ${vol} кг`;
         } else {
             stats.style.display = 'none';
-            list.innerHTML = "<p style='text-align:center; opacity:0.5;'>На эту дату записей нет. 🦾</p>";
         }
 
         docs.forEach(doc => {
@@ -220,10 +237,9 @@
     }
 
     async function del(id) {
-        if(confirm("Удалить запись?")) { await db.collection("gym_logs").doc(id).delete(); load(); }
+        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); load(); }
     }
 
-    // Слушатель изменения даты: если меняешь дату в календаре, список ниже обновляется
     document.getElementById('exDate').addEventListener('change', load);
 
     window.onload = () => {
