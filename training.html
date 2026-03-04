@@ -3,65 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Coach v4.3</title>
+    <title>AI Gym Pro OS</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0d1117; --card: #161b22; --gold: #f1c40f; --text: #c9d1d9; --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
-        .container { max-width: 500px; margin: 0 auto; }
+        :root { 
+            --bg: #0d1117; --card: #161b22; --gold: #f1c40f; --text: #c9d1d9; 
+            --blue: #58a6ff; --green: #238636; --red: #f85149; --border: #30363d; 
+        }
+        body { 
+            background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; 
+            margin: 0; display: flex; height: 100vh; overflow: hidden;
+        }
+
+        /* ЛЕВАЯ ПАНЕЛЬ - БАЗА */
+        .sidebar { 
+            width: 250px; background: #010409; border-right: 1px solid var(--border); 
+            display: flex; flex-direction: column; padding: 20px; overflow-y: auto;
+        }
+        .sidebar h3 { color: var(--blue); font-size: 14px; text-transform: uppercase; margin-bottom: 15px; }
+        .ex-item { 
+            padding: 10px; border: 1px solid var(--border); border-radius: 8px; 
+            margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 14px;
+        }
+        .ex-item:hover { background: var(--border); border-color: var(--gold); }
+
+        /* ЦЕНТРАЛЬНАЯ ЧАСТЬ */
+        .main { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; align-items: center; }
+        .content-wrapper { width: 100%; max-width: 500px; }
+
+        /* ДИЗАЙН ДАТЫ */
+        .date-widget {
+            background: linear-gradient(135deg, #1f2937, #111827);
+            border: 1px solid var(--blue); border-radius: 15px;
+            padding: 15px; margin-bottom: 25px; text-align: center;
+            box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
+        }
+        .date-widget label { color: var(--blue); font-size: 10px; font-weight: bold; text-transform: uppercase; }
+        .date-widget input { 
+            background: transparent; border: none; color: #fff; font-size: 22px; 
+            font-weight: bold; text-align: center; width: 100%; cursor: pointer;
+        }
+
         .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; color: var(--gold); font-size: 12px; text-transform: uppercase; font-weight: bold; }
-        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
-        input:focus { border-color: var(--blue); outline: none; }
+        input[type="text"] { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
+        
         .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px; }
-        .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
-        .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); }
+        .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); margin-bottom: 10px; }
         .btn-save { background: var(--green); color: #fff; }
-        #aiBox { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; line-height: 1.5; }
+
+        #aiBox { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
         .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-top: 10px; position: relative; }
         .verdict-line { font-size: 12px; color: var(--gold); margin-top: 8px; font-style: italic; display: block; border-top: 1px solid var(--border); padding-top: 5px; }
-        .ds { color: var(--red); font-size: 10px; font-weight: bold; border: 1px solid var(--red); padding: 1px 3px; border-radius: 3px; margin-left: 5px; }
-        .btns { position: absolute; top: 15px; right: 10px; }
-        .btn-m { background: none; border: none; cursor: pointer; filter: grayscale(1); margin-left: 10px; }
-        .summary { background: rgba(88, 166, 255, 0.1); border: 1px solid var(--blue); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 14px; }
-        .auto-fill-hint { font-size: 11px; color: var(--blue); margin-top: -10px; margin-bottom: 10px; display: block; }
+        
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            .main { padding: 15px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2 style="text-align:center; color:var(--gold)">🏋️ AI ТРЕНИРОВКА</h2>
-    
-    <div id="aiBox"></div>
-    <div id="statsBox" class="summary" style="display:none;"></div>
-
-    <div class="box">
-        <label>Дата тренировки</label>
-        <input type="date" id="exDate">
-
-        <label>Упражнение</label>
-        <input type="text" id="exName" placeholder="Выберите или впишите..." list="exList" oninput="checkHistory(this.value)">
-        <span class="auto-fill-hint" id="fillHint"></span>
-        <datalist id="exList">
-            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья"><option value="Присед">
-        </datalist>
-
-        <label>Подходы</label>
-        <div id="sets">
-            <div class="set-row">
-                <input type="number" class="sw" placeholder="кг">
-                <input type="number" class="sr" placeholder="раз">
-                <button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>
-            </div>
-        </div>
-        
-        <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
-        <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
+<div class="sidebar">
+    <h3>📂 Моя База</h3>
+    <div id="exerciseLibrary">
+        <small style="opacity: 0.5;">Загрузка базы...</small>
     </div>
+</div>
 
-    <h3 id="listHeader" style="color:var(--gold)">Результаты</h3>
-    <div id="list"></div>
+<div class="main">
+    <div class="content-wrapper">
+        <div class="date-widget">
+            <label>Тренировка от</label>
+            <input type="date" id="exDate" onchange="load()">
+        </div>
+
+        <div id="aiBox"></div>
+
+        <div class="box">
+            <input type="text" id="exName" placeholder="Название упражнения">
+            <div id="sets">
+                <div class="set-row">
+                    <input type="number" class="sw" placeholder="кг">
+                    <input type="number" class="sr" placeholder="раз">
+                    <button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>
+                </div>
+            </div>
+            <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
+            <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
+        </div>
+
+        <h3 id="listHeader" style="color:var(--gold)">Лог за день</h3>
+        <div id="list"></div>
+    </div>
 </div>
 
 <script>
@@ -78,35 +114,32 @@
     const db = firebase.firestore();
     let editId = null;
 
-    const setTodayDate = () => {
-        document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
-    };
+    // 1. ПОДТЯГИВАНИЕ СПИСКА УПРАЖНЕНИЙ В SIDEBAR
+    async function updateLibrary() {
+        const snap = await db.collection("gym_logs").get();
+        const names = [...new Set(snap.docs.map(d => d.data().name))].sort();
+        const lib = document.getElementById('exerciseLibrary');
+        lib.innerHTML = names.map(n => `<div class="ex-item" onclick="autoFill('${n}')">➕ ${n}</div>`).join('');
+    }
+
+    // 2. АВТОЗАПОЛНЕНИЕ ПРИ ВЫБОРЕ ИЗ БАЗЫ
+    async function autoFill(name) {
+        document.getElementById('exName').value = name;
+        const snap = await db.collection("gym_logs").where("name", "==", name).get();
+        const history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
+        const last = history[0];
+        
+        const setsContainer = document.getElementById('sets');
+        setsContainer.innerHTML = "";
+        last.sets.forEach(s => addSet(s.w, s.r));
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
 
     function addSet(w='', r='') {
         const div = document.createElement('div');
         div.className = 'set-row';
         div.innerHTML = `<input type="number" class="sw" value="${w}" placeholder="кг"><input type="number" class="sr" value="${r}" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>`;
         document.getElementById('sets').appendChild(div);
-    }
-
-    // ГЛАВНАЯ ФУНКЦИЯ: Автоподтягивание данных
-    async function checkHistory(name) {
-        if (name.length < 3 || editId) return; // Не ищем, если редактируем или имя слишком короткое
-
-        const snap = await db.collection("gym_logs").where("name", "==", name).get();
-        if (!snap.empty) {
-            const history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
-            const last = history[0]; // Берем самую последнюю запись
-
-            document.getElementById('fillHint').innerText = `✨ Подтянуты данные за ${last.date}`;
-            
-            // Очищаем текущие поля подходов и вставляем старые
-            const setsContainer = document.getElementById('sets');
-            setsContainer.innerHTML = "";
-            last.sets.forEach(s => addSet(s.w, s.r));
-        } else {
-            document.getElementById('fillHint').innerText = "";
-        }
     }
 
     async function save() {
@@ -123,68 +156,44 @@
             let weight = parseFloat(ws[i].value);
             let reps = parseInt(rs[i].value);
             if(weight && reps) {
-                let isDs = (i > 0 && weight < parseFloat(ws[i-1].value));
-                sets.push({w: weight, r: reps, ds: isDs});
+                sets.push({w: weight, r: reps});
                 if(weight > curMaxW) { curMaxW = weight; curMaxR = reps; }
                 else if(weight === curMaxW && reps > curMaxR) { curMaxR = reps; }
             }
         }
 
-        if(!name || !date || sets.length === 0) return alert("Заполни всё!");
+        if(!name || sets.length === 0) return alert("Заполни данные!");
         btn.disabled = true;
 
-        try {
-            const snap = await db.collection("gym_logs").where("name", "==", name).get();
-            let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
-            let lastEx = history.find(h => h.date !== date);
+        const snap = await db.collection("gym_logs").where("name", "==", name).get();
+        let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
+        let lastEx = history.find(h => h.date !== date);
 
-            let advice = "Первая запись!";
-            let verdict = "База создана.";
+        let advice = "Первая запись!";
+        let verdict = "База создана. Жду прогресса!";
 
-            if(lastEx) {
-                const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
-                const pMaxR = Math.max(...lastEx.sets.filter(s => s.w === pMaxW).map(s => s.r));
+        if(lastEx) {
+            const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
+            const pMaxR = Math.max(...lastEx.sets.filter(s => s.w === pMaxW).map(s => s.r));
+            if(curMaxW > pMaxW) { advice = `🔥 РЕКОРД ВЕСА! +${curMaxW-pMaxW}кг.`; verdict = `Ты мощнее, чем был (${pMaxW}кг).`; }
+            else if(curMaxW === pMaxW) {
+                if(curMaxR > pMaxR) { advice = `📈 ПРОГРЕСС В ПОВТОРАХ!`; verdict = `Сделал больше раз. Пора накинуть вес!`; }
+                else { advice = `💪 СТАБИЛЬНОСТЬ.`; verdict = `Повторил прошлый результат.`; }
+            } else { advice = `🧘 ТЕХНИКА.`; verdict = `Вес ниже пика (${pMaxW}кг).`; }
+        }
 
-                if(curMaxW > pMaxW) {
-                    advice = `🔥 РЕКОРД ВЕСА! +${curMaxW-pMaxW}кг.`;
-                    verdict = `Ты мощнее, чем в прошлый раз (${pMaxW}кг).`;
-                } else if(curMaxW === pMaxW) {
-                    if(curMaxR > pMaxR) {
-                        advice = `📈 ПРОГРЕСС В ПОВТОРАХ! +${curMaxR-pMaxR} раз.`;
-                        verdict = `При том же весе ты сделал больше раз.`;
-                    } else if (curMaxR < pMaxR) {
-                        advice = `⚠️ СПАД.`;
-                        verdict = `Сегодня тяжелее обычного. Отдохни.`;
-                    } else {
-                        advice = `💪 СТАБИЛЬНОСТЬ.`;
-                        verdict = `Повторил результат прошлого раза.`;
-                    }
-                } else {
-                    advice = `🧘 ТЕХНИКА.`;
-                    verdict = `Вес меньше пикового (${pMaxW}кг).`;
-                }
-            }
+        const data = { name, sets, date, ts: Date.now(), verdict, advice };
+        if(editId) { await db.collection("gym_logs").doc(editId).update(data); editId = null; }
+        else { await db.collection("gym_logs").add(data); }
 
-            const data = { name, sets, date, ts: Date.now(), verdict, advice };
-
-            if(editId) {
-                await db.collection("gym_logs").doc(editId).update(data);
-                editId = null;
-            } else {
-                await db.collection("gym_logs").add(data);
-            }
-
-            document.getElementById('aiBox').style.display = 'block';
-            document.getElementById('aiBox').innerHTML = `🤖 <b>AI:</b> ${advice}<br>👉 ${verdict}`;
-            
-            // Полный сброс формы после сохранения
-            document.getElementById('exName').value = '';
-            document.getElementById('fillHint').innerText = "";
-            document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
-            load();
-        } catch (e) { alert("Ошибка!"); console.log(e); }
-        btn.disabled = false;
-        btn.innerText = "СОХРАНИТЬ";
+        document.getElementById('aiBox').style.display = 'block';
+        document.getElementById('aiBox').innerHTML = `🤖 <b>AI:</b> ${advice}<br>👉 ${verdict}`;
+        
+        document.getElementById('exName').value = '';
+        document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
+        btn.disabled = false; btn.innerText = "СОХРАНИТЬ";
+        load();
+        updateLibrary();
     }
 
     async function load() {
@@ -197,18 +206,6 @@
             .filter(d => d.data().date === selectedDate)
             .sort((a,b) => b.data().ts - a.data().ts);
 
-        const stats = document.getElementById('statsBox');
-        document.getElementById('listHeader').innerText = `Результаты за ${selectedDate}`;
-
-        if(docs.length > 0) {
-            stats.style.display = 'block';
-            let vol = 0;
-            docs.forEach(doc => doc.data().sets.forEach(s => vol += s.w * s.r));
-            stats.innerHTML = `📊 <b>Всего:</b> ${docs.length} упр. | <b>Объем:</b> ${vol} кг`;
-        } else {
-            stats.style.display = 'none';
-        }
-
         docs.forEach(doc => {
             const d = doc.data();
             list.innerHTML += `
@@ -218,7 +215,7 @@
                         <button class="btn-m" onclick="edit('${doc.id}')">✏️</button>
                         <button class="btn-m" onclick="del('${doc.id}')">🗑️</button>
                     </div>
-                    <br><small>${d.sets.map(s => `${s.w}×${s.r}${s.ds?'<span class="ds">DS</span>':''}`).join(' | ')}</small>
+                    <br><small>${d.sets.map(s => `${s.w}×${s.r}`).join(' | ')}</small>
                     <span class="verdict-line">🤖 ${d.verdict}</span>
                 </div>`;
         });
@@ -237,14 +234,13 @@
     }
 
     async function del(id) {
-        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); load(); }
+        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); load(); updateLibrary(); }
     }
 
-    document.getElementById('exDate').addEventListener('change', load);
-
     window.onload = () => {
-        setTodayDate();
+        document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
         load();
+        updateLibrary();
     };
 </script>
 </body>
