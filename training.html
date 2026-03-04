@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Pro</title>
+    <title>AI Gym Pro + Аналитика</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -16,8 +16,13 @@
         .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); }
         .btn-save { background: var(--green); color: #fff; }
-        #aiBox { background: #000; border: 1px solid var(--gold); padding: 10px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
+        
+        /* Блоки вердиктов */
+        #aiBox { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; line-height: 1.4; }
+        .session-summary { background: rgba(88, 166, 255, 0.1); border: 1px solid var(--blue); padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        
         .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-top: 10px; position: relative; }
+        .verdict-line { font-size: 12px; color: var(--gold); margin-top: 8px; font-style: italic; display: block; }
         .ds { color: var(--red); font-size: 10px; font-weight: bold; border: 1px solid var(--red); padding: 1px 3px; border-radius: 3px; margin-left: 5px; }
         .btns { position: absolute; top: 15px; right: 10px; }
         .btn-m { background: none; border: none; cursor: pointer; filter: grayscale(1); margin-left: 10px; }
@@ -29,11 +34,12 @@
     <h2 style="text-align:center; color:var(--gold)">🏋️ AI ТРЕНИРОВКА</h2>
     
     <div id="aiBox"></div>
+    <div id="sessionVerdict" class="session-summary" style="display:none;"></div>
 
     <div class="box">
         <input type="text" id="exName" placeholder="Упражнение" list="exList">
         <datalist id="exList">
-            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья">
+            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья"><option value="Присед"><option value="Тяга">
         </datalist>
 
         <div id="sets">
@@ -45,10 +51,10 @@
         </div>
         
         <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
-        <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
+        <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ УПРАЖНЕНИЕ</button>
     </div>
 
-    <h3 style="color:var(--gold)">Сегодняшний лог</h3>
+    <h3 id="dateTitle" style="color:var(--gold)">Записи за сегодня</h3>
     <div id="list"></div>
 </div>
 
@@ -80,12 +86,16 @@
         const btn = document.getElementById('saveBtn');
         
         let sets = [];
+        let maxW = 0, maxR = 0;
+
         for(let i=0; i<ws.length; i++) {
             let weight = parseFloat(ws[i].value);
             let reps = parseInt(rs[i].value);
             if(weight && reps) {
                 let isDs = (i > 0 && weight < parseFloat(ws[i-1].value));
                 sets.push({w: weight, r: reps, ds: isDs});
+                if(weight > maxW) { maxW = weight; maxR = reps; }
+                else if(weight === maxW && reps > maxR) { maxR = reps; }
             }
         }
 
@@ -93,23 +103,47 @@
         btn.disabled = true;
 
         try {
-            // AI часть: берем ВСЕ логи и фильтруем тут (чтобы не было ошибки индекса)
             const allLogs = await db.collection("gym_logs").get();
-            let lastEx = allLogs.docs
+            const history = allLogs.docs
                 .map(d => d.data())
                 .filter(d => d.name === name)
-                .sort((a,b) => b.ts - a.ts)[0];
+                .sort((a,b) => b.ts - a.ts);
 
-            let advice = "Красава! Первая запись есть.";
+            let lastEx = history[0];
+            let advice = "Первая тренировка этого упражнения. Удачи!";
+            let verdict = "База создана.";
+
             if(lastEx) {
-                const cMax = Math.max(...sets.map(s => s.w));
-                const pMax = Math.max(...lastEx.sets.map(s => s.w));
-                if(cMax > pMax) advice = `🔥 Рекорд! +${cMax-pMax}кг. Красавчик!`;
-                else if(cMax === pMax) advice = `💪 Вес тот же. Жми больше повторов в следующий раз!`;
-                else advice = `📈 Работаем на технику сегодня.`;
+                const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
+                const pMaxR = Math.max(...lastEx.sets.filter(s => s.w === pMaxW).map(s => s.r));
+
+                if(maxW > pMaxW) {
+                    advice = `🔥 Рекорд веса! +${maxW-pMaxW}кг. Ты стал мощнее.`;
+                    verdict = "На след. тренировке закрепи этот вес с тем же количеством раз.";
+                } else if(maxW === pMaxW) {
+                    if(maxR > pMaxR) {
+                        advice = `📈 Прогресс в повторах! +${maxR-pMaxR} раз.`;
+                        verdict = "Пора добавить +2.5кг в следующем подходе!";
+                    } else if (maxR < pMaxR) {
+                        advice = `⚠️ Спад в повторах.`;
+                        verdict = "Возможно недовосстановление. Попробуй увеличить отдых между сетами.";
+                    } else {
+                        advice = `💪 Стабильность.`;
+                        verdict = "Попробуй сделать 'отказной' повтор в последнем сете.";
+                    }
+                } else {
+                    advice = `🧘 Работа на технику.`;
+                    verdict = "Вес ниже рекорда. Фокусируйся на негативной фазе.";
+                }
             }
 
-            const data = { name, sets, date: new Date().toLocaleDateString('ru-RU'), ts: Date.now() };
+            const data = { 
+                name, 
+                sets, 
+                date: new Date().toLocaleDateString('ru-RU'), 
+                ts: Date.now(),
+                verdict: verdict // сохраняем вердикт в базу
+            };
 
             if(editId) {
                 await db.collection("gym_logs").doc(editId).update(data);
@@ -119,27 +153,39 @@
             }
 
             document.getElementById('aiBox').style.display = 'block';
-            document.getElementById('aiBox').innerHTML = `🤖 <b>AI:</b> ${advice}`;
+            document.getElementById('aiBox').innerHTML = `🤖 <b>AI АНАЛИЗ:</b> ${advice}<br>👉 ${verdict}`;
             
-            // Очистка
             document.getElementById('exName').value = '';
             document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
             load();
         } catch (e) { alert("Ошибка!"); console.log(e); }
         btn.disabled = false;
-        btn.innerText = "СОХРАНИТЬ";
+        btn.innerText = "СОХРАНИТЬ УПРАЖНЕНИЕ";
     }
 
     async function load() {
-        const today = new Date().toLocaleDateString('ru-RU');
+        const todayStr = new Date().toLocaleDateString('ru-RU');
         const snap = await db.collection("gym_logs").get();
         const list = document.getElementById('list');
         list.innerHTML = "";
         
-        // Фильтруем сегодня прямо в коде
         const docs = snap.docs
-            .filter(d => d.data().date === today)
+            .filter(d => d.data().date === todayStr)
             .sort((a,b) => b.data().ts - a.data().ts);
+
+        // Общая оценка тренировки
+        const summaryDiv = document.getElementById('sessionVerdict');
+        if(docs.length > 0) {
+            summaryDiv.style.display = "block";
+            let totalVolume = 0;
+            docs.forEach(doc => {
+                doc.data().sets.forEach(s => totalVolume += (s.w * s.r));
+            });
+            summaryDiv.innerHTML = `🏁 <b>ИТОГ СЕССИИ:</b> Упражнений: ${docs.length}. Тоннаж: ${totalVolume}кг. <br> 
+            ${totalVolume > 5000 ? "🔥 Хардкорная тренировка! Пей прот и спать." : "💪 Хорошая работа, держи темп!"}`;
+        } else {
+            summaryDiv.style.display = "none";
+        }
 
         docs.forEach(doc => {
             const d = doc.data();
@@ -147,6 +193,7 @@
                 <div class="card">
                     <b>${d.name}</b><br>
                     <small>${d.sets.map(s => `${s.w}×${s.r}${s.ds?'<span class="ds">DS</span>':''}`).join(' | ')}</small>
+                    <span class="verdict-line">📝 Решение: ${d.verdict || 'Без анализа'}</span>
                     <div class="btns">
                         <button class="btn-m" onclick="edit('${doc.id}')">✏️</button>
                         <button class="btn-m" onclick="del('${doc.id}')">🗑️</button>
