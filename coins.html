@@ -2,11 +2,14 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Ultra Pro v4.5</title>
+    <title>Coin Archive Ultra Pro v4.6 | Auction Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
-        :root { --bg: #0a0a0a; --card: #161616; --gold: #f1c40f; --text: #e0e0e0; --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --border: #333; }
+        :root { 
+            --bg: #0a0a0a; --card: #161616; --gold: #f1c40f; --text: #e0e0e0; 
+            --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --border: #333; --auc: #9b59b6; 
+        }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
@@ -31,8 +34,12 @@
         .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         .coin-card { 
             background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); 
-            position: relative; content-visibility: auto; contain-intrinsic-size: 400px; 
+            position: relative; content-visibility: auto; contain-intrinsic-size: 400px; transition: 0.3s;
         }
+        /* Цвета для разных статусов */
+        .coin-card[data-s="Продано"] { border-color: var(--red); opacity: 0.8; }
+        .coin-card[data-s="Аукцион"] { border-color: var(--blue); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
+        
         .coin-card.hidden { display: none !important; }
         
         .coin-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #000; height: 160px; }
@@ -46,7 +53,6 @@
         .btn-card { padding: 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; background: #222; color: #fff; font-size: 12px; }
         .btn-del { background: var(--red); position: absolute; top: 8px; right: 8px; width: 26px; height: 26px; border-radius: 50%; z-index: 5; color: white; border: none; cursor: pointer; }
 
-        /* МОДАЛКА */
         #saleModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
         .modal-content { background: var(--card); padding: 30px; border-radius: 12px; border: 2px solid var(--gold); width: 320px; text-align: center; }
     </style>
@@ -54,37 +60,39 @@
 <body>
 
 <div class="container">
-    <div class="stats-panel" id="statsDisplay" style="display: none;">
-        <div class="stat-card"><span>Выручка</span><b id="totalRevenue">0.00</b></div>
-        <div class="stat-card"><span>Продано шт.</span><b id="totalSoldQty">0</b></div>
-        <div class="stat-card"><span>Средний чек</span><b id="avgCheck">0.00</b></div>
+    <div class="stats-panel" id="statsDisplay">
+        <div class="stat-card"><span>Выручка / Лотов</span><b id="stat1">0</b></div>
+        <div class="stat-card"><span>Продано / Активно</span><b id="stat2">0</b></div>
+        <div class="stat-card"><span>Ср. чек / Тип</span><b id="stat3">0</b></div>
     </div>
 
     <div class="admin-panel">
         <div class="inputs-row">
-            <input type="number" id="cNum" placeholder="Номер (число)">
-            <input type="text" id="cPrice" placeholder="Цена (напр. 500)">
+            <input type="number" id="cNum" placeholder="Номер">
+            <input type="text" id="cPrice" placeholder="Цена / Старт">
             <select id="cStatus">
                 <option value="В наличии">В наличии</option>
                 <option value="Продано">Продано</option>
+                <option value="Аукцион">Аукцион</option>
             </select>
         </div>
-        <textarea id="cUrls" placeholder="Ссылки на фото (через запятую)..." rows="2"></textarea>
+        <textarea id="cUrls" placeholder="Ссылки на фото через запятую..." rows="2"></textarea>
         <textarea id="cDesc" placeholder="Описание..." rows="2" style="margin-top:10px"></textarea>
         <button id="mainBtn" class="btn-main" onclick="saveData()">Добавить в базу</button>
-        <button id="cancelBtn" onclick="resetForm()" style="display:none; color:gray; width:100%; margin-top:10px; cursor:pointer; background:none; border:none;">Отменить редактирование</button>
+        <button id="cancelBtn" onclick="resetForm()" style="display:none; color:gray; width:100%; margin-top:10px; cursor:pointer; background:none; border:none;">Отмена</button>
         
         <div class="filter-bar">
-            <input type="text" id="searchInput" placeholder="🔍 Быстрый поиск по номеру или описанию..." oninput="applyFilters()">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск..." oninput="applyFilters()">
             <select id="sortSelect" onchange="applyFilters()">
-                <option value="newest">Сначала новые (изменения)</option>
-                <option value="numAsc">Номер: Меньше > Больше</option>
-                <option value="numDesc">Номер: Больше > Меньше</option>
+                <option value="newest">Сначала новые</option>
+                <option value="numAsc">Номер: 1 > 99</option>
+                <option value="numDesc">Номер: 99 > 1</option>
             </select>
             <select id="filterStatus" onchange="applyFilters()">
                 <option value="all">Все монеты</option>
                 <option value="В наличии">В наличии</option>
                 <option value="Продано">Архив продаж</option>
+                <option value="Аукцион">Аукционы</option>
             </select>
         </div>
     </div>
@@ -94,11 +102,11 @@
 
 <div id="saleModal">
     <div class="modal-content">
-        <h3>💰 Продажа</h3>
-        <input type="number" id="modalPrice" placeholder="Цена продажи">
+        <h3>💰 Фиксация продажи</h3>
+        <input type="number" id="modalPrice" placeholder="Цена финала">
         <input type="number" id="modalQty" value="1" style="margin-top:10px">
-        <button class="btn-main" style="margin-top:15px" onclick="confirmSale()">OK</button>
-        <button style="color:gray; margin-top:10px; background:none; border:none; cursor:pointer;" onclick="closeModal()">Закрыть</button>
+        <button class="btn-main" style="margin-top:15px" onclick="confirmSale()">ПОДТВЕРДИТЬ</button>
+        <button style="color:gray; margin-top:10px; background:none; border:none; cursor:pointer;" onclick="closeModal()">ОТМЕНА</button>
     </div>
 </div>
 
@@ -118,23 +126,20 @@
     let currentEditId = null;
     let salePendingId = null;
 
-    // 1. ПОЛУЧЕНИЕ ДАННЫХ
     db.collection("my_coins").onSnapshot(snap => {
         allCoins = snap.docs.map(d => ({
             id: d.id, 
             ...d.data(),
-            // Приводим к числам для правильной сортировки
             numSort: parseInt(d.data().num) || 0,
             tsSort: d.data().lastUpdate ? d.data().lastUpdate.toMillis() : 0
         }));
         renderAllCards();
     });
 
-    // 2. ОТРИСОВКА ВСЕХ КАРТОЧЕК (один раз при изменении базы)
     function renderAllCards() {
         const grid = document.getElementById('coinGrid');
         grid.innerHTML = allCoins.map(c => `
-            <div class="coin-card" id="card-${c.id}">
+            <div class="coin-card" id="card-${c.id}" data-s="${c.status}">
                 <button class="btn-del" onclick="deleteCoin('${c.id}')">✕</button>
                 <div class="coin-gallery">
                     ${(c.imgs||[]).slice(0,2).map(url=>`<img src="${url}" loading="lazy" onclick="window.open('${url}')">`).join('')}
@@ -144,7 +149,7 @@
                         <span class="coin-id"># ${c.num}</span>
                         <span class="coin-price">${c.price}</span>
                     </div>
-                    <div style="color:${c.status==='Продано'?'var(--red)':'var(--green)'}; font-weight:bold; font-size:12px; margin-bottom:8px;">
+                    <div style="color:${getStatusColor(c.status)}; font-weight:bold; font-size:12px; margin-bottom:8px;">
                         ● ${c.status} ${c.saleTotal ? ` | ${c.saleTotal}` : ''}
                     </div>
                     <div style="height:36px; overflow:hidden; font-size:12px; color:#888;">${c.desc || ''}</div>
@@ -158,90 +163,72 @@
         applyFilters();
     }
 
-    // 3. РАДИКАЛЬНЫЕ ФИЛЬТРЫ И СОРТИРОВКА
+    function getStatusColor(s) {
+        if(s === 'Продано') return 'var(--red)';
+        if(s === 'Аукцион') return 'var(--blue)';
+        return 'var(--green)';
+    }
+
     function applyFilters() {
         const query = document.getElementById('searchInput').value.toLowerCase();
         const statusF = document.getElementById('filterStatus').value;
         const sortF = document.getElementById('sortSelect').value;
         const grid = document.getElementById('coinGrid');
         
-        // Показываем/Скрываем статы
-        document.getElementById('statsDisplay').style.display = statusF === "Продано" ? "grid" : "none";
-
         let rev = 0, qty = 0, count = 0;
 
-        // Фильтруем массив данных, а не элементы DOM (так надежнее)
         let filtered = allCoins.filter(c => {
             const matchStatus = (statusF === "all" || c.status === statusF);
             const matchSearch = (`${c.num} ${c.desc}`.toLowerCase().includes(query));
             return matchStatus && matchSearch;
         });
 
-        // Сортируем отфильтрованный массив
         filtered.sort((a, b) => {
             if (sortF === "numAsc") return a.numSort - b.numSort;
             if (sortF === "numDesc") return b.numSort - a.numSort;
-            return b.tsSort - a.tsSort; // newest
+            return b.tsSort - a.tsSort;
         });
 
-        // Прячем все карточки
-        const allCardElements = document.querySelectorAll('.coin-card');
-        allCardElements.forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.coin-card').forEach(el => el.classList.add('hidden'));
 
-        // Показываем только нужные в правильном порядке
         filtered.forEach(c => {
             const el = document.getElementById(`card-${c.id}`);
             if(el) {
                 el.classList.remove('hidden');
-                grid.appendChild(el); // Это перемещает элемент в конец, обеспечивая порядок сортировки
-                
-                if(c.status === "Продано") {
-                    rev += (parseFloat(c.saleTotal) || 0);
-                    qty += (parseInt(c.saleQty) || 0);
-                    count++;
-                }
+                grid.appendChild(el);
+                if(c.status === "Продано") { rev += (parseFloat(c.saleTotal) || 0); qty += (parseInt(c.saleQty) || 0); count++; }
             }
         });
 
+        // ДИНАМИЧЕСКАЯ СТАТИСТИКА
+        const s1 = document.getElementById('stat1'), s2 = document.getElementById('stat2'), s3 = document.getElementById('stat3');
         if(statusF === "Продано") {
-            document.getElementById('totalRevenue').innerText = rev.toLocaleString();
-            document.getElementById('totalSoldQty').innerText = qty;
-            document.getElementById('avgCheck').innerText = count > 0 ? (rev/count).toFixed(0) : 0;
+            s1.innerText = rev.toLocaleString(); s2.innerText = qty; s3.innerText = count > 0 ? (rev/count).toFixed(0) : 0;
+        } else if(statusF === "Аукцион") {
+            s1.innerText = filtered.length; s2.innerText = "Активно"; s3.innerText = "Торги";
+        } else {
+            s1.innerText = filtered.length; s2.innerText = "В наличии"; s3.innerText = "Сток";
         }
     }
 
-    // 4. ОПЕРАЦИИ С БАЗОЙ
     async function saveData() {
         const num = document.getElementById('cNum').value;
         if(!num) return alert("Нужен номер!");
-        
         const data = {
-            num: num,
-            price: document.getElementById('cPrice').value,
+            num: num, price: document.getElementById('cPrice').value,
             status: document.getElementById('cStatus').value,
             imgs: document.getElementById('cUrls').value.split(',').map(s=>s.trim()).filter(s=>s),
             desc: document.getElementById('cDesc').value,
             lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
         };
-
-        if(currentEditId) {
-            await db.collection("my_coins").doc(currentEditId).update(data);
-            currentEditId = null;
-        } else {
-            await db.collection("my_coins").add(data);
-        }
+        if(currentEditId) { await db.collection("my_coins").doc(currentEditId).update(data); currentEditId = null; }
+        else { await db.collection("my_coins").add(data); }
         resetForm();
     }
 
     function handleStatusClick(id, status, price) {
         if(status === "Продано") {
-            if(confirm("Вернуть в наличие?")) {
-                db.collection("my_coins").doc(id).update({
-                    status: "В наличии",
-                    saleQty: firebase.firestore.FieldValue.delete(),
-                    saleTotal: firebase.firestore.FieldValue.delete()
-                });
-            }
+            if(confirm("Вернуть в наличие?")) db.collection("my_coins").doc(id).update({ status: "В наличии", saleQty: firebase.firestore.FieldValue.delete(), saleTotal: firebase.firestore.FieldValue.delete() });
             return;
         }
         salePendingId = id;
@@ -252,35 +239,21 @@
     async function confirmSale() {
         const p = parseFloat(document.getElementById('modalPrice').value) || 0;
         const q = parseInt(document.getElementById('modalQty').value) || 1;
-        await db.collection("my_coins").doc(salePendingId).update({
-            status: "Продано", salePrice: p, saleQty: q, saleTotal: p*q,
-            lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        await db.collection("my_coins").doc(salePendingId).update({ status: "Продано", salePrice: p, saleQty: q, saleTotal: p*q, lastUpdate: firebase.firestore.FieldValue.serverTimestamp() });
         closeModal();
     }
 
     function editCoin(id) {
         const c = allCoins.find(x => x.id === id);
         currentEditId = id;
-        document.getElementById('cNum').value = c.num;
-        document.getElementById('cPrice').value = c.price;
-        document.getElementById('cUrls').value = (c.imgs || []).join(', ');
-        document.getElementById('cDesc').value = c.desc;
-        document.getElementById('cStatus').value = c.status;
-        document.getElementById('mainBtn').innerText = "ОБНОВИТЬ ИНФО";
+        ['cNum','cPrice','cUrls','cDesc','cStatus'].forEach(f => document.getElementById(f).value = (f==='cUrls' ? (c.imgs||[]).join(', ') : c[f.slice(1)]));
+        document.getElementById('mainBtn').innerText = "ОБНОВИТЬ";
         document.getElementById('mainBtn').classList.add('edit-mode');
         document.getElementById('cancelBtn').style.display = "block";
         window.scrollTo({top:0, behavior:'smooth'});
     }
 
-    function resetForm() {
-        currentEditId = null;
-        ['cNum','cPrice','cUrls','cDesc'].forEach(id => document.getElementById(id).value = "");
-        document.getElementById('mainBtn').innerText = "Добавить в базу";
-        document.getElementById('mainBtn').classList.remove('edit-mode');
-        document.getElementById('cancelBtn').style.display = "none";
-    }
-
+    function resetForm() { currentEditId = null; ['cNum','cPrice','cUrls','cDesc'].forEach(id => document.getElementById(id).value = ""); document.getElementById('mainBtn').innerText = "Добавить"; document.getElementById('mainBtn').classList.remove('edit-mode'); document.getElementById('cancelBtn').style.display = "none"; }
     function closeModal() { document.getElementById('saleModal').style.display = "none"; }
     async function deleteCoin(id) { if(confirm("Удалить?")) await db.collection("my_coins").doc(id).delete(); }
 
