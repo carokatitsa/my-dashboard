@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Coach v4.1</title>
+    <title>AI Gym Coach v4.2</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -11,7 +11,9 @@
         body { background: var(--bg); color: var(--text); font-family: sans-serif; padding: 20px; margin: 0; }
         .container { max-width: 500px; margin: 0 auto; }
         .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
-        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 16px; }
+        label { display: block; margin-bottom: 5px; color: var(--gold); font-size: 12px; text-transform: uppercase; font-weight: bold; }
+        input { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
+        input:focus { border-color: var(--blue); outline: none; }
         .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px; }
         .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-bottom: 10px; }
         .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); }
@@ -34,11 +36,16 @@
     <div id="statsBox" class="summary" style="display:none;"></div>
 
     <div class="box">
-        <input type="text" id="exName" placeholder="Упражнение" list="exList">
+        <label>Дата тренировки</label>
+        <input type="date" id="exDate">
+
+        <label>Упражнение</label>
+        <input type="text" id="exName" placeholder="Напр: Жим лежа" list="exList">
         <datalist id="exList">
-            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья"><option value="Трицепс кнут"><option value="Присед">
+            <option value="Жим обычный"><option value="Грудь на сиденьи"><option value="Брусья"><option value="Присед">
         </datalist>
 
+        <label>Подходы</label>
         <div id="sets">
             <div class="set-row">
                 <input type="number" class="sw" placeholder="кг">
@@ -51,7 +58,7 @@
         <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
     </div>
 
-    <h3 style="color:var(--gold)">Сегодняшние результаты</h3>
+    <h3 id="listHeader" style="color:var(--gold)">Результаты за сегодня</h3>
     <div id="list"></div>
 </div>
 
@@ -69,8 +76,12 @@
     const db = firebase.firestore();
     let editId = null;
 
-    // Функция получения даты сегодня в формате ГГГГ-ММ-ДД
-    const getToday = () => new Date().toISOString().split('T')[0];
+    // Установка сегодняшней даты в поле при загрузке
+    const setTodayDate = () => {
+        const d = new Date();
+        const dateStr = d.toISOString().split('T')[0];
+        document.getElementById('exDate').value = dateStr;
+    };
 
     function addSet(w='', r='') {
         const div = document.createElement('div');
@@ -80,11 +91,11 @@
     }
 
     async function save() {
+        const date = document.getElementById('exDate').value;
         const name = document.getElementById('exName').value.trim();
         const ws = document.getElementsByClassName('sw');
         const rs = document.getElementsByClassName('sr');
         const btn = document.getElementById('saveBtn');
-        const today = getToday();
         
         let sets = [];
         let curMaxW = 0, curMaxR = 0;
@@ -100,19 +111,18 @@
             }
         }
 
-        if(!name || sets.length === 0) return alert("Заполни данные!");
+        if(!name || !date || sets.length === 0) return alert("Заполни дату, название и подходы!");
         btn.disabled = true;
 
         try {
-            // Лезем в базу за ВСЕЙ историей этого упражнения
             const snap = await db.collection("gym_logs").where("name", "==", name).get();
             let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
             
-            // Находим последнюю запись, которая была сделана НЕ сегодня
-            let lastEx = history.find(h => h.date !== today);
+            // Сравниваем с последней записью, у которой дата не совпадает с выбранной в инпуте
+            let lastEx = history.find(h => h.date !== date);
 
             let advice = "Первая запись для анализа в будущем!";
-            let verdict = "База упражнения создана. Теперь я буду следить за твоим прогрессом.";
+            let verdict = "База упражнения создана. Жду прогресса!";
 
             if(lastEx) {
                 const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
@@ -120,25 +130,25 @@
 
                 if(curMaxW > pMaxW) {
                     advice = `🔥 РЕКОРД ВЕСА! +${curMaxW-pMaxW}кг.`;
-                    verdict = `Ты мощнее, чем в прошлый раз (${pMaxW}кг). Закрепи этот результат!`;
+                    verdict = `Ты мощнее, чем в прошлый раз (${pMaxW}кг). Закрепи результат!`;
                 } else if(curMaxW === pMaxW) {
                     if(curMaxR > pMaxR) {
                         advice = `📈 ПРОГРЕСС В ПОВТОРАХ! +${curMaxR-pMaxR} раз.`;
-                        verdict = `При том же весе ты сделал больше раз. На следующей тренировке накинь +2.5кг!`;
+                        verdict = `При том же весе ты сделал больше раз. Накинь +2.5кг в следующий раз!`;
                     } else if (curMaxR < pMaxR) {
                         advice = `⚠️ СПАД. На ${pMaxR-curMaxR} раз меньше.`;
-                        verdict = `Сегодня тяжелее обычного. Удели время восстановлению и сну.`;
+                        verdict = `Сегодня тяжелее обычного. Отдохни и восстановись.`;
                     } else {
                         advice = `💪 СТАБИЛЬНОСТЬ.`;
-                        verdict = `Повторил результат прошлого раза. Попробуй добавить один экстра-повтор в конце.`;
+                        verdict = `Повторил результат прошлого раза. Попробуй экстра-повтор!`;
                     }
                 } else {
                     advice = `🧘 ТЕХНИЧЕСКАЯ РАБОТА.`;
-                    verdict = `Вес меньше твоего пикового (${pMaxW}кг). Хороший день для идеальной техники.`;
+                    verdict = `Вес меньше пикового (${pMaxW}кг). Работаем над техникой.`;
                 }
             }
 
-            const data = { name, sets, date: today, ts: Date.now(), verdict: verdict, advice: advice };
+            const data = { name, sets, date, ts: Date.now(), verdict, advice };
 
             if(editId) {
                 await db.collection("gym_logs").doc(editId).update(data);
@@ -159,25 +169,27 @@
     }
 
     async function load() {
-        const today = getToday();
+        const selectedDate = document.getElementById('exDate').value;
         const snap = await db.collection("gym_logs").get();
         const list = document.getElementById('list');
         list.innerHTML = "";
         
-        // Показываем только сегодняшние
+        // Показываем записи только за выбранную дату
         const docs = snap.docs
-            .filter(d => d.data().date === today)
+            .filter(d => d.data().date === selectedDate)
             .sort((a,b) => b.data().ts - a.data().ts);
 
         const stats = document.getElementById('statsBox');
+        document.getElementById('listHeader').innerText = `Результаты за ${selectedDate}`;
+
         if(docs.length > 0) {
             stats.style.display = 'block';
             let vol = 0;
             docs.forEach(doc => doc.data().sets.forEach(s => vol += s.w * s.r));
-            stats.innerHTML = `📊 <b>Сегодня:</b> ${docs.length} упр. | <b>Общий объем:</b> ${vol} кг`;
+            stats.innerHTML = `📊 <b>Всего:</b> ${docs.length} упр. | <b>Объем:</b> ${vol} кг`;
         } else {
             stats.style.display = 'none';
-            list.innerHTML = "<p style='text-align:center; opacity:0.5;'>На сегодня записей нет. Время тренироваться! 🦾</p>";
+            list.innerHTML = "<p style='text-align:center; opacity:0.5;'>На эту дату записей нет. 🦾</p>";
         }
 
         docs.forEach(doc => {
@@ -198,6 +210,7 @@
     async function edit(id) {
         const doc = await db.collection("gym_logs").doc(id).get();
         const d = doc.data();
+        document.getElementById('exDate').value = d.date;
         document.getElementById('exName').value = d.name;
         document.getElementById('sets').innerHTML = "";
         d.sets.forEach(s => addSet(s.w, s.r));
@@ -210,7 +223,13 @@
         if(confirm("Удалить запись?")) { await db.collection("gym_logs").doc(id).delete(); load(); }
     }
 
-    window.onload = load;
+    // Слушатель изменения даты: если меняешь дату в календаре, список ниже обновляется
+    document.getElementById('exDate').addEventListener('change', load);
+
+    window.onload = () => {
+        setTodayDate();
+        load();
+    };
 </script>
 </body>
 </html>
