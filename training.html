@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Pro OS</title>
+    <title>AI Gym Pro OS v5.0</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -16,7 +16,7 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* ЛЕВАЯ ПАНЕЛЬ - БАЗА */
+        /* ЛЕВАЯ ПАНЕЛЬ */
         .sidebar { 
             width: 250px; background: #010409; border-right: 1px solid var(--border); 
             display: flex; flex-direction: column; padding: 20px; overflow-y: auto;
@@ -24,38 +24,47 @@
         .sidebar h3 { color: var(--blue); font-size: 14px; text-transform: uppercase; margin-bottom: 15px; }
         .ex-item { 
             padding: 10px; border: 1px solid var(--border); border-radius: 8px; 
-            margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 14px;
+            margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 13px; background: rgba(255,255,255,0.03);
         }
         .ex-item:hover { background: var(--border); border-color: var(--gold); }
 
-        /* ЦЕНТРАЛЬНАЯ ЧАСТЬ */
-        .main { flex: 1; overflow-y: auto; padding: 30px; display: flex; flex-direction: column; align-items: center; }
-        .content-wrapper { width: 100%; max-width: 500px; }
+        /* ЦЕНТР */
+        .main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .content-wrapper { width: 100%; max-width: 600px; }
 
-        /* ДИЗАЙН ДАТЫ */
-        .date-widget {
-            background: linear-gradient(135deg, #1f2937, #111827);
-            border: 1px solid var(--blue); border-radius: 15px;
-            padding: 15px; margin-bottom: 25px; text-align: center;
-            box-shadow: 0 0 15px rgba(88, 166, 255, 0.2);
+        /* ВИДЖЕТ ДАТЫ И ОТЧЕТА */
+        .status-panel {
+            background: linear-gradient(145deg, #1c2128, #111827);
+            border: 1px solid var(--blue); border-radius: 16px;
+            padding: 20px; margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
         }
-        .date-widget label { color: var(--blue); font-size: 10px; font-weight: bold; text-transform: uppercase; }
-        .date-widget input { 
-            background: transparent; border: none; color: #fff; font-size: 22px; 
-            font-weight: bold; text-align: center; width: 100%; cursor: pointer;
-        }
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .status-header input { background: transparent; border: none; color: var(--blue); font-size: 18px; font-weight: bold; cursor: pointer; outline: none; }
+        .ai-report-text { font-size: 14px; line-height: 1.6; color: #fff; font-style: italic; }
+        .stats-badge { font-size: 12px; color: var(--gold); font-weight: bold; margin-top: 10px; display: block; }
 
-        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 25px; }
         input[type="text"] { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
         
         .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px; }
-        .btn { border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
+        .btn { border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); margin-bottom: 10px; }
-        .btn-save { background: var(--green); color: #fff; }
+        .btn-save { background: var(--green); color: #fff; font-size: 16px; }
+        .btn-save:active { transform: scale(0.98); }
 
-        #aiBox { background: #000; border: 1px solid var(--gold); padding: 15px; border-radius: 8px; margin-bottom: 15px; display: none; font-size: 14px; }
-        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 10px; margin-top: 10px; position: relative; }
-        .verdict-line { font-size: 12px; color: var(--gold); margin-top: 8px; font-style: italic; display: block; border-top: 1px solid var(--border); padding-top: 5px; }
+        /* ГАРМОШКА ИСТОРИИ */
+        .history-day { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        .history-header { 
+            background: #21262d; padding: 12px 15px; cursor: pointer; display: flex; 
+            justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
+        }
+        .history-header:hover { background: #30363d; }
+        .history-content { background: #0d1117; display: none; padding: 10px; }
+        .history-content.active { display: block; }
+
+        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 10px; position: relative; }
+        .card b { color: var(--gold); }
+        .verdict-line { font-size: 11px; color: #8b949e; margin-top: 8px; display: block; }
         
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; }
@@ -67,23 +76,23 @@
 <body>
 
 <div class="sidebar">
-    <h3>📂 Моя База</h3>
-    <div id="exerciseLibrary">
-        <small style="opacity: 0.5;">Загрузка базы...</small>
-    </div>
+    <h3>📂 МОЯ БАЗА</h3>
+    <div id="exerciseLibrary"></div>
 </div>
 
 <div class="main">
     <div class="content-wrapper">
-        <div class="date-widget">
-            <label>Тренировка от</label>
-            <input type="date" id="exDate" onchange="load()">
+        <div class="status-panel">
+            <div class="status-header">
+                <input type="date" id="exDate" onchange="loadHistory()">
+                <span id="dayTone">⚡️ Готов к работе</span>
+            </div>
+            <div id="aiReport" class="ai-report-text">Выберите дату или сохраните упражнение, чтобы увидеть отчет за тренировку...</div>
+            <div id="quickStats" class="stats-badge"></div>
         </div>
 
-        <div id="aiBox"></div>
-
         <div class="box">
-            <input type="text" id="exName" placeholder="Название упражнения">
+            <input type="text" id="exName" placeholder="Название упражнения...">
             <div id="sets">
                 <div class="set-row">
                     <input type="number" class="sw" placeholder="кг">
@@ -92,11 +101,11 @@
                 </div>
             </div>
             <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
-            <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ</button>
+            <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ РЕЗУЛЬТАТ</button>
         </div>
 
-        <h3 id="listHeader" style="color:var(--gold)">Лог за день</h3>
-        <div id="list"></div>
+        <h3 style="color:var(--gold); font-size: 16px; margin-bottom: 15px;">📜 АРХИВ ТРЕНИРОВОК</h3>
+        <div id="historyAccordion"></div>
     </div>
 </div>
 
@@ -114,7 +123,7 @@
     const db = firebase.firestore();
     let editId = null;
 
-    // 1. ПОДТЯГИВАНИЕ СПИСКА УПРАЖНЕНИЙ В SIDEBAR
+    // ОБНОВЛЕНИЕ БИБЛИОТЕКИ СЛЕВА
     async function updateLibrary() {
         const snap = await db.collection("gym_logs").get();
         const names = [...new Set(snap.docs.map(d => d.data().name))].sort();
@@ -122,17 +131,14 @@
         lib.innerHTML = names.map(n => `<div class="ex-item" onclick="autoFill('${n}')">➕ ${n}</div>`).join('');
     }
 
-    // 2. АВТОЗАПОЛНЕНИЕ ПРИ ВЫБОРЕ ИЗ БАЗЫ
     async function autoFill(name) {
         document.getElementById('exName').value = name;
         const snap = await db.collection("gym_logs").where("name", "==", name).get();
         const history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
         const last = history[0];
-        
         const setsContainer = document.getElementById('sets');
         setsContainer.innerHTML = "";
         last.sets.forEach(s => addSet(s.w, s.r));
-        window.scrollTo({top: 0, behavior: 'smooth'});
     }
 
     function addSet(w='', r='') {
@@ -142,6 +148,7 @@
         document.getElementById('sets').appendChild(div);
     }
 
+    // СОХРАНЕНИЕ
     async function save() {
         const date = document.getElementById('exDate').value;
         const name = document.getElementById('exName').value.trim();
@@ -151,14 +158,12 @@
         
         let sets = [];
         let curMaxW = 0, curMaxR = 0;
-
         for(let i=0; i<ws.length; i++) {
             let weight = parseFloat(ws[i].value);
             let reps = parseInt(rs[i].value);
             if(weight && reps) {
                 sets.push({w: weight, r: reps});
                 if(weight > curMaxW) { curMaxW = weight; curMaxR = reps; }
-                else if(weight === curMaxW && reps > curMaxR) { curMaxR = reps; }
             }
         }
 
@@ -169,56 +174,95 @@
         let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
         let lastEx = history.find(h => h.date !== date);
 
-        let advice = "Первая запись!";
-        let verdict = "База создана. Жду прогресса!";
+        let verdict = lastEx ? `Прошлый раз: ${Math.max(...lastEx.sets.map(s=>s.w))}кг. Погнали!` : "База создана!";
 
-        if(lastEx) {
-            const pMaxW = Math.max(...lastEx.sets.map(s => s.w));
-            const pMaxR = Math.max(...lastEx.sets.filter(s => s.w === pMaxW).map(s => s.r));
-            if(curMaxW > pMaxW) { advice = `🔥 РЕКОРД ВЕСА! +${curMaxW-pMaxW}кг.`; verdict = `Ты мощнее, чем был (${pMaxW}кг).`; }
-            else if(curMaxW === pMaxW) {
-                if(curMaxR > pMaxR) { advice = `📈 ПРОГРЕСС В ПОВТОРАХ!`; verdict = `Сделал больше раз. Пора накинуть вес!`; }
-                else { advice = `💪 СТАБИЛЬНОСТЬ.`; verdict = `Повторил прошлый результат.`; }
-            } else { advice = `🧘 ТЕХНИКА.`; verdict = `Вес ниже пика (${pMaxW}кг).`; }
-        }
-
-        const data = { name, sets, date, ts: Date.now(), verdict, advice };
+        const data = { name, sets, date, ts: Date.now(), verdict };
         if(editId) { await db.collection("gym_logs").doc(editId).update(data); editId = null; }
         else { await db.collection("gym_logs").add(data); }
 
-        document.getElementById('aiBox').style.display = 'block';
-        document.getElementById('aiBox').innerHTML = `🤖 <b>AI:</b> ${advice}<br>👉 ${verdict}`;
-        
         document.getElementById('exName').value = '';
         document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
-        btn.disabled = false; btn.innerText = "СОХРАНИТЬ";
-        load();
+        btn.disabled = false;
+        loadHistory();
         updateLibrary();
     }
 
-    async function load() {
-        const selectedDate = document.getElementById('exDate').value;
+    // ЗАГРУЗКА ИСТОРИИ С ГАРМОШКОЙ И ОТЧЕТОМ
+    async function loadHistory() {
         const snap = await db.collection("gym_logs").get();
-        const list = document.getElementById('list');
-        list.innerHTML = "";
-        
-        const docs = snap.docs
-            .filter(d => d.data().date === selectedDate)
-            .sort((a,b) => b.data().ts - a.data().ts);
+        const allData = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        const grouped = {};
 
-        docs.forEach(doc => {
-            const d = doc.data();
-            list.innerHTML += `
-                <div class="card">
-                    <b>${d.name}</b>
-                    <div class="btns">
-                        <button class="btn-m" onclick="edit('${doc.id}')">✏️</button>
-                        <button class="btn-m" onclick="del('${doc.id}')">🗑️</button>
-                    </div>
-                    <br><small>${d.sets.map(s => `${s.w}×${s.r}`).join(' | ')}</small>
-                    <span class="verdict-line">🤖 ${d.verdict}</span>
-                </div>`;
+        // Группируем по датам
+        allData.forEach(item => {
+            if(!grouped[item.date]) grouped[item.date] = [];
+            grouped[item.date].push(item);
         });
+
+        const container = document.getElementById('historyAccordion');
+        container.innerHTML = "";
+
+        const sortedDates = Object.keys(grouped).sort().reverse();
+        const selectedDate = document.getElementById('exDate').value;
+
+        sortedDates.forEach(date => {
+            const exercises = grouped[date];
+            const isToday = date === selectedDate;
+            let totalVolume = 0;
+            exercises.forEach(ex => ex.sets.forEach(s => totalVolume += (s.w * s.r)));
+
+            // Если это выбранная дата — обновляем отчет вверху
+            if(isToday) {
+                updateReport(exercises, totalVolume);
+            }
+
+            const section = document.createElement('div');
+            section.className = 'history-day';
+            section.innerHTML = `
+                <div class="history-header" onclick="this.nextElementSibling.classList.toggle('active')">
+                    <span>📅 ${date}</span>
+                    <span style="color:var(--blue)">${exercises.length} упр. | ${totalVolume} кг ▾</span>
+                </div>
+                <div class="history-content ${isToday ? 'active' : ''}">
+                    ${exercises.map(ex => `
+                        <div class="card">
+                            <b>${ex.name}</b>
+                            <div style="position:absolute; top:10px; right:10px;">
+                                <button onclick="edit('${ex.id}')" style="background:none; border:none; cursor:pointer;">✏️</button>
+                                <button onclick="del('${ex.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
+                            </div>
+                            <br><small>${ex.sets.map(s => `${s.w}×${s.r}`).join(' | ')}</small>
+                            <span class="verdict-line">${ex.verdict}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(section);
+        });
+
+        if(!grouped[selectedDate]) {
+            document.getElementById('aiReport').innerText = "На эту дату записей нет. Самое время потренироваться!";
+            document.getElementById('quickStats').innerText = "";
+        }
+    }
+
+    // ПИСЬМЕННЫЙ ОТЧЕТ
+    function updateReport(exercises, volume) {
+        const reportBox = document.getElementById('aiReport');
+        const statsBox = document.getElementById('quickStats');
+        const toneBox = document.getElementById('dayTone');
+
+        let text = "";
+        if(volume > 5000) {
+            text = `Ого! Сегодня была по-настоящему тяжелая тренировка. Вы проделали огромный объем работы, задействовав ${exercises.length} упражнений. Основной фокус был на интенсивности.`;
+            toneBox.innerText = "🔥 Режим Зверя";
+        } else if(volume > 0) {
+            text = `Хорошая техническая сессия. Вы выполнили ${exercises.length} упражнений. Такой объем отлично подходит для поддержания тонуса и отработки нейромышечной связи.`;
+            toneBox.innerText = "💪 Продуктивно";
+        }
+
+        reportBox.innerText = text;
+        statsBox.innerText = `📊 ИТОГО: ${volume} кг поднято за сегодня.`;
     }
 
     async function edit(id) {
@@ -234,12 +278,12 @@
     }
 
     async function del(id) {
-        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); load(); updateLibrary(); }
+        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); loadHistory(); updateLibrary(); }
     }
 
     window.onload = () => {
         document.getElementById('exDate').value = new Date().toISOString().split('T')[0];
-        load();
+        loadHistory();
         updateLibrary();
     };
 </script>
