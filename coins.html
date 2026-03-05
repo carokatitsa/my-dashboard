@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Ultra Pro v4.8 | Auction & Optimized</title>
+    <title>Coin Archive Ultra Pro v4.9 | Smart Parser & Lazy Load</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -13,13 +13,11 @@
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
         
-        /* СТАТИСТИКА */
         .stats-panel { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 25px; }
         .stat-card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
         .stat-card span { display: block; font-size: 11px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
         .stat-card b { font-size: 24px; color: var(--gold); }
 
-        /* АДМИН ПАНЕЛЬ */
         .admin-panel { background: var(--card); padding: 25px; border-radius: 12px; border: 2px solid var(--border); margin-bottom: 20px; }
         .inputs-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         input, textarea, select { background: #000; border: 1px solid #444; color: #fff; padding: 12px; border-radius: 6px; width: 100%; box-sizing: border-box; outline: none; }
@@ -30,7 +28,6 @@
 
         .filter-bar { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border); }
 
-        /* СЕТКА И КАРТОЧКИ */
         .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         .coin-card { 
             background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); 
@@ -40,11 +37,10 @@
         .coin-card[data-s="Аукцион"] { border-color: var(--blue); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
         .coin-card.hidden { display: none !important; }
         
-        /* ОПТИМИЗИРОВАННАЯ ГАЛЕРЕЯ */
         .coin-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #000; height: 160px; overflow: hidden; }
         .coin-gallery img { 
             width: 100%; height: 160px; object-fit: cover; cursor: pointer; background: #222; 
-            opacity: 0; transition: opacity 0.5s; /* Плавное появление */
+            opacity: 0; transition: opacity 0.5s;
         }
         .coin-gallery img.loaded { opacity: 1; }
 
@@ -79,7 +75,7 @@
                 <option value="Аукцион">Аукцион</option>
             </select>
         </div>
-        <textarea id="cUrls" placeholder="Ссылки на фото через запятую..." rows="2"></textarea>
+        <textarea id="cUrls" placeholder="Вставьте ссылки или HTML-код с ImgBB..." rows="2"></textarea>
         <textarea id="cDesc" placeholder="Описание..." rows="2" style="margin-top:10px"></textarea>
         <button id="mainBtn" class="btn-main" onclick="saveData()">Добавить в базу</button>
         <button id="cancelBtn" onclick="resetForm()" style="display:none; color:gray; width:100%; margin-top:10px; cursor:pointer; background:none; border:none;">Отмена</button>
@@ -129,7 +125,6 @@
     let currentEditId = null;
     let salePendingId = null;
 
-    // Слушатель базы
     db.collection("my_coins").onSnapshot(snap => {
         allCoins = snap.docs.map(d => ({
             id: d.id, 
@@ -150,6 +145,7 @@
                         <img data-src="${url}" 
                              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
                              class="lazy"
+                             onerror="this.src='https://via.placeholder.com/300x160?text=Error'"
                              onload="this.classList.add('loaded')"
                              onclick="window.open('${url}')">
                     `).join('')}
@@ -171,22 +167,20 @@
             </div>
         `).join('');
         
-        initLazyLoad(); // Запуск ленивой загрузки
+        initLazyLoad();
         applyFilters();
     }
 
-    // ЛЕНИВАЯ ЗАГРУЗКА
     function initLazyLoad() {
         const observer = new IntersectionObserver((entries, obs) => {
             entries.forEach(entry => {
                 if(entry.isIntersecting) {
                     const img = entry.target;
-                    img.src = img.dataset.src;
+                    if(img.dataset.src) img.src = img.dataset.src;
                     obs.unobserve(img);
                 }
             });
-        }, { rootMargin: "200px" });
-
+        }, { rootMargin: "300px" });
         document.querySelectorAll('img.lazy').forEach(img => observer.observe(img));
     }
 
@@ -203,7 +197,6 @@
         const grid = document.getElementById('coinGrid');
         
         let rev = 0, qty = 0, count = 0;
-
         let filtered = allCoins.filter(c => {
             const matchStatus = (statusF === "all" || c.status === statusF);
             const matchSearch = (`${c.num} ${c.desc}`.toLowerCase().includes(query));
@@ -217,7 +210,6 @@
         });
 
         document.querySelectorAll('.coin-card').forEach(el => el.classList.add('hidden'));
-
         filtered.forEach(c => {
             const el = document.getElementById(`card-${c.id}`);
             if(el) {
@@ -230,23 +222,39 @@
         const s1 = document.getElementById('stat1'), s2 = document.getElementById('stat2'), s3 = document.getElementById('stat3');
         if(statusF === "Продано") {
             s1.innerText = rev.toLocaleString(); s2.innerText = qty; s3.innerText = count > 0 ? (rev/count).toFixed(0) : 0;
-        } else if(statusF === "Аукцион") {
-            s1.innerText = filtered.length; s2.innerText = "Активно"; s3.innerText = "Торги";
         } else {
-            s1.innerText = filtered.length; s2.innerText = "В наличии"; s3.innerText = "Сток";
+            s1.innerText = filtered.length; s2.innerText = statusF === "Аукцион" ? "Торги" : "В наличии"; s3.innerText = "Активно";
         }
     }
 
     async function saveData() {
         const num = document.getElementById('cNum').value;
         if(!num) return alert("Нужен номер!");
+        
+        let rawInput = document.getElementById('cUrls').value;
+        let cleanImgs = [];
+
+        // УМНЫЙ ПАРСЕР: Ищем все прямые ссылки (начинаются на http и заканчиваются на расширение фото)
+        // Либо вытаскиваем из тегов <img src="...">
+        const imgRegex = /(https?:\/\/[^"'\s<>]+?\.(?:jpg|jpeg|png|webp|gif))/gi;
+        let match;
+        while ((match = imgRegex.exec(rawInput)) !== null) {
+            cleanImgs.push(match[0]);
+        }
+
+        // Если регулярка ничего не нашла, пробуем просто разделить запятыми (на всякий случай)
+        if(cleanImgs.length === 0 && rawInput.trim() !== "") {
+            cleanImgs = rawInput.split(',').map(s => s.trim()).filter(s => s);
+        }
+
         const data = {
             num: num, price: document.getElementById('cPrice').value,
             status: document.getElementById('cStatus').value,
-            imgs: document.getElementById('cUrls').value.split(',').map(s=>s.trim()).filter(s=>s),
+            imgs: cleanImgs,
             desc: document.getElementById('cDesc').value,
             lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
         };
+        
         if(currentEditId) { await db.collection("my_coins").doc(currentEditId).update(data); currentEditId = null; }
         else { await db.collection("my_coins").add(data); }
         resetForm();
