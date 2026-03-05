@@ -2,13 +2,13 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Coin Archive Ultra Pro v4.6 | Auction Edition</title>
+    <title>Coin Archive Ultra Pro v4.8 | Auction & Optimized</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root { 
             --bg: #0a0a0a; --card: #161616; --gold: #f1c40f; --text: #e0e0e0; 
-            --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --border: #333; --auc: #9b59b6; 
+            --blue: #3498db; --green: #2ecc71; --red: #e74c3c; --border: #333; 
         }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: 0 auto; }
@@ -34,16 +34,19 @@
         .coin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
         .coin-card { 
             background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); 
-            position: relative; content-visibility: auto; contain-intrinsic-size: 400px; transition: 0.3s;
+            position: relative; transition: 0.3s; min-height: 350px;
         }
-        /* Цвета для разных статусов */
         .coin-card[data-s="Продано"] { border-color: var(--red); opacity: 0.8; }
         .coin-card[data-s="Аукцион"] { border-color: var(--blue); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
-        
         .coin-card.hidden { display: none !important; }
         
-        .coin-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #000; height: 160px; }
-        .coin-gallery img { width: 100%; height: 160px; object-fit: cover; cursor: pointer; background: #222; }
+        /* ОПТИМИЗИРОВАННАЯ ГАЛЕРЕЯ */
+        .coin-gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; background: #000; height: 160px; overflow: hidden; }
+        .coin-gallery img { 
+            width: 100%; height: 160px; object-fit: cover; cursor: pointer; background: #222; 
+            opacity: 0; transition: opacity 0.5s; /* Плавное появление */
+        }
+        .coin-gallery img.loaded { opacity: 1; }
 
         .coin-info { padding: 15px; }
         .coin-id { color: var(--gold); font-size: 20px; font-weight: bold; }
@@ -126,6 +129,7 @@
     let currentEditId = null;
     let salePendingId = null;
 
+    // Слушатель базы
     db.collection("my_coins").onSnapshot(snap => {
         allCoins = snap.docs.map(d => ({
             id: d.id, 
@@ -142,7 +146,13 @@
             <div class="coin-card" id="card-${c.id}" data-s="${c.status}">
                 <button class="btn-del" onclick="deleteCoin('${c.id}')">✕</button>
                 <div class="coin-gallery">
-                    ${(c.imgs||[]).slice(0,2).map(url=>`<img src="${url}" loading="lazy" onclick="window.open('${url}')">`).join('')}
+                    ${(c.imgs||[]).slice(0,2).map(url=>`
+                        <img data-src="${url}" 
+                             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" 
+                             class="lazy"
+                             onload="this.classList.add('loaded')"
+                             onclick="window.open('${url}')">
+                    `).join('')}
                 </div>
                 <div class="coin-info">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
@@ -160,7 +170,24 @@
                 </div>
             </div>
         `).join('');
+        
+        initLazyLoad(); // Запуск ленивой загрузки
         applyFilters();
+    }
+
+    // ЛЕНИВАЯ ЗАГРУЗКА
+    function initLazyLoad() {
+        const observer = new IntersectionObserver((entries, obs) => {
+            entries.forEach(entry => {
+                if(entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    obs.unobserve(img);
+                }
+            });
+        }, { rootMargin: "200px" });
+
+        document.querySelectorAll('img.lazy').forEach(img => observer.observe(img));
     }
 
     function getStatusColor(s) {
@@ -200,7 +227,6 @@
             }
         });
 
-        // ДИНАМИЧЕСКАЯ СТАТИСТИКА
         const s1 = document.getElementById('stat1'), s2 = document.getElementById('stat2'), s3 = document.getElementById('stat3');
         if(statusF === "Продано") {
             s1.innerText = rev.toLocaleString(); s2.innerText = qty; s3.innerText = count > 0 ? (rev/count).toFixed(0) : 0;
