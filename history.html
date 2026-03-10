@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>История | LingoArchive Pro</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+
+  <style>
+    :root { 
+      --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc;
+      --accent: #3498db; --gold: #f1c40f;
+    }
+    body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); }
+    header { background:#111a2e; padding:16px; border-bottom: 1px solid #1e2a44; display: flex; justify-content: space-between; }
+    nav a { color: var(--text-main); margin-right:14px; text-decoration:none; font-weight:600; }
+    
+    main { padding: 20px; max-width: 1200px; margin: auto; }
+    #map { height: 500px; border-radius: 15px; border: 1px solid var(--accent); margin-bottom: 20px; z-index: 1; }
+    
+    .timeline-container { background: var(--bg-card); padding: 20px; border-radius: 15px; margin-bottom: 20px; text-align: center; }
+    #yearSlider { width: 100%; margin: 15px 0; cursor: pointer; }
+    .year-display { font-size: 24px; font-weight: bold; color: var(--gold); }
+
+    .card { background: var(--bg-card); border-radius:14px; padding:20px; border: 1px solid #1e2a44; margin-bottom: 20px; }
+    input, textarea { background:#000; border:1px solid #333; color:#fff; padding:10px; border-radius:8px; width:100%; box-sizing:border-box; margin-bottom: 10px; }
+    .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <a href="index.html">🏠 Главная</a>
+    <a href="coins.html">🪙 Монеты</a>
+    <a href="languages.html">📚 Языки</a>
+    <a href="history.html" style="color:var(--gold)">🏛 История</a>
+  </nav>
+</header>
+
+<main>
+  <h1>🏛 Личный Исторический Атлас</h1>
+
+  <div class="timeline-container">
+    <div class="year-display">Год: <span id="currentYear">2024</span></div>
+    <input type="range" id="yearSlider" min="-4000" max="2026" value="2024">
+    <div style="display:flex; justify-content: space-between" class="muted">
+        <span>4000 до н.э.</span>
+        <span>0</span>
+        <span>2026 н.э.</span>
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <div class="card">
+    <h3>➕ Добавить государство/событие</h3>
+    <p class="muted" style="font-size: 13px">1. Нарисуй область на карте (инструмент многоугольник слева)<br>2. Заполни данные ниже</p>
+    <input id="countryName" placeholder="Название (например: Римская Империя)">
+    <div style="display:flex; gap:10px">
+        <input id="startYear" type="number" placeholder="Год появления">
+        <input id="endYear" type="number" placeholder="Год исчезновения">
+    </div>
+    <textarea id="description" placeholder="Описание, правители, важные битвы..." rows="3"></textarea>
+    <button class="btn" onclick="saveHistory()"><i class="fas fa-save"></i> Сохранить в Атлас</button>
+  </div>
+
+  <h2>Список событий в этом году:</h2>
+  <div id="historyList"></div>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
+    authDomain: "my-dashboard-dc67a.firebaseapp.com",
+    projectId: "my-dashboard-dc67a",
+    storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+    messagingSenderId: "710702954120",
+    appId: "1:710702954120:web:f06b1038c48d3bd328913d"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Инициализация карты
+const map = L.map('map').setView([50, 20], 3);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+// Инструменты рисования
+const drawnItems = new L.FeatureGroup();
+map.addLayer(drawnItems);
+const drawControl = new L.Control.Draw({
+    draw: { polyline: false, circle: false, marker: false, circlemarker: false, rectangle: true, polygon: true },
+    edit: { featureGroup: drawnItems }
+});
+map.addControl(drawControl);
+
+let currentShape = null;
+map.on(L.Draw.Event.CREATED, function (event) {
+    drawnItems.clearLayers(); // Только одна страна за раз
+    currentShape = event.layer;
+    drawnItems.addLayer(currentShape);
+});
+
+// Логика слайдера
+const slider = document.getElementById("yearSlider");
+const yearDisplay = document.getElementById("currentYear");
+let allHistoryData = [];
+
+slider.oninput = function() {
+    yearDisplay.innerText = this.value;
+    filterMapByYear(parseInt(this.value));
+};
+
+async function loadHistory() {
+    const q = collection(db, "history_atlas");
+    const snap = await getDocs(q);
+    allHistoryData = [];
+    snap.forEach(doc => allHistoryData.push({id: doc.id, ...doc.data()}));
+    filterMapByYear(parseInt(slider.value));
+}
+
+const mapLayers = L.layerGroup().addTo(map);
+
+function filterMapByYear(year) {
+    mapLayers.clearLayers();
+    const list = document.getElementById("historyList");
+    list.innerHTML = "";
+
+    allHistoryData.forEach(item => {
+        if (year >= item.start && year <= item.end) {
+            // Рисуем на карте
+            const layer = L.geoJSON(JSON.parse(item.geo));
+            layer.bindPopup(`<b>${item.name}</b><br>${item.desc}`);
+            mapLayers.addLayer(layer);
+
+            // Добавляем в список под картой
+            list.innerHTML += `
+                <div class="card">
+                    <h4>${item.name} (${item.start} — ${item.end})</h4>
+                    <p>${item.desc}</p>
+                </div>`;
+        }
+    });
+}
+
+async function saveHistory() {
+    if (!currentShape) return alert("Сначала нарисуй территорию на карте!");
+    const name = document.getElementById("countryName").value;
+    const start = parseInt(document.getElementById("startYear").value);
+    const end = parseInt(document.getElementById("endYear").value);
+    const desc = document.getElementById("description").value;
+
+    if (!name || isNaN(start) || isNaN(end)) return alert("Заполни все поля");
+
+    const geoData = JSON.stringify(currentShape.toGeoJSON());
+
+    await addDoc(collection(db, "history_atlas"), {
+        name, start, end, desc, geo: geoData, created: Date.now()
+    });
+
+    alert("Сохранено!");
+    location.reload();
+}
+
+window.saveHistory = saveHistory;
+loadHistory();
+</script>
+
+</body>
+</html>
