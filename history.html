@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Бронзовый Атлас | LingoArchive Pro</title>
+  <title>Бронзовый Атлас Pro | LingoArchive</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -14,35 +14,27 @@
       --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #cd7f32; 
       --gold: #f1c40f; --text: #c9d1d9; --border: #30363d;
     }
-    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    body { margin:0; font-family: -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
     header { background: var(--bg-sidebar); padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1001; }
-    nav a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 14px; margin-left: 15px; transition: 0.2s; }
-    nav a:hover { color: var(--gold); }
+    nav a { color: var(--text); text-decoration: none; font-size: 14px; margin-left: 15px; }
 
     .layout { display: flex; flex: 1; overflow: hidden; }
-    
-    /* Боковая панель */
-    .sidebar { width: 350px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; z-index: 10; }
-    .sidebar h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--accent); letter-spacing: 1px; }
+    .sidebar { width: 360px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
 
     .input-group { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
-    .input-group label { display: block; font-size: 11px; text-transform: uppercase; color: #8b949e; margin-bottom: 5px; }
-    input, textarea, select { background: #161b22; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 13px; outline: none; }
+    input, textarea { background: #161b22; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 13px; }
     
     .btn-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-    .btn-main:hover { background: #e38e4a; transform: translateY(-1px); }
+    .btn-main:hover { background: #e38e4a; }
 
-    /* Список стран в базе */
-    .country-card { background: #0d1117; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; }
-    .country-header { padding: 10px; background: #1c2128; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid var(--border); }
-    .country-header strong { font-size: 14px; color: var(--gold); }
-    .country-body { padding: 10px; display: block; } /* Можно добавить toggle для скрытия */
-    
-    .stage-item { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #21262d; color: #8b949e; display: flex; justify-content: space-between; }
-    .stage-item:last-child { border: none; }
+    /* Карточки государств */
+    .country-card { background: #0d1117; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
+    .country-header { padding: 10px; background: #1c2128; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .country-header strong { color: var(--gold); font-size: 14px; }
+    .country-body { padding: 8px 12px; font-size: 12px; color: #8b949e; }
 
-    .btn-sm { padding: 4px 8px; font-size: 11px; background: #21262d; color: #c9d1d9; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; transition: 0.2s; }
+    .btn-sm { padding: 4px 8px; font-size: 11px; background: #21262d; color: #c9d1d9; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
     .btn-sm:hover { border-color: var(--accent); color: white; }
 
     /* Карта */
@@ -50,48 +42,36 @@
     #map { height: 100%; width: 100%; filter: sepia(0.6) contrast(1.1) brightness(0.9) hue-rotate(-10deg); }
 
     /* Таймлайн */
-    .timeline-box { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 70%; z-index: 1000; background: rgba(13, 17, 23, 0.9); padding: 15px 25px; border-radius: 50px; border: 1px solid var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
-    #yearSlider { -webkit-appearance: none; width: 100%; height: 6px; background: #30363d; border-radius: 5px; outline: none; cursor: pointer; }
-    #yearSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; background: var(--accent); border-radius: 50%; border: 3px solid #0d1117; }
-    .year-label { font-size: 26px; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 5px; text-shadow: 0 0 10px rgba(205, 127, 50, 0.4); }
+    .timeline-box { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 70%; z-index: 1000; background: rgba(13, 17, 23, 0.9); padding: 15px 25px; border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px); }
+    #yearSlider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+    .year-label { font-size: 26px; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 5px; }
 
     /* Надписи на карте */
-    .map-label { background: transparent; border: none; box-shadow: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
-    .map-label-text { text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.9); }
+    .map-label { background: transparent; border: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
+    .map-label-text { text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px rgba(0,0,0,0.9); }
   </style>
 </head>
 <body>
 
 <header>
-  <div style="font-weight: bold; font-size: 20px; color: var(--accent);">🏛 BRONZE <span style="color: white;">ARCHIVE</span></div>
-  <nav>
-    <a href="index.html">🏠 Главная</a>
-    <a href="history.html" style="color:var(--gold)">🏛 История</a>
-  </nav>
+  <div style="font-weight: bold; font-size: 20px; color: var(--accent);">🏛 BRONZE ARCHIVE</div>
+  <nav><a href="index.html">🏠 Главная</a><a href="history.html" style="color:var(--gold)">🏛 История</a></nav>
 </header>
 
 <div class="layout">
   <div class="sidebar">
-    <h2>📜 Летопись</h2>
-    
     <div class="input-group">
-      <label>Название государства</label>
-      <input id="countryName" placeholder="Напр: Древний Египет">
-      
-      <label>Период владения (годы)</label>
+      <input id="countryName" placeholder="Название страны (напр. Рим)">
       <div style="display:flex; gap:10px">
-          <input id="startYear" type="number" placeholder="От">
-          <input id="endYear" type="number" placeholder="До">
+          <input id="startYear" type="number" placeholder="Год начала">
+          <input id="endYear" type="number" placeholder="Год конца">
       </div>
-      
-      <label>Цвет и Описание</label>
-      <input type="color" id="objColor" value="#cd7f32" style="height:35px; cursor:pointer;">
-      <textarea id="description" placeholder="События этого этапа..." rows="2"></textarea>
-      
-      <button class="btn-main" onclick="saveHistory()"><i class="fas fa-feather-alt"></i> Вписать этап</button>
+      <input type="color" id="objColor" value="#cd7f32" style="height:35px; cursor:pointer; margin-bottom:8px">
+      <textarea id="description" placeholder="Описание этого этапа..." rows="2"></textarea>
+      <button class="btn-main" onclick="saveHistory()">Вписать этап</button>
     </div>
 
-    <h3 style="font-size: 12px; color: #8b949e; text-transform: uppercase; margin-bottom: 10px;">База государств:</h3>
+    <h3 style="font-size: 12px; color: #8b949e; margin-bottom:10px;">БАЗА ГОСУДАРСТВ:</h3>
     <div id="historyList"></div>
   </div>
 
@@ -100,9 +80,6 @@
     <div class="timeline-box">
         <div class="year-label" id="currentYear">2026 AD</div>
         <input type="range" id="yearSlider" min="-4000" max="2026" value="2026">
-        <div style="display:flex; justify-content: space-between; font-size: 10px; color: #8b949e; margin-top:5px;">
-            <span>4000 BC</span><span>0</span><span>2026 AD</span>
-        </div>
     </div>
   </div>
 </div>
@@ -112,7 +89,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -126,7 +103,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Инициализация карты
 const map = L.map('map', { zoomControl: false }).setView([30, 31], 4);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.6 }).addTo(map);
@@ -134,7 +110,7 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 const drawControl = new L.Control.Draw({
-    draw: { polyline: false, polygon: true, rectangle: true, circle: false, marker: false },
+    draw: { polygon: true, rectangle: true, circle: false, marker: false, polyline: false },
     edit: { featureGroup: drawnItems }
 });
 map.addControl(drawControl);
@@ -148,7 +124,7 @@ map.on(L.Draw.Event.CREATED, (e) => {
 
 const slider = document.getElementById("yearSlider");
 const yearDisplay = document.getElementById("currentYear");
-let allCountries = [];
+let countriesData = [];
 const mapLayers = L.layerGroup().addTo(map);
 
 slider.oninput = function() {
@@ -157,120 +133,103 @@ slider.oninput = function() {
     renderAtlas(y);
 };
 
-// Загрузка данных (Группировка)
+// Загрузка из двух коллекций (старой и новой)
 async function loadHistory() {
-    const snap = await getDocs(collection(db, "historical_countries"));
-    allCountries = [];
-    snap.forEach(d => allCountries.push({id: d.id, ...d.data()}));
+    countriesData = [];
+    const snapNew = await getDocs(collection(db, "historical_countries"));
+    snapNew.forEach(d => countriesData.push({ id: d.id, ...d.data(), type: 'modern' }));
+
+    const snapOld = await getDocs(collection(db, "history_atlas"));
+    snapOld.forEach(d => {
+        const data = d.data();
+        countriesData.push({
+            id: d.id, name: data.name, color: data.color || "#cd7f32",
+            history: [{ start: data.start, end: data.end, geo: data.geo, desc: data.desc }],
+            type: 'legacy'
+        });
+    });
     renderAtlas(parseInt(slider.value));
 }
 
-// Отрисовка карты и Базы слева
 function renderAtlas(year) {
     mapLayers.clearLayers();
     const list = document.getElementById("historyList");
     list.innerHTML = "";
 
-    allCountries.forEach(country => {
-        // Находим этап, соответствующий году
+    countriesData.forEach(country => {
         const stage = country.history.find(h => year >= h.start && year <= h.end);
-        
         if (stage) {
             const geo = JSON.parse(stage.geo);
-            const color = country.color || "#cd7f32";
-            
-            L.geoJSON(geo, { style: { color: color, fillColor: color, fillOpacity: 0.4, weight: 2 } }).addTo(mapLayers);
-
+            L.geoJSON(geo, { style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } }).addTo(mapLayers);
             const center = L.geoJSON(geo).getBounds().getCenter();
             L.marker(center, {
-                icon: L.divIcon({ 
-                    className: 'map-label', 
-                    html: `<div class="map-label-text">${country.name}</div>`, 
-                    iconSize: [140, 30] 
-                })
+                icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [140, 30] })
             }).addTo(mapLayers);
         }
 
-        // Вывод в базу слева
-        let stagesHtml = country.history.map((h, index) => `
-            <div class="stage-item">
-                <span>${h.start}..${h.end} гг.</span>
-                <button class="btn-sm" onclick="editStage('${country.id}', ${index})">✏️</button>
-            </div>
-        `).join('');
-
         list.innerHTML += `
-            <div class="country-card" style="border-left-color: ${country.color}">
+            <div class="country-card" style="border-left: 4px solid ${country.color}">
                 <div class="country-header">
-                    <strong>${country.name}</strong>
+                    <strong>${country.name} ${country.type === 'legacy' ? '📜' : ''}</strong>
                     <div style="display:flex; gap:5px;">
-                        <button class="btn-sm" onclick="extendCountry('${country.id}')" title="Добавить расширение">➕</button>
-                        <button class="btn-sm" onclick="deleteCountry('${country.id}')">🗑</button>
+                        <button class="btn-sm" onclick="extendCountry('${country.id}', '${country.type}')">➕</button>
+                        <button class="btn-sm" onclick="deleteEntry('${country.id}', '${country.type}')">🗑</button>
                     </div>
                 </div>
-                <div class="country-body">${stagesHtml}</div>
+                <div class="country-body">Периодов: ${country.history.length}</div>
             </div>`;
     });
 }
 
-// СОХРАНЕНИЕ С АВТО-ОЧИСТКОЙ
-async function saveHistory() {
+window.saveHistory = async function() {
     const name = document.getElementById("countryName").value.trim();
     const start = parseInt(document.getElementById("startYear").value);
     const end = parseInt(document.getElementById("endYear").value);
     const desc = document.getElementById("description").value;
     const color = document.getElementById("objColor").value;
 
-    if (!name || isNaN(start) || !currentGeoData) return alert("Заполни данные и нарисуй границы!");
+    if (!name || isNaN(start) || !currentGeoData) return alert("Заполни поля и нарисуй границы!");
 
-    const newStage = { start, end: isNaN(end) ? start : end, desc, geo: JSON.stringify(currentGeoData) };
+    const newStage = { start, end: end || start, desc, geo: JSON.stringify(currentGeoData) };
+    const existing = countriesData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.type === 'modern');
 
-    try {
-        const existing = allCountries.find(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existing) {
+        const updated = [...existing.history, newStage].sort((a,b) => a.start - b.start);
+        await updateDoc(doc(db, "historical_countries", existing.id), { history: updated, color });
+    } else {
+        await addDoc(collection(db, "historical_countries"), { name, color, history: [newStage] });
+    }
 
-        if (existing) {
-            const updatedHistory = [...existing.history, newStage].sort((a,b) => a.start - b.start);
-            await updateDoc(doc(db, "historical_countries", existing.id), { history: updatedHistory, color: color });
-        } else {
-            await addDoc(collection(db, "historical_countries"), { name, color, history: [newStage] });
-        }
+    // Очистка полей
+    document.getElementById("countryName").value = "";
+    document.getElementById("startYear").value = "";
+    document.getElementById("endYear").value = "";
+    document.getElementById("description").value = "";
+    drawnItems.clearLayers();
+    currentGeoData = null;
+    loadHistory();
+};
 
-        // ⭐ ОЧИСТКА ⭐
-        document.getElementById("countryName").value = "";
-        document.getElementById("startYear").value = "";
-        document.getElementById("endYear").value = "";
-        document.getElementById("description").value = "";
-        drawnItems.clearLayers();
-        currentGeoData = null;
-
-        alert("Летопись обновлена!");
-        loadHistory();
-    } catch (e) { console.error(e); }
-}
-
-// РАСШИРЕНИЕ (Копирует прошлую форму)
-window.extendCountry = function(id) {
-    const country = allCountries.find(c => c.id === id);
+window.extendCountry = function(id, type) {
+    const country = countriesData.find(c => c.id === id);
     const last = country.history[country.history.length - 1];
-    
     document.getElementById("countryName").value = country.name;
     document.getElementById("startYear").value = last.end;
     document.getElementById("objColor").value = country.color;
-
     drawnItems.clearLayers();
     L.geoJSON(JSON.parse(last.geo)).eachLayer(l => drawnItems.addLayer(l));
     currentGeoData = JSON.parse(last.geo);
-    alert("Границы этапа '" + last.start + "' загружены. Измени их и нажми 'Вписать этап'.");
+    alert("Границы этапа загружены! Измени их (инструмент Edit) и нажми Вписать.");
 };
 
-window.deleteCountry = async function(id) {
-    if(confirm("Удалить всю историю страны?")) {
-        await deleteDoc(doc(db, "historical_countries", id));
+window.deleteEntry = async function(id, type) {
+    if(confirm("Удалить?")) {
+        const coll = type === 'modern' ? "historical_countries" : "history_atlas";
+        await deleteDoc(doc(db, coll, id));
         loadHistory();
     }
 };
 
-window.saveHistory = saveHistory;
 loadHistory();
 </script>
 </body>
