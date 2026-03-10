@@ -11,7 +11,7 @@
 
   <style>
     :root { 
-      --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #cd7f32; /* Бронзовый */
+      --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #cd7f32; 
       --gold: #f1c40f; --text: #c9d1d9; --border: #30363d;
     }
     body { margin:0; font-family: -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -22,28 +22,26 @@
     .layout { display: flex; flex: 1; overflow: hidden; }
     .sidebar { width: 340px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
 
-    /* ⭐ ЭФФЕКТ БРОНЗОВОЙ КАРТЫ ⭐ */
     .map-container { flex: 1; position: relative; background: #2b2317; }
+    /* Тот самый бронзовый фильтр */
     #map { height: 100%; width: 100%; filter: sepia(0.6) contrast(1.1) brightness(0.9) hue-rotate(-10deg); }
 
     .input-group { background: #0d1117; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; }
     input, textarea, select { background: #161b22; border: 1px solid var(--border); color: #fff; padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 13px; }
     
-    .btn-main { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+    .btn-main { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+    .btn-main:hover { background: #e38e4a; }
     
-    /* Карточки событий */
-    .event-card { background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; position: relative; }
+    .event-card { background: #0d1117; padding: 10px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 8px; }
     .event-card strong { display: block; font-size: 14px; color: var(--accent); }
     .event-controls { display: flex; gap: 5px; margin-top: 8px; }
     .btn-sm { flex: 1; padding: 4px; font-size: 11px; background: #21262d; color: #8b949e; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
     .btn-sm:hover { color: white; border-color: var(--accent); }
 
-    /* Таймлайн */
     .timeline-box { position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%); width: 60%; z-index: 1000; background: rgba(13, 17, 23, 0.85); padding: 15px; border-radius: 40px; border: 1px solid var(--accent); backdrop-filter: blur(10px); }
-    #yearSlider { width: 100%; accent-color: var(--accent); }
+    #yearSlider { width: 100%; accent-color: var(--accent); cursor: pointer; }
     .year-label { font-size: 24px; font-weight: 800; color: var(--accent); text-align: center; }
 
-    /* Надписи на карте */
     .map-label { background: transparent; border: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
     .map-label-text { text-shadow: 0 0 4px #000, 0 0 8px #000, 1px 1px 0 #000; }
   </style>
@@ -51,25 +49,33 @@
 <body>
 
 <header>
-  <div style="font-weight: bold; color: var(--accent);">🏛 BRONZE <span style="color: white;">ARCHIVE</span></div>
-  <nav><a href="index.html">🏠 Главная</a><a href="history.html" style="color:var(--accent)">🏛 История</a></nav>
+  <div style="font-weight: bold; color: var(--accent); letter-spacing: 2px;">🏛 BRONZE ARCHIVE</div>
+  <nav>
+    <a href="index.html">🏠 Главная</a>
+    <a href="coins.html">🪙 Монеты</a>
+    <a href="history.html" style="color:var(--accent)">🏛 История</a>
+  </nav>
 </header>
 
 <div class="layout">
   <div class="sidebar">
     <div class="input-group">
-      <h3 style="margin-top:0; font-size:14px; color:var(--accent)">✏️ ПАНЕЛЬ СОЗДАНИЯ</h3>
+      <h3 style="margin-top:0; font-size:14px; color:var(--accent)">✏️ СОЗДАТЬ / ИЗМЕНИТЬ</h3>
       <input id="countryName" placeholder="Название страны">
       <div style="display:flex; gap:5px">
           <input id="startYear" type="number" placeholder="Год от">
           <input id="endYear" type="number" placeholder="Год до">
       </div>
-      <input type="color" id="objColor" value="#cd7f32">
-      <textarea id="description" placeholder="Описание..." rows="2"></textarea>
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <span style="font-size:12px">Цвет:</span>
+        <input type="color" id="objColor" value="#cd7f32" style="height:30px; width:100%; border:none; background:none;">
+      </div>
+      <textarea id="description" placeholder="Описание этапа..." rows="2"></textarea>
       <button class="btn-main" onclick="saveHistory()">Вписать в историю</button>
-      <input type="hidden" id="editId"> </div>
+      <input type="hidden" id="editId">
+    </div>
 
-    <h3 style="font-size: 12px; color: #8b949e; letter-spacing: 1px;">ОБЪЕКТЫ ЭПОХИ:</h3>
+    <h3 style="font-size: 12px; color: #8b949e; letter-spacing: 1px;">СПИСОК СОБЫТИЙ:</h3>
     <div id="historyList"></div>
   </div>
 
@@ -87,7 +93,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -103,7 +109,7 @@ const db = getFirestore(app);
 
 const map = L.map('map', { zoomControl: false }).setView([45, 30], 4);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.6 }).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.5 }).addTo(map);
 
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
@@ -114,10 +120,19 @@ const drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 let currentGeoData = null;
+
+// Слушатель создания нового объекта
 map.on(L.Draw.Event.CREATED, (e) => {
     drawnItems.clearLayers();
     currentGeoData = e.layer.toGeoJSON();
     drawnItems.addLayer(e.layer);
+});
+
+// Слушатель РЕДАКТИРОВАНИЯ существующего объекта на карте
+map.on(L.Draw.Event.EDITED, (e) => {
+    e.layers.eachLayer((layer) => {
+        currentGeoData = layer.toGeoJSON();
+    });
 });
 
 const slider = document.getElementById("yearSlider");
@@ -131,7 +146,8 @@ slider.oninput = function() {
 };
 
 async function loadHistory() {
-    const snap = await getDocs(collection(db, "history_atlas"));
+    const q = query(collection(db, "history_atlas"), orderBy("start", "asc"));
+    const snap = await getDocs(q);
     allHistoryData = [];
     snap.forEach(d => allHistoryData.push({id: d.id, ...d.data()}));
     renderAtlas(parseInt(slider.value));
@@ -159,8 +175,8 @@ function renderAtlas(year) {
                     <strong>${item.name}</strong>
                     <span style="font-size:11px">${item.start} - ${item.end}</span>
                     <div class="event-controls">
-                        <button class="btn-sm" onclick="editEvent('${item.id}')">✏️ Правка</button>
-                        <button class="btn-sm" onclick="extendEvent('${item.id}')">🔄 Расширить</button>
+                        <button class="btn-sm" onclick="editEvent('${item.id}')">✏️</button>
+                        <button class="btn-sm" onclick="extendEvent('${item.id}')" title="Расширить территорию">🔄</button>
                         <button class="btn-sm" onclick="deleteEvent('${item.id}')">🗑</button>
                     </div>
                 </div>`;
@@ -168,7 +184,6 @@ function renderAtlas(year) {
     });
 }
 
-// РЕДАКТИРОВАНИЕ: Заполняет поля данными
 window.editEvent = function(id) {
     const item = allHistoryData.find(i => i.id === id);
     document.getElementById("countryName").value = item.name;
@@ -177,26 +192,38 @@ window.editEvent = function(id) {
     document.getElementById("description").value = item.desc;
     document.getElementById("objColor").value = item.color;
     document.getElementById("editId").value = id;
-    alert("Данные загружены в панель. Измени их и нажми 'Вписать в историю'.");
+    
+    // Выводим геометрию на редактирование
+    drawnItems.clearLayers();
+    const layer = L.geoJSON(JSON.parse(item.geo)).getLayers()[0];
+    drawnItems.addLayer(layer);
+    currentGeoData = JSON.parse(item.geo);
 };
 
-// РАСШИРЕНИЕ: Копирует старую геометрию на карту для дорисовки
 window.extendEvent = function(id) {
     const item = allHistoryData.find(i => i.id === id);
     const geo = JSON.parse(item.geo);
     
+    // Очищаем форму под новое расширение
+    document.getElementById("editId").value = ""; 
+    document.getElementById("countryName").value = item.name;
+    document.getElementById("startYear").value = item.end; // Начинаем с года конца прошлого этапа
+    document.getElementById("endYear").value = parseInt(item.end) + 100;
+    document.getElementById("objColor").value = item.color;
+    document.getElementById("description").value = "Расширение территории";
+
+    // Выводим старую территорию на карту для дорисовки
     drawnItems.clearLayers();
-    const layer = L.geoJSON(geo).getLayers()[0];
-    drawnItems.addLayer(layer);
+    L.geoJSON(geo).eachLayer(layer => {
+        drawnItems.addLayer(layer);
+    });
     currentGeoData = geo;
     
-    document.getElementById("countryName").value = item.name + " (Расширение)";
-    document.getElementById("startYear").value = item.end; // Начинаем с года конца прошлого этапа
-    alert("Старые границы добавлены на карту! Теперь используй инструменты редактирования на карте (Edit layers), чтобы изменить их, или просто сохрани как основу.");
+    alert("Старые границы на карте! Используй 'Edit layers' (иконка карандаша на карте), чтобы изменить форму, затем нажми 'Save' на карте и 'Вписать в историю' в панели.");
 };
 
 window.deleteEvent = async function(id) {
-    if(confirm("Удалить из истории?")) {
+    if(confirm("Удалить этот этап из истории?")) {
         await deleteDoc(doc(db, "history_atlas", id));
         loadHistory();
     }
@@ -210,16 +237,22 @@ async function saveHistory() {
     const color = document.getElementById("objColor").value;
     const editId = document.getElementById("editId").value;
 
+    if (!currentGeoData) return alert("Нарисуй что-нибудь на карте!");
+
     const data = { name, start, end, desc, color, geo: JSON.stringify(currentGeoData) };
 
     if (editId) {
         await updateDoc(doc(db, "history_atlas", editId), data);
-        document.getElementById("editId").value = "";
     } else {
         await addDoc(collection(db, "history_atlas"), data);
     }
     
-    alert("Летопись обновлена!");
+    // Очистка
+    document.getElementById("editId").value = "";
+    drawnItems.clearLayers();
+    currentGeoData = null;
+    
+    alert("Запись внесена!");
     loadHistory();
 }
 
