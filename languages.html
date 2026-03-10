@@ -3,74 +3,192 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Языки | Умный архив</title>
+  <title>LingoArchive Pro | Твой языковой актив</title>
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  
   <style>
-    body { margin:0; font-family: Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
-    header { background:#111a2e; padding:16px; position:sticky; top:0; z-index: 100; }
-    nav a { color:#e8eefc; margin-right:14px; text-decoration:none; font-weight:600; }
-    main { max-width:900px; margin:auto; padding:24px; }
-    .card { background:#111a2e; border-radius:14px; padding:18px; margin:16px 0; border: 1px solid #1e2a44; }
-    .muted { color:#a9b6d3; }
-    .btn { background: #3498db; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-    .btn:hover { background: #2980b9; }
-    input, textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:6px; width:100%; box-sizing:border-box; outline:none; }
-    input:focus { border-color: #3498db; }
-    .feedback-note { background: #000; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #3498db; }
+    :root { 
+      --bg-main: #06090f;
+      --bg-card: rgba(17, 26, 46, 0.6); /* Glassmorphism */
+      --text-main: #e8eefc;
+      --text-muted: #8b9bb4;
+      --accent: #3498db;
+      --accent-hover: #2980b9;
+      --gold: #f1c40f;
+      --border: rgba(52, 152, 219, 0.2);
+      --error: #e74c3c;
+      --success: #2ecc71;
+    }
+
+    body { 
+      margin: 0; 
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+      background: var(--bg-main); 
+      color: var(--text-main); 
+      line-height: 1.6;
+    }
+
+    /* Навигация */
+    header { 
+      background: rgba(10, 15, 28, 0.8);
+      backdrop-filter: blur(10px);
+      padding: 12px 24px; 
+      position: sticky; 
+      top: 0; 
+      z-index: 1000;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand { font-size: 20px; font-weight: 800; color: var(--gold); text-decoration: none; }
+    
+    nav a { 
+      color: var(--text-muted); 
+      margin-left: 20px; 
+      text-decoration: none; 
+      font-weight: 600; 
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    nav a:hover { color: var(--text-main); }
+    nav a.active { color: var(--accent); }
+
+    main { max-width: 1000px; margin: auto; padding: 30px 20px; }
+
+    h1 { font-size: 32px; font-weight: 800; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+    h2 { font-size: 18px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-top: 30px; margin-bottom: 15px; }
+
+    /* Общий стиль карточек */
+    .card { 
+      background: var(--bg-card); 
+      backdrop-filter: blur(6px);
+      border-radius: 16px; 
+      padding: 24px; 
+      margin: 20px 0; 
+      border: 1px solid var(--border); 
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Кнопки */
+    .btn { 
+      background: var(--accent); 
+      color: white; 
+      border: none; 
+      padding: 12px 20px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 700; 
+      font-size: 14px;
+      transition: 0.3s; 
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    
+    .btn-lang { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .btn-lang:hover, .btn-lang.active { background: rgba(52, 152, 219, 0.1); border-color: var(--accent); color: var(--text-main); }
+    
+    .btn-type { background: transparent; border: 1px solid var(--border); color: var(--text-muted); opacity: 0.7; }
+    .btn-type:hover, .btn-type.active { opacity: 1; color: var(--text-main); border-color: var(--text-main); }
+
+    .btn-del { background: none; border: none; color: var(--text-muted); cursor: pointer; transition: 0.3s; padding: 0; font-size: 14px; }
+    .btn-del:hover { color: var(--error); }
+
+    /* Формы ввода */
+    input, textarea { 
+      background: rgba(0, 0, 0, 0.3); 
+      border: 1px solid #1e2a44; 
+      color: var(--text-main); 
+      padding: 14px; 
+      border-radius: 10px; 
+      width: 100%; 
+      box-sizing: border-box; 
+      outline: none; 
+      font-size: 15px;
+      transition: 0.3s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); background: rgba(0, 0, 0, 0.5); }
+    
+    /* Конкретные элементы */
+    #search { margin-bottom: 24px; border-color: var(--border); background: var(--bg-card); }
+
+    /* Тест / Экзамен */
+    .feedback-note { background: rgba(0, 0, 0, 0.3); padding: 15px; border-radius: 10px; margin-top: 15px; border-left: 4px solid var(--gold); color: var(--text-muted); font-size: 14px; }
+    #testArea h2 { color: var(--text-main); text-transform: none; letter-spacing: 0; font-size: 28px; }
+
+    /* Адаптивность для формы добавления */
+    .add-form-grid {
+      display: grid; 
+      grid-template-columns: 1fr 1fr 1.5fr auto; 
+      gap: 12px; 
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+        .add-form-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
 <header>
+  <a href="index.html" class="brand">LingoArchive<span style="color:white">Pro</span></a>
   <nav>
     <a href="index.html">🏠 Главная</a>
     <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html">📚 Языки</a>
+    <a href="languages.html" class="active">📚 Языки</a>
     <a href="training.html">💪 Тренировки</a>
   </nav>
 </header>
 
 <main>
-  <h1>📚 Языки</h1>
+  <h1>📚 Мои языковые активы</h1>
 
-  <div style="display:flex;gap:10px;margin-bottom:12px; flex-wrap: wrap;">
-    <button class="btn" onclick="setLang('EN')">🇬🇧 English</button>
-    <button class="btn" onclick="setLang('DE')">🇩🇪 Deutsch</button>
-    <button class="btn" onclick="setLang('PL')">🇵🇱 Polski</button>
-    <button class="btn" onclick="setLang('ES')">🇪🇸 Español</button>
-  </div>
-
-  <div style="margin-bottom:16px">
-    <button class="btn" style="background:#e67e22" onclick="startTestMode()">📝 Экзамен (Тест)</button>
-  </div>
-
-  <div id="testBox" class="card" style="display:none">
-    <h2 id="testTitle">📝 Тест</h2>
-    <div id="setupTest">
-        <label>Количество слов:</label><br>
-        <input id="testCount" type="number" value="10" min="1" style="width:100px; margin-top:8px"><br><br>
-        <button class="btn" onclick="beginTest()">Начать тест</button>
+  <div class="card" style="margin-top:0">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px">
+        <div style="display:flex; gap:8px; flex-wrap: wrap;">
+            <button class="btn btn-lang active" id="btnEN" onclick="setLang('EN')">🇬🇧 English</button>
+            <button class="btn btn-lang" id="btnDE" onclick="setLang('DE')">🇩🇪 Deutsch</button>
+            <button class="btn btn-lang" id="btnPL" onclick="setLang('PL')">🇵🇱 Polski</button>
+            <button class="btn btn-lang" id="btnES" onclick="setLang('ES')">🇪🇸 Español</button>
+        </div>
+        
+        <button class="btn" style="background:var(--gold); color:#000" onclick="startTestMode()">
+            <i class="fas fa-graduation-cap"></i> Начать Экзамен
+        </button>
     </div>
-    <div id="testArea" style="margin-top:16px"></div>
-  </div>
 
-  <div class="card" style="border: 2px solid #3498db">
-    <h2>➕ Добавить новое</h2>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
-        <input id="text" placeholder="Слово или фраза">
-        <input id="translation" placeholder="Перевод">
+    <div id="testBox" style="display:none; margin-top:20px; border-top: 1px solid var(--border); padding-top:20px">
+        <div id="setupTest" style="text-align:center">
+            <label class="muted">Сколько слов взять для теста?</label><br>
+            <input id="testCount" type="number" value="10" min="1" style="width:120px; margin: 10px 0; text-align:center"><br>
+            <button class="btn" onclick="beginTest()">🚀 Начать</button>
+        </div>
+        <div id="testArea"></div>
     </div>
-    <textarea id="note" placeholder="Заметка или предложение с этим словом..." style="margin-top:10px"></textarea>
-    <button class="btn" style="margin-top:10px; width:100%" onclick="add()">Добавить в список</button>
   </div>
 
-  <div style="display:flex;gap:10px;margin-bottom:16px">
-    <button class="btn" onclick="setType('words')">📝 Слова</button>
-    <button class="btn" onclick="setType('phrases')">💬 Фразы</button>
+  <div class="card" style="border: 1px solid var(--accent)">
+    <div class="add-form-grid">
+        <input id="text" placeholder="Слово или фраза (оригинал)">
+        <input id="translation" placeholder="Перевод (русский)">
+        <textarea id="note" placeholder="💡 Заметка или пример предложения..." rows="1" style="resize:none"></textarea>
+        <button class="btn" onclick="add()"><i class="fas fa-plus"></i></button>
+    </div>
   </div>
 
-  <h2 id="titleDisplay">Список</h2>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:30px">
+    <h2 id="titleDisplay" style="margin:0">English | Слова</h2>
+    <div style="display:flex;gap:8px">
+        <button class="btn btn-type active" id="btnTypeWords" onclick="setType('words')"><i class="fas fa-font"></i> Слова</button>
+        <button class="btn btn-type" id="btnTypePhrases" onclick="setType('phrases')"><i class="fas fa-comment-dots"></i> Фразы</button>
+    </div>
+  </div>
 
-  <input id="search" placeholder="🔍 Быстрый поиск..." style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
+  <input id="search" placeholder="🔍 Быстрый поиск в этом списке..." oninput="applySearch()">
 
   <div id="list"></div>
 </main>
@@ -81,6 +199,7 @@ import {
   getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
+// !!! Замени apiKey на свой актуальный, т.к. в твоем коде он был поврежден !!!
 const firebaseConfig = {
     apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
     authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -95,48 +214,92 @@ const db = getFirestore(app);
 
 let currentLang = "EN";
 let currentType = "words";
-let localItems = []; // Для проверки дубликатов
+let localItems = []; 
+let fullSnapshot = []; // Для локального поиска
 
 // --- Инициализация ---
 window.onload = () => { loadData(); };
 
 async function loadData() {
   const list = document.getElementById("list");
-  list.innerHTML = "<p>Загрузка...</p>";
-  document.getElementById("titleDisplay").innerText = `${currentLang} | ${currentType === 'words' ? 'Слова' : 'Фразы'}`;
+  list.innerHTML = "<p class='muted'>Синхронизация с базой...</p>";
+  
+  // Обновление заголовка и кнопок
+  const langNames = {'EN': 'English', 'DE': 'Deutsch', 'PL': 'Polski', 'ES': 'Español'};
+  const typeNames = {'words': 'Слова', 'phrases': 'Фразы'};
+  document.getElementById("titleDisplay").innerText = `${langNames[currentLang]} | ${typeNames[currentType]}`;
+  
+  // Подсветка активных кнопок
+  document.querySelectorAll('.btn-lang').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn${currentLang}`).classList.add('active');
+  document.querySelectorAll('.btn-type').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btnType${currentType === 'words' ? 'Words' : 'Phrases'}`).classList.add('active');
 
   const q = query(
     collection(db, "languages"),
     where("lang", "==", currentLang),
-    where("type", "==", currentType)
+    where("type", "==", currentType),
+    orderBy("created", "desc") // Сначала новые
   );
 
-  const snapshot = await getDocs(q);
-  list.innerHTML = "";
-  localItems = []; 
+  try {
+      const snapshot = await getDocs(q);
+      list.innerHTML = "";
+      fullSnapshot = [];
+      localItems = []; 
 
-  let index = 1;
-  snapshot.forEach(docSnap => {
-    const e = docSnap.data();
-    localItems.push(e.text.toLowerCase().trim()); // Сохраняем для проверки
+      if (snapshot.empty) { list.innerHTML = "<p class='muted'>Список пока пуст.</p>"; return; }
 
-    list.innerHTML += `
-      <div class="card">
-        <div style="display:flex; justify-content:space-between">
-            <h3>${index}. ${e.text}</h3>
-            <button style="background:none; border:none; color:#ff6b6b; cursor:pointer" onclick="removeItem('${docSnap.id}')">Удалить</button>
-        </div>
-        <p><b>${e.translation}</b></p>
-        ${e.note ? `<p class="muted">💡 ${e.note}</p>` : ""}
-      </div>
-    `;
-    index++;
-  });
+      let index = 1;
+      snapshot.forEach(docSnap => {
+        const e = docSnap.data();
+        e.id = docSnap.id; // Сохраняем ID для удаления
+        fullSnapshot.push(e);
+        localItems.push(e.text.toLowerCase().trim()); // Для проверки дубликатов
+      });
+      
+      renderList(fullSnapshot);
+  } catch (e) {
+      console.error(e);
+      list.innerHTML = "<p style='color:var(--error)'>Ошибка загрузки. Проверь консоль.</p>";
+  }
+}
+
+function renderList(data) {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+    let index = 1;
+    data.forEach(e => {
+        list.innerHTML += `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:start">
+                <div>
+                    <h3 style="margin:0; font-size:18px">${index}. ${e.text}</h3>
+                    <p style="margin:5px 0; color:white; font-size:16px"><b>${e.translation}</b></p>
+                    ${e.note ? `<p class="feedback-note" style="border-color:var(--border); margin-top:10px">💡 ${e.note}</p>` : ""}
+                </div>
+                <button class="btn-del" onclick="removeItem('${e.id}')" title="Удалить"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+        `;
+        index++;
+    });
+}
+
+// Локальный поиск по уже загруженным данным
+function applySearch() {
+    const query = document.getElementById("search").value.toLowerCase().trim();
+    if (!query) { renderList(fullSnapshot); return; }
+    
+    const filtered = fullSnapshot.filter(e => 
+        e.text.toLowerCase().includes(query) || 
+        e.translation.toLowerCase().includes(query) ||
+        (e.note && e.note.toLowerCase().includes(query))
+    );
+    renderList(filtered);
 }
 
 async function add() {
-  const txt = document.getElementById("text").value.trim();
-  const trans = document.getElementById("translation.value"); // Ошибочный ID в твоем коде был исправлен ниже
   const valText = document.getElementById("text").value.trim();
   const valTrans = document.getElementById("translation").value.trim();
   const valNote = document.getElementById("note").value.trim();
@@ -145,16 +308,11 @@ async function add() {
 
   // 🛡 ПРОВЕРКА НА ДУБЛИКАТ
   if (localItems.includes(valText.toLowerCase())) {
-      return alert(`Ошибка! Слово "${valText}" уже есть в этом списке.`);
+      return alert(`Ошибка! "${valText}" уже есть в этом списке.`);
   }
 
   await addDoc(collection(db, "languages"), {
-    lang: currentLang,
-    type: currentType,
-    text: valText,
-    translation: valTrans,
-    note: valNote,
-    created: Date.now()
+    lang: currentLang, type: currentType, text: valText, translation: valTrans, note: valNote, created: Date.now()
   });
 
   document.getElementById("text").value = "";
@@ -164,18 +322,19 @@ async function add() {
 }
 
 async function removeItem(id) {
-  if(confirm("Удалить?")) {
+  if(confirm("Удалить это слово навсегда?")) {
     await deleteDoc(doc(db, "languages", id));
     loadData();
   }
 }
 
 // --- Управление ---
-function setLang(lang) { currentLang = lang; loadData(); }
-function setType(type) { currentType = type; loadData(); }
+function setLang(lang) { currentLang = lang; loadData(); closeModal(); }
+function setType(type) { currentType = type; loadData(); closeModal(); }
+function closeModal() { document.getElementById("testBox").style.display = "none"; }
 
 // =======================
-// 🧠 TEST LOGIC (Updated)
+// 🧠 TEST LOGIC Pro
 // =======================
 let testWords = [];
 let testIndex = 0;
@@ -185,21 +344,20 @@ function startTestMode() {
   document.getElementById("testBox").style.display = "block";
   document.getElementById("setupTest").style.display = "block";
   document.getElementById("testArea").innerHTML = "";
-  window.scrollTo({top: 0, behavior: 'smooth'});
+  // Плавно скроллим к тесту
+  document.getElementById("testBox").scrollIntoView({behavior: 'smooth'});
 }
 
 async function beginTest() {
   const count = Number(document.getElementById("testCount").value);
-  const q = query(collection(db, "languages"), where("lang", "==", currentLang), where("type", "==", currentType));
-  const snapshot = await getDocs(q);
-  
-  let all = [];
-  snapshot.forEach(doc => all.push(doc.data()));
+  const countF = count > fullSnapshot.length ? fullSnapshot.length : count;
 
-  if (all.length === 0) return alert("Список пуст!");
+  if (fullSnapshot.length === 0) return alert("Список пуст!");
 
+  // Тасуем локальную копию данных
+  let all = [...fullSnapshot];
   all = all.sort(() => Math.random() - 0.5);
-  testWords = all.slice(0, count);
+  testWords = all.slice(0, countF);
   testIndex = 0;
   correctAnswers = 0;
 
@@ -210,20 +368,44 @@ async function beginTest() {
 function showQuestion() {
   const area = document.getElementById("testArea");
   if (testIndex >= testWords.length) {
-    area.innerHTML = `<h3>✅ Тест завершён</h3><p>Итог: ${correctAnswers} из ${testWords.length}</p><button class="btn" onclick="location.reload()">Закрыть</button>`;
+    area.innerHTML = `
+        <div style="text-align:center; padding: 20px 0">
+            <i class="fas fa-check-circle" style="font-size:48px; color:var(--success)"></i>
+            <h3 style="font-size:24px">Экзамен завершён</h3>
+            <p class="muted" style="font-size:18px">Ваш результат: <b style="color:var(--text-main)">${correctAnswers}</b> из <b style="color:var(--text-main)">${testWords.length}</b></p>
+            <button class="btn" style="background:var(--success)" onclick="closeModal()"><i class="fas fa-times"></i> Закрыть экзамен</button>
+        </div>`;
     return;
   }
 
   const word = testWords[testIndex];
   area.innerHTML = `
-    <p>Как переводится:</p>
-    <h2 style="color:#f1c40f">${word.text}</h2>
-    <input id="answerInput" placeholder="Введите перевод..." style="margin-bottom:10px">
-    <button class="btn" id="checkBtn" onclick="checkAnswer()">Проверить ответ</button>
-    <div id="feedback"></div>
-    <button class="btn" id="nextBtn" style="display:none; margin-top:15px; background:#2ecc71" onclick="nextQuestion()">Дальше →</button>
+    <div class="card" style="background: rgba(0,0,0,0.2); border-color: var(--border)">
+        <p class="muted" style="margin:0; font-size:12px">Вопрос ${testIndex + 1} из ${testWords.length}</p>
+        <p class="muted" style="margin: 5px 0 10px 0">Как переводится:</p>
+        <h2 style="margin:0 0 20px 0">${word.text}</h2>
+        
+        <input id="answerInput" placeholder="Введите перевод на русском..." style="margin-bottom:15px">
+        
+        <div style="display:flex; gap:10px">
+            <button class="btn" id="checkBtn" onclick="checkAnswer()">Проверить <i class="fas fa-search"></i></button>
+            <button class="btn btn-lang" id="skipBtn" onclick="nextQuestion()">Пропустить <i class="fas fa-forward"></i></button>
+        </div>
+
+        <div id="feedback"></div>
+        <button class="btn" id="nextBtn" style="display:none; margin-top:20px; background:var(--success); width:100%; justify-content:center" onclick="nextQuestion()">Следующий вопрос <i class="fas fa-arrow-right"></i></button>
+    </div>
   `;
   document.getElementById("answerInput").focus();
+  
+  // Обработка нажатия Enter
+  document.getElementById("answerInput").addEventListener("keypress", function(e) {
+    if (e.key === 'Enter' && !document.getElementById("answerInput").disabled) {
+        checkAnswer();
+    } else if (e.key === 'Enter' && document.getElementById("answerInput").disabled) {
+        nextQuestion();
+    }
+  });
 }
 
 function checkAnswer() {
@@ -234,19 +416,21 @@ function checkAnswer() {
 
   if (user === correct) {
     correctAnswers++;
-    feedback.innerHTML = `<p style="color:#2ecc71; font-weight:bold">✅ Верно!</p>`;
+    feedback.innerHTML = `<p style="color:var(--success); font-weight:bold; margin-top:15px"><i class="fas fa-check"></i> Великолепно! Правильно.</p>`;
   } else {
-    feedback.innerHTML = `<p style="color:#e74c3c; font-weight:bold">❌ Ошибка. Правильно: ${word.translation}</p>`;
+    feedback.innerHTML = `<p style="color:var(--error); font-weight:bold; margin-top:15px"><i class="fas fa-times"></i> Ошибка. Верный ответ: ${word.translation}</p>`;
   }
 
-  // ПОКАЗ ЗАМЕТКИ (то, что ты просил)
+  // ПОКАЗ ЗАМЕТКИ (Экзамен)
   if (word.note) {
-      feedback.innerHTML += `<div class="feedback-note"><b>Заметка / Пример:</b><br>${word.note}</div>`;
+      feedback.innerHTML += `<div class="feedback-note"><b>Заметка / Контекст:</b><br>${word.note}</div>`;
   }
 
   document.getElementById("answerInput").disabled = true;
   document.getElementById("checkBtn").style.display = "none";
-  document.getElementById("nextBtn").style.display = "block";
+  document.getElementById("skipBtn").style.display = "none";
+  document.getElementById("nextBtn").style.display = "inline-flex";
+  document.getElementById("nextBtn").focus();
 }
 
 function nextQuestion() {
@@ -254,7 +438,7 @@ function nextQuestion() {
   showQuestion();
 }
 
-// Привязка к окну
+// Привязка к окну (для старых onclick)
 window.add = add;
 window.removeItem = removeItem;
 window.setLang = setLang;
@@ -263,6 +447,8 @@ window.startTestMode = startTestMode;
 window.beginTest = beginTest;
 window.checkAnswer = checkAnswer;
 window.nextQuestion = nextQuestion;
+window.applySearch = applySearch;
+window.closeModal = closeModal;
 </script>
 
 </body>
