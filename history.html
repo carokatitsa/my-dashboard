@@ -10,83 +10,99 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
 
   <style>
-    :root { --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc; --accent: #3498db; --gold: #f1c40f; }
-    body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    :root { 
+      --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #58a6ff; 
+      --gold: #f1c40f; --text: #c9d1d9; --border: #30363d;
+    }
+    body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    header { background:#111a2e; padding:12px; border-bottom: 1px solid #1e2a44; z-index: 1000; }
-    nav { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
-    nav a { color: var(--text-main); text-decoration:none; font-weight:600; font-size: 13px; opacity: 0.8; }
+    header { background: var(--bg-sidebar); padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    nav { display: flex; gap: 20px; }
+    nav a { color: var(--text); text-decoration: none; font-weight: 500; font-size: 14px; transition: 0.2s; }
     nav a:hover { color: var(--gold); }
 
     .layout { display: flex; flex: 1; overflow: hidden; }
     
-    /* Боковая панель (База данных) */
-    .sidebar { width: 350px; background: #0b1221; border-right: 1px solid #1e2a44; display: flex; flex-direction: column; padding: 15px; overflow-y: auto; }
+    /* Стили базы данных слева */
+    .sidebar { width: 320px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
+    .sidebar h2 { font-size: 18px; margin: 0 0 15px 0; color: var(--gold); }
+
+    .input-group { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+    .input-group label { display: block; font-size: 11px; text-transform: uppercase; color: #8b949e; margin-bottom: 5px; }
+    input, textarea, select { background: #161b22; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; font-size: 13px; }
     
+    .btn-main { background: var(--gold); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+    .btn-main:hover { filter: brightness(1.2); }
+
+    /* Список стран */
+    .event-card { background: #0d1117; padding: 12px; border-radius: 6px; border: 1px solid var(--border); margin-bottom: 10px; border-left: 4px solid var(--accent); cursor: pointer; transition: 0.2s; }
+    .event-card:hover { transform: translateX(5px); border-color: var(--gold); }
+    .event-card strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .event-card span { font-size: 11px; color: #8b949e; }
+
     /* Карта */
-    .map-container { flex: 1; position: relative; background: #c5d8d6; }
-    #map { height: 100%; width: 100%; }
+    .map-container { flex: 1; position: relative; }
+    #map { height: 100%; width: 100%; background: #c5d8d6; }
 
-    .timeline-float { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; z-index: 999; background: rgba(17, 26, 46, 0.9); padding: 15px; border-radius: 12px; border: 1px solid var(--accent); backdrop-filter: blur(5px); }
-    #yearSlider { width: 100%; accent-color: var(--gold); cursor: pointer; }
+    /* Плавающий таймлайн */
+    .timeline-box { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 70%; z-index: 1000; background: rgba(22, 27, 34, 0.95); padding: 20px; border-radius: 50px; border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+    #yearSlider { -webkit-appearance: none; width: 100%; height: 6px; background: #30363d; border-radius: 5px; outline: none; }
+    #yearSlider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; background: var(--gold); border-radius: 50%; cursor: pointer; border: 3px solid #0d1117; }
+    .year-label { font-size: 24px; font-weight: 800; color: var(--gold); text-align: center; margin-bottom: 10px; }
 
-    .card { background: var(--bg-card); border-radius:10px; padding:15px; border: 1px solid #1e2a44; margin-bottom: 15px; }
-    input, textarea, select { background:#000; border:1px solid #333; color:#fff; padding:8px; border-radius:6px; width:100%; box-sizing:border-box; margin-bottom: 8px; font-size: 14px; }
-    
-    .btn { background: var(--accent); color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
-    .btn-save { background: var(--gold); color: #000; margin-top: 5px; }
-
-    .history-item { padding: 10px; border-bottom: 1px solid #1e2a44; cursor: pointer; transition: 0.2s; }
-    .history-item:hover { background: #1a243a; }
-    .year-tag { font-size: 28px; font-weight: bold; color: var(--gold); text-align: center; }
+    /* Стили для названий на карте */
+    .map-label { background: transparent; border: none; box-shadow: none; color: white; text-shadow: 1px 1px 4px #000; font-weight: bold; font-size: 12px; text-align: center; }
   </style>
 </head>
 <body>
 
 <header>
+  <div style="font-weight: bold; font-size: 20px; color: var(--gold);">LingoArchive <span style="color: white;">Pro</span></div>
   <nav>
     <a href="index.html">🏠 Главная</a>
     <a href="coins.html">🪙 Монеты</a>
     <a href="languages.html">📚 Языки</a>
-    <a href="training.html">💪 Тренировки</a>
-    <a href="history.html" style="color:var(--gold)">🏛️ История</a>
+    <a href="history.html" style="border-bottom: 2px solid var(--gold); padding-bottom: 5px;">🏛 История</a>
   </nav>
 </header>
 
 <div class="layout">
   <div class="sidebar">
-    <div class="year-tag" id="currentYear">2026</div>
+    <h2>📜 База данных</h2>
     
-    <div class="card">
-      <h3 style="margin-top:0; font-size: 16px;"><i class="fas fa-plus-circle"></i> Добавить в базу</h3>
+    <div class="input-group">
+      <label>Тип объекта</label>
       <select id="objType">
           <option value="country">🌍 Государство</option>
-          <option value="battle">⚔️ Битва / Стрелка</option>
+          <option value="battle">⚔️ Битва / Маневр</option>
       </select>
-      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px">
-          <span style="font-size:12px">Цвет:</span>
-          <input type="color" id="objColor" value="#e74c3c" style="width:50px; height:30px; padding:0; border:none;">
+      <label>Название и цвет</label>
+      <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <input id="countryName" placeholder="Напр: Хеттское царство" style="margin:0">
+          <input type="color" id="objColor" value="#58a6ff" style="width:60px; height:38px; padding:2px; margin:0">
       </div>
-      <input id="countryName" placeholder="Название">
-      <div style="display:flex; gap:5px">
-          <input id="startYear" type="number" placeholder="От (год)">
-          <input id="endYear" type="number" placeholder="До (год)">
+      <label>Годы существования</label>
+      <div style="display:flex; gap:10px">
+          <input id="startYear" type="number" placeholder="От">
+          <input id="endYear" type="number" placeholder="До">
       </div>
-      <textarea id="description" placeholder="Описание..." rows="2"></textarea>
-      <button class="btn btn-save" onclick="saveHistory()">Сохранить объект</button>
+      <label>Описание</label>
+      <textarea id="description" placeholder="Краткая история..." rows="2"></textarea>
+      <button class="btn-main" onclick="saveHistory()">Нанести в летопись</button>
     </div>
 
-    <h3 style="font-size: 16px; border-bottom: 1px solid var(--accent); padding-bottom: 5px;">📜 События эпохи:</h3>
+    <h3 style="font-size: 14px; color: #8b949e;">ОБЪЕКТЫ ТЕКУЩЕЙ ЭПОХИ:</h3>
     <div id="historyList"></div>
   </div>
 
   <div class="map-container">
     <div id="map"></div>
     
-    <div class="timeline-float">
+    <div class="timeline-box">
+        <div class="year-label" id="currentYear">2026 AD</div>
         <input type="range" id="yearSlider" min="-4000" max="2026" value="2026">
-        <div style="display:flex; justify-content: space-between; font-size: 11px; margin-top: 5px;">
-            <span>4000 до н.э.</span><span>Рождество Христово</span><span>2026 н.э.</span>
+        <div style="display:flex; justify-content: space-between; font-size: 10px; color: #8b949e; margin-top:5px; padding: 0 10px">
+            <span>4000 BC</span><span>0</span><span>2026 AD</span>
         </div>
     </div>
   </div>
@@ -112,25 +128,22 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Настройка "Той самой карты"
-const map = L.map('map', { zoomControl: false }).setView([48, 32], 4);
+const map = L.map('map', { zoomControl: false }).setView([45, 30], 4);
 L.control.zoom({ position: 'topright' }).addTo(map);
 
-// 1. Основной слой: Физическая карта (рельеф и реки)
-L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', {
-	maxZoom: 8
-}).addTo(map);
+// 1. Физический слой (Рельеф и Реки)
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 8 }).addTo(map);
 
-// 2. Слой с городами и границами (прозрачный)
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', {
-    pane: 'shadowPane' // Чтобы надписи были чуть выше объектов
+// 2. СЕГОДНЯШНИЕ ГРАНИЦЫ (Серые, для ориентира)
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    opacity: 0.6
 }).addTo(map);
 
 const drawnItems = new L.FeatureGroup();
 map.addLayer(drawnItems);
 
 const drawControl = new L.Control.Draw({
-    draw: { polyline: true, polygon: true, circle: false, marker: false, rectangle: true, circlemarker: false },
+    draw: { polyline: true, polygon: true, rectangle: true, circle: false, marker: false, circlemarker: false },
     edit: { featureGroup: drawnItems }
 });
 map.addControl(drawControl);
@@ -150,8 +163,9 @@ let allHistoryData = [];
 const mapLayers = L.layerGroup().addTo(map);
 
 slider.oninput = function() {
-    yearDisplay.innerText = this.value;
-    renderAtlas(parseInt(this.value));
+    let y = parseInt(this.value);
+    yearDisplay.innerText = y < 0 ? Math.abs(y) + " BC" : y + " AD";
+    renderAtlas(y);
 };
 
 async function loadHistory() {
@@ -169,15 +183,33 @@ function renderAtlas(year) {
     allHistoryData.forEach(item => {
         if (year >= item.start && year <= item.end) {
             const geo = JSON.parse(item.geo);
-            const color = item.color || "#e74c3c";
+            const color = item.color || "#58a6ff";
             
             const layer = L.geoJSON(geo, {
                 style: { color: color, fillColor: color, fillOpacity: 0.4, weight: 2 }
             });
 
+            // Названия прямо на карте
+            let center;
+            if (geo.geometry.type === "Polygon" || geo.geometry.type === "MultiPolygon") {
+                center = L.geoJSON(geo).getBounds().getCenter();
+            } else if (geo.geometry.type === "LineString") {
+                center = L.geoJSON(geo).getBounds().getCenter();
+            }
+            
+            if (center) {
+                L.marker(center, {
+                    icon: L.divIcon({
+                        className: 'map-label',
+                        html: `<div>${item.name}</div><div style="font-size:9px; opacity:0.8">${item.start}..${item.end}</div>`,
+                        iconSize: [120, 40]
+                    })
+                }).addTo(mapLayers);
+            }
+
             if (item.type === 'battle' && geo.geometry.type === 'LineString') {
                 L.polylineDecorator(geo.geometry.coordinates.map(c => [c[1], c[0]]), {
-                    patterns: [{ offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({ pixelSize: 15, pathOptions: { color: color, fillOpacity: 1 } }) }]
+                    patterns: [{ offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({ pixelSize: 14, pathOptions: { color: color, fillOpacity: 1 } }) }]
                 }).addTo(mapLayers);
             }
 
@@ -185,16 +217,16 @@ function renderAtlas(year) {
             mapLayers.addLayer(layer);
 
             list.innerHTML += `
-                <div class="history-item" onclick="map.panTo(L.geoJSON(${item.geo}).getBounds().getCenter())">
-                    <strong style="color:${color}">● ${item.name}</strong>
-                    <div style="font-size:11px; color:#888;">${item.start} — ${item.end}</div>
+                <div class="event-card" style="border-left-color: ${color}" onclick="map.flyTo(L.geoJSON(${item.geo}).getBounds().getCenter(), 5)">
+                    <strong>${item.name}</strong>
+                    <span>${item.start} — ${item.end} гг.</span>
                 </div>`;
         }
     });
 }
 
 async function saveHistory() {
-    if (!currentGeoData) return alert("Нарисуй объект!");
+    if (!currentGeoData) return alert("Сначала нарисуй на карте!");
     const name = document.getElementById("countryName").value;
     const start = parseInt(document.getElementById("startYear").value);
     const end = parseInt(document.getElementById("endYear").value);
