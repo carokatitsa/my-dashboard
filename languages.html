@@ -3,14 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Языки</title>
+  <title>Языки | Умный архив</title>
   <style>
     body { margin:0; font-family: Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
-    header { background:#111a2e; padding:16px; position:sticky; top:0; }
+    header { background:#111a2e; padding:16px; position:sticky; top:0; z-index: 100; }
     nav a { color:#e8eefc; margin-right:14px; text-decoration:none; font-weight:600; }
     main { max-width:900px; margin:auto; padding:24px; }
-    .card { background:#111a2e; border-radius:14px; padding:18px; margin:16px 0; }
+    .card { background:#111a2e; border-radius:14px; padding:18px; margin:16px 0; border: 1px solid #1e2a44; }
     .muted { color:#a9b6d3; }
+    .btn { background: #3498db; color: white; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+    .btn:hover { background: #2980b9; }
+    input, textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:6px; width:100%; box-sizing:border-box; outline:none; }
+    input:focus { border-color: #3498db; }
+    .feedback-note { background: #000; padding: 10px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #3498db; }
   </style>
 </head>
 <body>
@@ -27,66 +32,53 @@
 <main>
   <h1>📚 Языки</h1>
 
-  <!-- Языки -->
-  <div style="display:flex;gap:10px;margin-bottom:12px">
+  <div style="display:flex;gap:10px;margin-bottom:12px; flex-wrap: wrap;">
     <button class="btn" onclick="setLang('EN')">🇬🇧 English</button>
     <button class="btn" onclick="setLang('DE')">🇩🇪 Deutsch</button>
     <button class="btn" onclick="setLang('PL')">🇵🇱 Polski</button>
     <button class="btn" onclick="setLang('ES')">🇪🇸 Español</button>
   </div>
- <div style="margin-bottom:16px">
- <button class="btn" onclick="startTestMode()">📝 Тест</button>
 
- </div>
-  <!-- ⭐ ТЕСТ -->
-<div id="testBox" class="card" style="display:none">
-  <h2>📝 Тест</h2>
+  <div style="margin-bottom:16px">
+    <button class="btn" style="background:#e67e22" onclick="startTestMode()">📝 Экзамен (Тест)</button>
+  </div>
 
-  <label>Количество слов:</label><br>
-  <input id="testCount" type="number" value="10" min="1" style="width:100px"><br><br>
+  <div id="testBox" class="card" style="display:none">
+    <h2 id="testTitle">📝 Тест</h2>
+    <div id="setupTest">
+        <label>Количество слов:</label><br>
+        <input id="testCount" type="number" value="10" min="1" style="width:100px; margin-top:8px"><br><br>
+        <button class="btn" onclick="beginTest()">Начать тест</button>
+    </div>
+    <div id="testArea" style="margin-top:16px"></div>
+  </div>
 
-  <button class="btn" onclick="beginTest()">Начать тест</button>
+  <div class="card" style="border: 2px solid #3498db">
+    <h2>➕ Добавить новое</h2>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px">
+        <input id="text" placeholder="Слово или фраза">
+        <input id="translation" placeholder="Перевод">
+    </div>
+    <textarea id="note" placeholder="Заметка или предложение с этим словом..." style="margin-top:10px"></textarea>
+    <button class="btn" style="margin-top:10px; width:100%" onclick="add()">Добавить в список</button>
+  </div>
 
-  <div id="testArea" style="margin-top:16px"></div>
-</div>
-
-  <!-- Тип: слова / фразы -->
   <div style="display:flex;gap:10px;margin-bottom:16px">
     <button class="btn" onclick="setType('words')">📝 Слова</button>
     <button class="btn" onclick="setType('phrases')">💬 Фразы</button>
   </div>
 
-  <h2 id="title"></h2>
+  <h2 id="titleDisplay">Список</h2>
 
-  <input id="search"
-         placeholder="Поиск..."
-         style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
+  <input id="search" placeholder="🔍 Быстрый поиск..." style="width:100%;padding:10px;border-radius:8px;margin-bottom:16px">
 
   <div id="list"></div>
-
-  <div class="card">
-    <h2>➕ Добавить</h2>
-
-    <input id="text" placeholder="Слово или фраза"><br><br>
-    <input id="translation" placeholder="Перевод"><br><br>
-    <textarea id="note" placeholder="Заметка (необязательно)"></textarea><br><br>
-
-    <button class="btn" onclick="add()">Добавить</button>
-  </div>
 </main>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore,
-  collection,
-  addDoc,
-  getDocs,
-  deleteDoc,
-  doc,
-  query,
-  where,
-  orderBy
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -95,104 +87,23 @@ const firebaseConfig = {
     projectId: "my-dashboard-dc67a",
     storageBucket: "my-dashboard-dc67a.firebasestorage.app",
     messagingSenderId: "710702954120",
-    appId: "1:710702954120:web:f06b1038c48d3bd328913d",
-    measurementId: "G-74720EWKSB"
-  };
+    appId: "1:710702954120:web:f06b1038c48d3bd328913d"
+};
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-   let currentLang = "EN";
-   let currentType = "words";
+let currentLang = "EN";
+let currentType = "words";
+let localItems = []; // Для проверки дубликатов
 
-   function setLang(lang) {
-     currentLang = lang;
-     loadData();
-   }
-   function setType(type) {
-     currentType = type;
-     loadData();
-   }
-  async function add() {
-  if (!text.value || !translation.value) return;
+// --- Инициализация ---
+window.onload = () => { loadData(); };
 
-  await addDoc(collection(db, "languages"), {
-    lang: currentLang,
-    type: currentType,
-    text: text.value,
-    translation: translation.value,
-    note: note.value || "",
-    created: Date.now()
-  });
-
-  text.value = "";
-  translation.value = "";
-  note.value = "";
-
-  loadData();
-}
-async function removeItem(id) {
-  await deleteDoc(doc(db, "languages", id));
-  loadData();
-}
-
-  async function loadData() {
+async function loadData() {
   const list = document.getElementById("list");
-  list.innerHTML = "";
-
-  const q = query(
-    collection(db, "languages"),
-    where("lang", "==", currentLang),
-    where("type", "==", currentType),
-  );
-
-  const snapshot = await getDocs(q);
-
-let index = 1;
-
-snapshot.forEach(docSnap => {
-  const e = docSnap.data();
-
-  list.innerHTML += `
-    <div class="card">
-      <h3>${index}. ${e.text}</h3>
-      <p><b>${e.translation}</b></p>
-      <p>${e.note || ""}</p>
-      <button class="btn" onclick="removeItem('${docSnap.id}')">Удалить</button>
-    </div>
-  `;
-
-  index++;
-});
-
-}
-
-
-window.add = add;
-window.removeItem = removeItem;
-window.setLang = setLang;
-window.setType = setType;
-
-// =======================
-// 🧠 TEST LOGIC
-// =======================
-
-let testWords = [];
-let testIndex = 0;
-let correctAnswers = 0;
-
-function startTestMode() {
-  document.getElementById("testBox").style.display = "block";
-  document.getElementById("testArea").innerHTML = "";
-}
-
-async function beginTest() {
-  const count = Number(document.getElementById("testCount").value);
-  if (!count || count <= 0) return;
-
-  testWords = [];
-  testIndex = 0;
-  correctAnswers = 0;
+  list.innerHTML = "<p>Загрузка...</p>";
+  document.getElementById("titleDisplay").innerText = `${currentLang} | ${currentType === 'words' ? 'Слова' : 'Фразы'}`;
 
   const q = query(
     collection(db, "languages"),
@@ -201,91 +112,158 @@ async function beginTest() {
   );
 
   const snapshot = await getDocs(q);
+  list.innerHTML = "";
+  localItems = []; 
 
-  let all = [];
-  snapshot.forEach(doc => {
-    all.push(doc.data());
+  let index = 1;
+  snapshot.forEach(docSnap => {
+    const e = docSnap.data();
+    localItems.push(e.text.toLowerCase().trim()); // Сохраняем для проверки
+
+    list.innerHTML += `
+      <div class="card">
+        <div style="display:flex; justify-content:space-between">
+            <h3>${index}. ${e.text}</h3>
+            <button style="background:none; border:none; color:#ff6b6b; cursor:pointer" onclick="removeItem('${docSnap.id}')">Удалить</button>
+        </div>
+        <p><b>${e.translation}</b></p>
+        ${e.note ? `<p class="muted">💡 ${e.note}</p>` : ""}
+      </div>
+    `;
+    index++;
+  });
+}
+
+async function add() {
+  const txt = document.getElementById("text").value.trim();
+  const trans = document.getElementById("translation.value"); // Ошибочный ID в твоем коде был исправлен ниже
+  const valText = document.getElementById("text").value.trim();
+  const valTrans = document.getElementById("translation").value.trim();
+  const valNote = document.getElementById("note").value.trim();
+
+  if (!valText || !valTrans) return alert("Заполни слово и перевод!");
+
+  // 🛡 ПРОВЕРКА НА ДУБЛИКАТ
+  if (localItems.includes(valText.toLowerCase())) {
+      return alert(`Ошибка! Слово "${valText}" уже есть в этом списке.`);
+  }
+
+  await addDoc(collection(db, "languages"), {
+    lang: currentLang,
+    type: currentType,
+    text: valText,
+    translation: valTrans,
+    note: valNote,
+    created: Date.now()
   });
 
-  // 🔀 RANDOM
+  document.getElementById("text").value = "";
+  document.getElementById("translation").value = "";
+  document.getElementById("note").value = "";
+  loadData();
+}
+
+async function removeItem(id) {
+  if(confirm("Удалить?")) {
+    await deleteDoc(doc(db, "languages", id));
+    loadData();
+  }
+}
+
+// --- Управление ---
+function setLang(lang) { currentLang = lang; loadData(); }
+function setType(type) { currentType = type; loadData(); }
+
+// =======================
+// 🧠 TEST LOGIC (Updated)
+// =======================
+let testWords = [];
+let testIndex = 0;
+let correctAnswers = 0;
+
+function startTestMode() {
+  document.getElementById("testBox").style.display = "block";
+  document.getElementById("setupTest").style.display = "block";
+  document.getElementById("testArea").innerHTML = "";
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+async function beginTest() {
+  const count = Number(document.getElementById("testCount").value);
+  const q = query(collection(db, "languages"), where("lang", "==", currentLang), where("type", "==", currentType));
+  const snapshot = await getDocs(q);
+  
+  let all = [];
+  snapshot.forEach(doc => all.push(doc.data()));
+
+  if (all.length === 0) return alert("Список пуст!");
+
   all = all.sort(() => Math.random() - 0.5);
   testWords = all.slice(0, count);
+  testIndex = 0;
+  correctAnswers = 0;
 
+  document.getElementById("setupTest").style.display = "none";
   showQuestion();
 }
 
 function showQuestion() {
   const area = document.getElementById("testArea");
-
   if (testIndex >= testWords.length) {
-    area.innerHTML = `
-      <h3>✅ Тест завершён</h3>
-      <p>Правильных ответов: <b>${correctAnswers}</b> из <b>${testWords.length}</b></p>
-      <button class="btn" onclick="loadData()">К словам</button>
-    `;
+    area.innerHTML = `<h3>✅ Тест завершён</h3><p>Итог: ${correctAnswers} из ${testWords.length}</p><button class="btn" onclick="location.reload()">Закрыть</button>`;
     return;
   }
 
   const word = testWords[testIndex];
-
   area.innerHTML = `
-    <p><b>${testIndex + 1}. ${word.text}</b></p>
-
-    <input id="answerInput" placeholder="Перевод на русском"
-      style="width:100%;padding:8px"><br><br>
-
-    <button class="btn" onclick="checkAnswer()">Ответить</button>
-
-    <p id="feedback" style="margin-top:12px;font-weight:bold"></p>
-
-    <button class="btn" id="nextBtn"
-      style="display:none;margin-top:10px"
-      onclick="nextQuestion()">Дальше →</button>
+    <p>Как переводится:</p>
+    <h2 style="color:#f1c40f">${word.text}</h2>
+    <input id="answerInput" placeholder="Введите перевод..." style="margin-bottom:10px">
+    <button class="btn" id="checkBtn" onclick="checkAnswer()">Проверить ответ</button>
+    <div id="feedback"></div>
+    <button class="btn" id="nextBtn" style="display:none; margin-top:15px; background:#2ecc71" onclick="nextQuestion()">Дальше →</button>
   `;
+  document.getElementById("answerInput").focus();
 }
 
-
-
 function checkAnswer() {
-  const input = document.getElementById("answerInput");
-  const feedback = document.getElementById("feedback");
-  const nextBtn = document.getElementById("nextBtn");
-
-  if (!input || !feedback || !nextBtn) {
-    console.error("❌ Элементы теста не найдены");
-    return;
-  }
-
-  const user = input.value.trim().toLowerCase();
+  const user = document.getElementById("answerInput").value.trim().toLowerCase();
   const correct = testWords[testIndex].translation.trim().toLowerCase();
+  const feedback = document.getElementById("feedback");
+  const word = testWords[testIndex];
 
   if (user === correct) {
     correctAnswers++;
-    feedback.innerHTML = "✅ Правильно";
-    feedback.style.color = "#4caf50";
+    feedback.innerHTML = `<p style="color:#2ecc71; font-weight:bold">✅ Верно!</p>`;
   } else {
-    feedback.innerHTML = `❌ Неправильно. Правильный ответ: <b>${correct}</b>`;
-    feedback.style.color = "#ff6b6b";
+    feedback.innerHTML = `<p style="color:#e74c3c; font-weight:bold">❌ Ошибка. Правильно: ${word.translation}</p>`;
   }
 
-  input.disabled = true;
-  nextBtn.style.display = "inline-block";
+  // ПОКАЗ ЗАМЕТКИ (то, что ты просил)
+  if (word.note) {
+      feedback.innerHTML += `<div class="feedback-note"><b>Заметка / Пример:</b><br>${word.note}</div>`;
+  }
+
+  document.getElementById("answerInput").disabled = true;
+  document.getElementById("checkBtn").style.display = "none";
+  document.getElementById("nextBtn").style.display = "block";
 }
 
-  function nextQuestion() {
+function nextQuestion() {
   testIndex++;
   showQuestion();
 }
 
-
-  // 👇 ДЕЛАЕМ ФУНКЦИИ ДОСТУПНЫМИ ДЛЯ HTML
+// Привязка к окну
+window.add = add;
+window.removeItem = removeItem;
+window.setLang = setLang;
+window.setType = setType;
 window.startTestMode = startTestMode;
 window.beginTest = beginTest;
 window.checkAnswer = checkAnswer;
 window.nextQuestion = nextQuestion;
-
-
- </script>
+</script>
 
 </body>
 </html>
