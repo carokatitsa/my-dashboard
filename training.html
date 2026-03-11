@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Gym Pro OS v5.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Gym Pro OS v5.2</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -16,67 +16,95 @@
             margin: 0; display: flex; height: 100vh; overflow: hidden;
         }
 
-        /* ЛЕВАЯ ПАНЕЛЬ */
+        /* ЛЕВАЯ ПАНЕЛЬ (БАЗА) */
         .sidebar { 
-            width: 250px; background: #010409; border-right: 1px solid var(--border); 
-            display: flex; flex-direction: column; padding: 20px; overflow-y: auto;
+            width: 280px; background: #010409; border-right: 1px solid var(--border); 
+            display: flex; flex-direction: column; padding: 20px; 
+            flex-shrink: 0; height: 100vh; overflow-y: auto;
         }
-        .sidebar h3 { color: var(--blue); font-size: 14px; text-transform: uppercase; margin-bottom: 15px; }
+        .sidebar h3 { color: var(--blue); font-size: 12px; text-transform: uppercase; margin-bottom: 15px; letter-spacing: 1px; }
+        
+        #exerciseLibrary { display: flex; flex-direction: column; gap: 8px; }
+        
         .ex-item { 
-            padding: 10px; border: 1px solid var(--border); border-radius: 8px; 
-            margin-bottom: 8px; cursor: pointer; transition: 0.2s; font-size: 13px; background: rgba(255,255,255,0.03);
+            padding: 12px; border: 1px solid var(--border); border-radius: 8px; 
+            cursor: pointer; transition: 0.2s; font-size: 13px; background: rgba(255,255,255,0.03);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
         .ex-item:hover { background: var(--border); border-color: var(--gold); }
 
-        /* ЦЕНТР */
-        .main { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        /* ЦЕНТРАЛЬНАЯ ОБЛАСТЬ */
+        .main { 
+            flex: 1; overflow-y: auto; display: flex; flex-direction: column; align-items: center;
+            padding: 20px; scroll-behavior: smooth;
+        }
         .content-wrapper { width: 100%; max-width: 600px; }
 
-        /* ВИДЖЕТ ДАТЫ И ОТЧЕТА */
+        /* ПАНЕЛЬ ОТЧЕТА (ВСЕГДА ЗАМЕТНА) */
         .status-panel {
             background: linear-gradient(145deg, #1c2128, #111827);
             border: 1px solid var(--blue); border-radius: 16px;
             padding: 20px; margin-bottom: 25px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            position: sticky; top: 0; z-index: 100;
         }
-        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .status-header input { background: transparent; border: none; color: var(--blue); font-size: 18px; font-weight: bold; cursor: pointer; outline: none; }
-        .ai-report-text { font-size: 14px; line-height: 1.6; color: #fff; font-style: italic; }
-        .stats-badge { font-size: 12px; color: var(--gold); font-weight: bold; margin-top: 10px; display: block; }
+        .status-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .status-header input { background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--blue); padding: 5px 10px; font-size: 14px; font-weight: bold; }
+        
+        .ai-report-text { font-size: 14px; line-height: 1.5; color: #fff; font-style: italic; opacity: 0.9; }
+        .stats-badge { font-size: 13px; color: var(--gold); font-weight: bold; margin-top: 12px; display: block; background: rgba(241, 196, 15, 0.1); padding: 5px 10px; border-radius: 5px; width: fit-content; }
 
-        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+        .box { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px; margin-bottom: 25px; }
         input[type="text"] { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; }
         
         .set-row { display: grid; grid-template-columns: 1fr 1fr 40px; gap: 8px; margin-bottom: 10px; }
+        .set-row input { background: #1c2128; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; text-align: center; }
+
         .btn { border: none; padding: 14px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .btn-add { background: none; border: 1px dashed var(--blue); color: var(--blue); margin-bottom: 10px; }
-        .btn-save { background: var(--green); color: #fff; font-size: 16px; }
-        .btn-save:active { transform: scale(0.98); }
+        .btn-save { background: var(--green); color: #fff; font-size: 16px; box-shadow: 0 4px 14px rgba(35, 134, 54, 0.3); }
 
-        /* ГАРМОШКА ИСТОРИИ */
-        .history-day { margin-bottom: 10px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+        /* АРХИВ */
+        .history-day { margin-bottom: 12px; border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
         .history-header { 
-            background: #21262d; padding: 12px 15px; cursor: pointer; display: flex; 
-            justify-content: space-between; align-items: center; font-weight: bold; font-size: 14px;
+            background: #21262d; padding: 14px; cursor: pointer; display: flex; 
+            justify-content: space-between; align-items: center; font-size: 14px;
         }
-        .history-header:hover { background: #30363d; }
         .history-content { background: #0d1117; display: none; padding: 10px; }
         .history-content.active { display: block; }
 
-        .card { background: var(--card); border: 1px solid var(--border); padding: 15px; border-radius: 8px; margin-bottom: 10px; position: relative; }
-        .card b { color: var(--gold); }
-        .verdict-line { font-size: 11px; color: #8b949e; margin-top: 8px; display: block; }
-        
+        .card { background: var(--card); border: 1px solid var(--border); padding: 12px; border-radius: 8px; margin-bottom: 8px; position: relative; }
+        .card b { color: var(--gold); font-size: 15px; }
+        .verdict-line { font-size: 11px; color: #8b949e; margin-top: 8px; display: block; border-top: 1px solid #30363d; padding-top: 5px; }
+
+        /* МОБИЛЬНАЯ АДАПТАЦИЯ */
         @media (max-width: 768px) {
-            body { flex-direction: column; overflow-y: auto; }
-            .sidebar { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
-            .main { padding: 15px; }
+            body { flex-direction: column; overflow: hidden; }
+            
+            .sidebar { 
+                width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); 
+                padding: 10px 15px; overflow-y: hidden;
+            }
+            .sidebar h3 { margin-bottom: 8px; font-size: 10px; }
+            
+            /* БАЗА НА МОБИЛКАХ СТАНОВИТСЯ ГОРИЗОНТАЛЬНЫМ СКРОЛЛОМ */
+            #exerciseLibrary { 
+                flex-direction: row; overflow-x: auto; padding-bottom: 5px; gap: 10px;
+                -webkit-overflow-scrolling: touch;
+            }
+            .ex-item { 
+                padding: 8px 15px; flex-shrink: 0; font-size: 12px; 
+            }
+
+            .main { padding: 10px; height: 100%; overflow-y: auto; }
+            .status-panel { padding: 15px; margin-bottom: 15px; border-radius: 12px; }
+            .ai-report-text { font-size: 13px; }
         }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h3>📂 МОЯ БАЗА</h3>
+    <h3>📂 БАЗА УПРАЖНЕНИЙ</h3>
     <div id="exerciseLibrary"></div>
 </div>
 
@@ -85,31 +113,32 @@
         <div class="status-panel">
             <div class="status-header">
                 <input type="date" id="exDate" onchange="loadHistory()">
-                <span id="dayTone">⚡️ Готов к работе</span>
+                <span id="dayTone" style="color:var(--gold); font-weight: bold; font-size: 13px;">⚡️ ГОТОВ</span>
             </div>
-            <div id="aiReport" class="ai-report-text">Выберите дату или сохраните упражнение, чтобы увидеть отчет за тренировку...</div>
+            <div id="aiReport" class="ai-report-text">Выберите упражнение из базы слева или введите новое...</div>
             <div id="quickStats" class="stats-badge"></div>
         </div>
 
         <div class="box">
-            <input type="text" id="exName" placeholder="Название упражнения...">
+            <input type="text" id="exName" placeholder="Что качаем сегодня?">
             <div id="sets">
                 <div class="set-row">
-                    <input type="number" class="sw" placeholder="кг">
-                    <input type="number" class="sr" placeholder="раз">
-                    <button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>
+                    <input type="number" class="sw" placeholder="кг" inputmode="decimal">
+                    <input type="number" class="sr" placeholder="раз" inputmode="numeric">
+                    <button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none; font-size: 20px;">✕</button>
                 </div>
             </div>
             <button class="btn btn-add" onclick="addSet()">+ Добавить подход</button>
-            <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ РЕЗУЛЬТАТ</button>
+            <button id="saveBtn" class="btn btn-save" onclick="save()">СОХРАНИТЬ В ОБЛАКО</button>
         </div>
 
-        <h3 style="color:var(--gold); font-size: 16px; margin-bottom: 15px;">📜 АРХИВ ТРЕНИРОВОК</h3>
+        <h3 style="color:var(--gold); font-size: 14px; margin: 20px 0 10px 5px; text-transform: uppercase; letter-spacing: 1px;">📜 История тренировок</h3>
         <div id="historyAccordion"></div>
     </div>
 </div>
 
 <script>
+    // Тот же конфиг (не меняем)
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -123,12 +152,11 @@
     const db = firebase.firestore();
     let editId = null;
 
-    // ОБНОВЛЕНИЕ БИБЛИОТЕКИ СЛЕВА
     async function updateLibrary() {
         const snap = await db.collection("gym_logs").get();
         const names = [...new Set(snap.docs.map(d => d.data().name))].sort();
         const lib = document.getElementById('exerciseLibrary');
-        lib.innerHTML = names.map(n => `<div class="ex-item" onclick="autoFill('${n}')">➕ ${n}</div>`).join('');
+        lib.innerHTML = names.map(n => `<div class="ex-item" onclick="autoFill('${n}')">${n}</div>`).join('');
     }
 
     async function autoFill(name) {
@@ -139,16 +167,17 @@
         const setsContainer = document.getElementById('sets');
         setsContainer.innerHTML = "";
         last.sets.forEach(s => addSet(s.w, s.r));
+        // Скроллим к форме на мобилках
+        if(window.innerWidth < 768) document.querySelector('.box').scrollIntoView();
     }
 
     function addSet(w='', r='') {
         const div = document.createElement('div');
         div.className = 'set-row';
-        div.innerHTML = `<input type="number" class="sw" value="${w}" placeholder="кг"><input type="number" class="sr" value="${r}" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button>`;
+        div.innerHTML = `<input type="number" class="sw" value="${w}" placeholder="кг" inputmode="decimal"><input type="number" class="sr" value="${r}" placeholder="раз" inputmode="numeric"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none; font-size: 20px;">✕</button>`;
         document.getElementById('sets').appendChild(div);
     }
 
-    // СОХРАНЕНИЕ
     async function save() {
         const date = document.getElementById('exDate').value;
         const name = document.getElementById('exName').value.trim();
@@ -157,43 +186,39 @@
         const btn = document.getElementById('saveBtn');
         
         let sets = [];
-        let curMaxW = 0, curMaxR = 0;
         for(let i=0; i<ws.length; i++) {
             let weight = parseFloat(ws[i].value);
             let reps = parseInt(rs[i].value);
-            if(weight && reps) {
-                sets.push({w: weight, r: reps});
-                if(weight > curMaxW) { curMaxW = weight; curMaxR = reps; }
-            }
+            if(weight && reps) sets.push({w: weight, r: reps});
         }
 
-        if(!name || sets.length === 0) return alert("Заполни данные!");
+        if(!name || sets.length === 0) return alert("Введите название и хотя бы один подход!");
         btn.disabled = true;
+        btn.innerText = "СОХРАНЕНИЕ...";
 
         const snap = await db.collection("gym_logs").where("name", "==", name).get();
         let history = snap.docs.map(d => d.data()).sort((a,b) => b.ts - a.ts);
         let lastEx = history.find(h => h.date !== date);
 
-        let verdict = lastEx ? `Прошлый раз: ${Math.max(...lastEx.sets.map(s=>s.w))}кг. Погнали!` : "База создана!";
+        let verdict = lastEx ? `Прошлый максимум: ${Math.max(...lastEx.sets.map(s=>s.w))}кг. Работаем!` : "Новое упражнение в базе!";
 
         const data = { name, sets, date, ts: Date.now(), verdict };
         if(editId) { await db.collection("gym_logs").doc(editId).update(data); editId = null; }
         else { await db.collection("gym_logs").add(data); }
 
         document.getElementById('exName').value = '';
-        document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг"><input type="number" class="sr" placeholder="раз"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
+        document.getElementById('sets').innerHTML = `<div class="set-row"><input type="number" class="sw" placeholder="кг" inputmode="decimal"><input type="number" class="sr" placeholder="раз" inputmode="numeric"><button onclick="this.parentElement.remove()" style="color:var(--red); background:none; border:none;">✕</button></div>`;
         btn.disabled = false;
+        btn.innerText = "СОХРАНИТЬ РЕЗУЛЬТАТ";
         loadHistory();
         updateLibrary();
     }
 
-    // ЗАГРУЗКА ИСТОРИИ С ГАРМОШКОЙ И ОТЧЕТОМ
     async function loadHistory() {
         const snap = await db.collection("gym_logs").get();
         const allData = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
         const grouped = {};
 
-        // Группируем по датам
         allData.forEach(item => {
             if(!grouped[item.date]) grouped[item.date] = [];
             grouped[item.date].push(item);
@@ -211,17 +236,14 @@
             let totalVolume = 0;
             exercises.forEach(ex => ex.sets.forEach(s => totalVolume += (s.w * s.r)));
 
-            // Если это выбранная дата — обновляем отчет вверху
-            if(isToday) {
-                updateReport(exercises, totalVolume);
-            }
+            if(isToday) updateReport(exercises, totalVolume);
 
             const section = document.createElement('div');
             section.className = 'history-day';
             section.innerHTML = `
                 <div class="history-header" onclick="this.nextElementSibling.classList.toggle('active')">
                     <span>📅 ${date}</span>
-                    <span style="color:var(--blue)">${exercises.length} упр. | ${totalVolume} кг ▾</span>
+                    <span style="color:var(--blue); font-size:12px;">${totalVolume} кг ▾</span>
                 </div>
                 <div class="history-content ${isToday ? 'active' : ''}">
                     ${exercises.map(ex => `
@@ -231,7 +253,7 @@
                                 <button onclick="edit('${ex.id}')" style="background:none; border:none; cursor:pointer;">✏️</button>
                                 <button onclick="del('${ex.id}')" style="background:none; border:none; cursor:pointer;">🗑️</button>
                             </div>
-                            <br><small>${ex.sets.map(s => `${s.w}×${s.r}`).join(' | ')}</small>
+                            <br><small style="color:var(--blue)">${ex.sets.map(s => `${s.w}×${s.r}`).join(' | ')}</small>
                             <span class="verdict-line">${ex.verdict}</span>
                         </div>
                     `).join('')}
@@ -241,28 +263,25 @@
         });
 
         if(!grouped[selectedDate]) {
-            document.getElementById('aiReport').innerText = "На эту дату записей нет. Самое время потренироваться!";
+            document.getElementById('aiReport').innerText = "На сегодня тренировок еще нет. Время ставить рекорды!";
             document.getElementById('quickStats').innerText = "";
+            document.getElementById('dayTone').innerText = "💤 ОТДЫХ";
         }
     }
 
-    // ПИСЬМЕННЫЙ ОТЧЕТ
     function updateReport(exercises, volume) {
         const reportBox = document.getElementById('aiReport');
         const statsBox = document.getElementById('quickStats');
         const toneBox = document.getElementById('dayTone');
 
-        let text = "";
         if(volume > 5000) {
-            text = `Ого! Сегодня была по-настоящему тяжелая тренировка. Вы проделали огромный объем работы, задействовав ${exercises.length} упражнений. Основной фокус был на интенсивности.`;
-            toneBox.innerText = "🔥 Режим Зверя";
-        } else if(volume > 0) {
-            text = `Хорошая техническая сессия. Вы выполнили ${exercises.length} упражнений. Такой объем отлично подходит для поддержания тонуса и отработки нейромышечной связи.`;
-            toneBox.innerText = "💪 Продуктивно";
+            reportBox.innerText = `Мощно! Суммарный тоннаж перевалил за 5 тонн. Отличный показатель интенсивности на ${exercises.length} упр.`;
+            toneBox.innerText = "🔥 ЗВЕРЬ";
+        } else {
+            reportBox.innerText = `Хорошая работа. Выполнили ${exercises.length} упражнений. Техника и стабильность — залог роста.`;
+            toneBox.innerText = "💪 В НОРМЕ";
         }
-
-        reportBox.innerText = text;
-        statsBox.innerText = `📊 ИТОГО: ${volume} кг поднято за сегодня.`;
+        statsBox.innerText = `📈 ОБЪЕМ: ${volume} кг`;
     }
 
     async function edit(id) {
@@ -273,12 +292,16 @@
         document.getElementById('sets').innerHTML = "";
         d.sets.forEach(s => addSet(s.w, s.r));
         editId = id;
-        document.getElementById('saveBtn').innerText = "ОБНОВИТЬ";
-        window.scrollTo(0,0);
+        document.getElementById('saveBtn').innerText = "ОБНОВИТЬ ЗАПИСЬ";
+        document.querySelector('.box').scrollIntoView();
     }
 
     async function del(id) {
-        if(confirm("Удалить?")) { await db.collection("gym_logs").doc(id).delete(); loadHistory(); updateLibrary(); }
+        if(confirm("Удалить это упражнение?")) { 
+            await db.collection("gym_logs").doc(id).delete(); 
+            loadHistory(); 
+            updateLibrary(); 
+        }
     }
 
     window.onload = () => {
