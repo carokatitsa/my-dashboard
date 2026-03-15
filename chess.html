@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess Master Pro - Random & Multi-lang</title>
+    <title>Chess Master Pro - Hidden Random & Multi-lang</title>
     <style>
         :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
         body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
         #left-pane { display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        /* Переключатель языка */
         #lang-switcher { position: absolute; top: -10px; right: -20px; }
         #lang-switcher button { background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; }
 
@@ -77,10 +76,10 @@
 
     <div id="status-bar">Mode: Recording</div>
     
-    <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px;">🎲 <span id="txt-random">RANDOM DEBUT</span></button>
+    <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px; margin: 5px 0;">🎲 <span id="txt-random">RANDOM DEBUT</span></button>
 
     <div id="record-tools" class="save-box">
-        <input type="text" id="debut-name" placeholder="Name (e.g. Sicilian)">
+        <input type="text" id="debut-name" placeholder="Name">
         <div class="side-select">
             <button id="btn-w" class="active" onclick="setSaveSide('W')">I PLAY WHITE</button>
             <button id="btn-b" onclick="setSaveSide('B')">I PLAY BLACK</button>
@@ -97,7 +96,6 @@
 </div>
 
 <script>
-    // Мультиязычность
     const i18n = {
         ru: {
             turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ",
@@ -114,7 +112,6 @@
             correct: "Верно! Соперник ходит...",
             yourTurn: "Ваш ход...",
             done: "✅ Вариант полностью пройден!",
-            randomMsg: "Выбран случайный вариант: ",
             noDebuts: "База дебютов пуста!"
         },
         en: {
@@ -132,13 +129,11 @@
             correct: "Correct! Opponent moving...",
             yourTurn: "Your turn...",
             done: "✅ Variant completed!",
-            randomMsg: "Random variant selected: ",
             noDebuts: "No saved debuts found!"
         }
     };
 
     let curLang = localStorage.getItem('chess_lang') || 'ru';
-
     const PIECES_SVG = {
         'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
         'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
@@ -173,6 +168,7 @@
     let saveSide = 'W';
     let debuts = JSON.parse(localStorage.getItem('chess_v2_data') || '{"W":{}, "B":{}}');
     let activeDebut = null;
+    let isRandomMode = false;
 
     function t(key) { return i18n[curLang][key]; }
 
@@ -238,7 +234,7 @@
         document.getElementById('mode-exam').className = m === 'exam' ? 'active exam' : '';
         statusEl.innerText = m === 'record' ? t('modeRec') : t('modeExam');
         statusEl.style.color = m === 'record' ? "#27ae60" : "#2980b9";
-        if (m === 'record') activeDebut = null;
+        if (m === 'record') { activeDebut = null; isRandomMode = false; }
     }
 
     function onSquareClick(r, c) {
@@ -303,30 +299,30 @@
                 statusEl.style.color = "#2980b9";
             }, 600);
         } else {
-            statusEl.innerText = t('done');
+            // В конце рандома показываем название
+            statusEl.innerText = `${t('done')} (${activeDebut.name})`;
             statusEl.style.color = "#27ae60";
         }
     }
 
-    function selectDebut(side, name) {
+    function selectDebut(side, name, isRandom = false) {
         activeDebut = { side, name, moves: debuts[side][name] };
+        isRandomMode = isRandom;
         setMode('exam');
         resetGame();
         
         if (side === 'B') boardEl.classList.add('flipped');
         else boardEl.classList.remove('flipped');
 
-        statusEl.innerText = `${t('randomMsg')} ${name}`;
+        // Скрываем название если рандом
+        statusEl.innerText = isRandom ? t('yourTurn') : `${t('yourTurn')} (${name})`;
         
-        // Если играем за черных, программа делает первый ход белых
         if (side === 'B' && activeDebut.moves.length > 0) {
             setTimeout(() => {
                 const m = activeDebut.moves[0];
                 executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]), true);
                 statusEl.innerText = t('yourTurn');
             }, 500);
-        } else {
-            statusEl.innerText = `${t('yourTurn')} (${name})`;
         }
     }
 
@@ -334,11 +330,9 @@
         const all = [];
         for (let name in debuts.W) all.push({side: 'W', name});
         for (let name in debuts.B) all.push({side: 'B', name});
-        
         if (all.length === 0) return alert(t('noDebuts'));
-        
         const rand = all[Math.floor(Math.random() * all.length)];
-        selectDebut(rand.side, rand.name);
+        selectDebut(rand.side, rand.name, true);
     }
 
     function getMoveType(fR, fC, tR, tC) {
@@ -411,8 +405,14 @@
     }
 
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
-    function redo() { if (historyIndex < history.length - 1) { historyIndex++; redo(); } }
-    function resetGame() { history = [history[0]]; historyIndex = 0; selected = null; validMoves = []; render(); }
+    function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
+    function resetGame() { 
+        history = [history[0]]; 
+        historyIndex = 0; 
+        selected = null; 
+        validMoves = []; 
+        render(); 
+    }
 
     applyLang();
     render();
