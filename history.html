@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <title>Бронзовый Атлас Pro | LingoArchive</title>
+  <title>Bronze Archive Pro | LingoArchive</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -19,12 +19,13 @@
     header { background: var(--bg-sidebar); padding: 10px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; z-index: 1001; flex-shrink: 0; }
     nav a { color: var(--text); text-decoration: none; font-size: 14px; margin-left: 15px; }
 
+    #lang-switcher { display: flex; gap: 5px; margin-right: 15px; }
+    #lang-switcher button { background: #333; color: #fff; border: 1px solid #555; padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 11px; }
+    #lang-switcher button.active { background: var(--accent); border-color: #fff; }
+
     .layout { display: flex; flex: 1; overflow: hidden; }
-    
-    /* Сайдбар */
     .sidebar { width: 360px; background: var(--bg-sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 15px; overflow-y: auto; z-index: 10; }
 
-    /* Карта */
     .map-container { flex: 1; position: relative; background: #2b2317; display: flex; flex-direction: column; }
     #map { flex: 1; width: 100%; filter: sepia(0.6) contrast(1.1) brightness(0.9) hue-rotate(-10deg); }
 
@@ -40,47 +41,52 @@
 
     .btn-sm { padding: 4px 8px; font-size: 11px; background: #21262d; color: #c9d1d9; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
 
-    /* Таймлайн */
     .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; z-index: 1000; background: rgba(13, 17, 23, 0.9); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px); }
     #yearSlider { width: 100%; accent-color: var(--accent); cursor: pointer; }
     .year-label { font-size: 20px; font-weight: 800; color: var(--accent); text-align: center; margin-bottom: 2px; }
 
-    /* АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ */
+    .map-label { background: transparent; border: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
+    .map-label-text { text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px rgba(0,0,0,0.9); }
+
+    /* Исправление стиля Popup */
+    .leaflet-popup-content-wrapper { background: #161b22; color: #c9d1d9; border: 1px solid var(--accent); }
+    .leaflet-popup-tip { background: var(--accent); }
+
     @media (max-width: 768px) {
       .layout { flex-direction: column; }
       .sidebar { width: 100%; height: 40vh; border-right: none; border-top: 1px solid var(--border); order: 2; padding: 10px; }
       .map-container { flex: 1; min-height: 60vh; order: 1; }
-      .timeline-box { bottom: 10px; width: 90%; padding: 8px 15px; }
-      .year-label { font-size: 18px; }
-      header { padding: 8px 15px; }
-      header div { font-size: 16px !important; }
     }
-
-    .map-label { background: transparent; border: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
-    .map-label-text { text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px rgba(0,0,0,0.9); }
   </style>
 </head>
 <body>
 
 <header>
-  <div style="font-weight: bold; font-size: 20px; color: var(--accent);">🏛 BRONZE ARCHIVE</div>
-  <nav><a href="index.html">🏠 Главная</a><a href="history.html" style="color:var(--gold)">🏛 История</a></nav>
+  <div style="display: flex; align-items: center;">
+    <div style="font-weight: bold; font-size: 20px; color: var(--accent); margin-right: 20px;">🏛 BRONZE ARCHIVE</div>
+    <div id="lang-switcher">
+      <button onclick="setLang('ru')" id="ln-ru">RU</button>
+      <button onclick="setLang('en')" id="ln-en">EN</button>
+      <button onclick="setLang('de')" id="ln-de">DE</button>
+    </div>
+  </div>
+  <nav><a href="index.html" id="nav-home">🏠 Главная</a><a href="history.html" style="color:var(--gold)" id="nav-hist">🏛 История</a></nav>
 </header>
 
 <div class="layout">
   <div class="sidebar">
     <div class="input-group">
-      <input id="countryName" placeholder="Название страны (напр. Рим)">
+      <input id="countryName" placeholder="Название страны">
       <div style="display:flex; gap:10px">
           <input id="startYear" type="number" placeholder="От">
           <input id="endYear" type="number" placeholder="До">
       </div>
       <input type="color" id="objColor" value="#cd7f32" style="height:35px; cursor:pointer; margin-bottom:8px">
       <textarea id="description" placeholder="Описание этапа..." rows="2"></textarea>
-      <button class="btn-main" onclick="saveHistory()">Вписать этап</button>
+      <button class="btn-main" onclick="saveHistory()" id="btn-save">Вписать этап</button>
     </div>
 
-    <h3 style="font-size: 11px; color: #8b949e; margin-bottom:10px; text-transform: uppercase;">База государств</h3>
+    <h3 style="font-size: 11px; color: #8b949e; margin-bottom:10px; text-transform: uppercase;" id="txt-list-title">База государств</h3>
     <div id="historyList"></div>
   </div>
 
@@ -112,6 +118,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Интернационализация
+const i18n = {
+    ru: { home: "🏠 Главная", hist: "🏛 История", save: "Вписать этап", list: "База государств", name: "Название страны", desc: "Описание этапа...", del: "Удалить?", alert: "Заполни поля и нарисуй!" },
+    en: { home: "🏠 Home", hist: "🏛 History", save: "Add Stage", list: "States Database", name: "Country Name", desc: "Stage Description...", del: "Delete?", alert: "Fill fields and draw!" },
+    de: { home: "🏠 Start", hist: "🏛 Geschichte", save: "Phase hinzufügen", list: "Staaten-Datenbank", name: "Ländername", desc: "Beschreibung...", del: "Löschen?", alert: "Felder ausfüllen und zeichnen!" }
+};
+window.currentLang = localStorage.getItem('atlas_lang') || 'ru';
+
 // Инициализация карты
 const map = L.map('map', { zoomControl: false }).setView([30, 31], 3);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
@@ -126,10 +140,17 @@ const drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 let currentGeoData = null;
+
 map.on(L.Draw.Event.CREATED, (e) => {
     drawnItems.clearLayers();
     currentGeoData = e.layer.toGeoJSON();
     drawnItems.addLayer(e.layer);
+});
+
+map.on(L.Draw.Event.EDITED, (e) => {
+    e.layers.eachLayer(layer => {
+        currentGeoData = layer.toGeoJSON();
+    });
 });
 
 const slider = document.getElementById("yearSlider");
@@ -169,7 +190,19 @@ function renderAtlas(year) {
         const stage = country.history.find(h => year >= h.start && year <= h.end);
         if (stage) {
             const geo = JSON.parse(stage.geo);
-            L.geoJSON(geo, { style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } }).addTo(mapLayers);
+            const layer = L.geoJSON(geo, { 
+                style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } 
+            });
+
+            // КЛИК ДЛЯ ОПИСАНИЯ
+            layer.bindPopup(`
+                <b style="font-size:16px; color:var(--gold)">${country.name}</b><br>
+                <i style="font-size:11px;">${stage.start} — ${stage.end}</i><hr>
+                <div style="max-height:150px; overflow-y:auto">${stage.desc || "..."}</div>
+            `);
+            
+            layer.addTo(mapLayers);
+
             const center = L.geoJSON(geo).getBounds().getCenter();
             L.marker(center, {
                 icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [120, 30] })
@@ -181,7 +214,7 @@ function renderAtlas(year) {
                 <div class="country-header">
                     <strong>${country.name} ${country.type === 'legacy' ? '📜' : ''}</strong>
                     <div style="display:flex; gap:5px;">
-                        <button class="btn-sm" onclick="extendCountry('${country.id}', '${country.type}')">➕</button>
+                        <button class="btn-sm" onclick="extendCountry('${country.id}')">➕</button>
                         <button class="btn-sm" onclick="deleteEntry('${country.id}', '${country.type}')">🗑</button>
                     </div>
                 </div>
@@ -196,7 +229,7 @@ window.saveHistory = async function() {
     const desc = document.getElementById("description").value;
     const color = document.getElementById("objColor").value;
 
-    if (!name || isNaN(start) || !currentGeoData) return alert("Заполни поля и нарисуй границы!");
+    if (!name || isNaN(start) || !currentGeoData) return alert(i18n[window.currentLang].alert);
 
     const newStage = { start, end: end || start, desc, geo: JSON.stringify(currentGeoData) };
     const existing = countriesData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.type === 'modern');
@@ -208,34 +241,67 @@ window.saveHistory = async function() {
         await addDoc(collection(db, "historical_countries"), { name, color, history: [newStage] });
     }
 
-    document.getElementById("countryName").value = "";
-    document.getElementById("startYear").value = "";
-    document.getElementById("endYear").value = "";
-    document.getElementById("description").value = "";
-    drawnItems.clearLayers();
-    currentGeoData = null;
+    resetInputs();
     loadHistory();
 };
 
-window.extendCountry = function(id, type) {
+window.extendCountry = function(id) {
     const country = countriesData.find(c => c.id === id);
     const last = country.history[country.history.length - 1];
     document.getElementById("countryName").value = country.name;
     document.getElementById("startYear").value = last.end;
     document.getElementById("objColor").value = country.color;
+    document.getElementById("description").value = last.desc || "";
+
+    // РЕДАКТИРОВАНИЕ ФОРМЫ
     drawnItems.clearLayers();
-    L.geoJSON(JSON.parse(last.geo)).eachLayer(l => drawnItems.addLayer(l));
-    currentGeoData = JSON.parse(last.geo);
+    const geoJSON = JSON.parse(last.geo);
+    L.geoJSON(geoJSON).eachLayer(l => {
+        const layer = l;
+        if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+           drawnItems.addLayer(layer);
+        }
+    });
+    currentGeoData = geoJSON;
+    map.fitBounds(drawnItems.getBounds());
 };
 
 window.deleteEntry = async function(id, type) {
-    if(confirm("Удалить?")) {
+    if(confirm(i18n[window.currentLang].del)) {
         const coll = type === 'modern' ? "historical_countries" : "history_atlas";
         await deleteDoc(doc(db, coll, id));
         loadHistory();
     }
 };
 
+window.setLang = function(ln) {
+    window.currentLang = ln;
+    localStorage.setItem('atlas_lang', ln);
+    updateUI();
+};
+
+function updateUI() {
+    const t = i18n[window.currentLang];
+    document.getElementById("nav-home").innerText = t.home;
+    document.getElementById("nav-hist").innerText = t.hist;
+    document.getElementById("btn-save").innerText = t.save;
+    document.getElementById("txt-list-title").innerText = t.list;
+    document.getElementById("countryName").placeholder = t.name;
+    document.getElementById("description").placeholder = t.desc;
+    document.querySelectorAll('#lang-switcher button').forEach(b => b.classList.remove('active'));
+    document.getElementById(`ln-${window.currentLang}`).classList.add('active');
+}
+
+function resetInputs() {
+    document.getElementById("countryName").value = "";
+    document.getElementById("startYear").value = "";
+    document.getElementById("endYear").value = "";
+    document.getElementById("description").value = "";
+    drawnItems.clearLayers();
+    currentGeoData = null;
+}
+
+updateUI();
 loadHistory();
 </script>
 </body>
