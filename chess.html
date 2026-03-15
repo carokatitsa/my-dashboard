@@ -2,13 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Chess Master - SVG & Flip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chess Master Pro - Random & Multi-lang</title>
     <style>
         :root { --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); }
         body { display: flex; background: var(--bg); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 20px; justify-content: center; gap: 40px; }
-        #left-pane { display: flex; flex-direction: column; align-items: center; }
+        #left-pane { display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        /* Доска */
+        /* Переключатель языка */
+        #lang-switcher { position: absolute; top: -10px; right: -20px; }
+        #lang-switcher button { background: #333; color: #fff; border: 1px solid #555; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 12px; }
+
         #board { 
             display: grid; grid-template-columns: repeat(8, 65px); grid-template-rows: repeat(8, 65px); 
             border: 8px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
@@ -20,10 +24,7 @@
         .square { width: 65px; height: 65px; display: flex; justify-content: center; align-items: center; cursor: pointer; position: relative; }
         .white-sq { background-color: var(--sq-l); }
         .black-sq { background-color: var(--sq-d); }
-        
-        /* SVG Фигуры */
         .piece { width: 90%; height: 90%; background-size: contain; background-repeat: no-repeat; z-index: 2; pointer-events: none; }
-        
         .selected { background-color: var(--hl) !important; }
         .can-move::after { content: ""; width: 18px; height: 18px; background: rgba(0,0,0,0.15); border-radius: 50%; position: absolute; }
         
@@ -34,63 +35,110 @@
         .mode-toggle button.active.exam { background: #2980b9; }
 
         .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 20px;}
-        button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
         button.action:hover { background: #555; }
         
         .save-box { display: flex; flex-direction: column; gap: 8px; background: #1a1a1a; padding: 10px; border-radius: 5px; }
         input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
         .side-select { display: flex; gap: 5px; }
-        .side-select button { flex: 1; font-size: 11px; padding: 6px; background: #333; color: white; border: 1px solid #444; cursor: pointer; font-weight: bold; }
+        .side-select button { flex: 1; font-size: 11px; padding: 6px; background: #333; color: white; border: 1px solid #444; cursor: pointer; }
         .side-select button.active { background: #555; border-color: #fff; }
 
-        .list-section { height: 180px; overflow-y: auto; border: 1px solid #333; border-radius: 4px; padding: 5px; margin-bottom: 10px; background: #1a1a1a; }
+        .list-section { height: 160px; overflow-y: auto; border: 1px solid #333; border-radius: 4px; padding: 5px; background: #1a1a1a; }
         h4 { margin: 10px 0 5px 0; color: #888; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
         .debut-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #333; cursor: pointer; font-size: 14px; }
         .debut-item:hover { background: #2a2a2a; }
         .active-debut { background: #1e374a !important; border-left: 4px solid #2980b9; }
         .delete-btn { color: #e74c3c; cursor: pointer; font-weight: bold; padding: 0 5px; }
-        #status-bar { padding: 12px; background: #111; border-radius: 4px; font-weight: bold; text-align: center; border: 1px solid #333; min-height: 18px; }
+        #status-bar { padding: 12px; background: #111; border-radius: 4px; font-weight: bold; text-align: center; border: 1px solid #333; min-height: 18px; transition: 0.3s; }
     </style>
 </head>
 <body>
 
 <div id="left-pane">
-    <div id="turn-display" style="margin-bottom: 15px; font-size: 22px; font-weight: bold;">Ход белых</div>
+    <div id="lang-switcher">
+        <button onclick="toggleLang()" id="lang-btn">EN</button>
+    </div>
+    <div id="turn-display" style="margin-bottom: 15px; font-size: 22px; font-weight: bold;">White Turn</div>
     <div id="board"></div>
     <div class="controls">
         <button class="action" onclick="undo()">⬅</button>
         <button class="action" onclick="redo()">➡</button>
-        <button class="action" onclick="toggleFlip()" style="background: #5c5c5c;">🔃 Переворот</button>
-        <button class="action" onclick="resetGame()" style="background: #c0392b;">Сброс</button>
+        <button class="action" onclick="toggleFlip()" id="txt-flip">🔃 Flip</button>
+        <button class="action" onclick="resetGame()" id="txt-reset" style="background: #c0392b;">Reset</button>
     </div>
 </div>
 
 <div id="right-pane">
     <div class="mode-toggle">
-        <button id="mode-record" class="active" onclick="setMode('record')">ЗАПИСЬ</button>
-        <button id="mode-exam" onclick="setMode('exam')">ЭКЗАМЕН</button>
+        <button id="mode-record" class="active" onclick="setMode('record')">RECORD</button>
+        <button id="mode-exam" onclick="setMode('exam')">EXAM</button>
     </div>
 
-    <div id="status-bar">Режим: Создание вариантов</div>
+    <div id="status-bar">Mode: Recording</div>
     
+    <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px;">🎲 <span id="txt-random">RANDOM DEBUT</span></button>
+
     <div id="record-tools" class="save-box">
-        <input type="text" id="debut-name" placeholder="Название (напр. Защита Пирца)">
+        <input type="text" id="debut-name" placeholder="Name (e.g. Sicilian)">
         <div class="side-select">
-            <button id="btn-w" class="active" onclick="setSaveSide('W')">Я ЗА БЕЛЫХ</button>
-            <button id="btn-b" onclick="setSaveSide('B')">Я ЗА ЧЕРНЫХ</button>
+            <button id="btn-w" class="active" onclick="setSaveSide('W')">I PLAY WHITE</button>
+            <button id="btn-b" onclick="setSaveSide('B')">I PLAY BLACK</button>
         </div>
-        <button class="action" onclick="saveDebut()" style="background: #27ae60;">Сохранить вариант</button>
+        <button class="action" onclick="saveDebut()" id="txt-save" style="background: #27ae60;">Save Variant</button>
     </div>
     
     <div id="repertoire">
-        <h4>Дебюты за Белых</h4>
+        <h4 id="txt-list-w">White Repertoire</h4>
         <div id="list-white" class="list-section"></div>
-        <h4>Дебюты за Черных</h4>
+        <h4 id="txt-list-b">Black Repertoire</h4>
         <div id="list-black" class="list-section"></div>
     </div>
 </div>
 
 <script>
+    // Мультиязычность
+    const i18n = {
+        ru: {
+            turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ",
+            flip: "🔃 Переворот", reset: "Сброс",
+            record: "ЗАПИСЬ", exam: "ЭКЗАМЕН",
+            save: "Сохранить вариант", random: "РАНДОМНЫЙ ВАРИАНТ",
+            playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ",
+            listW: "Дебюты за Белых", listB: "Дебюты за Черных",
+            modeRec: "Режим: Создание вариантов",
+            modeExam: "Режим: Экзамен",
+            namePh: "Название (напр. Сицилианка)",
+            errEmpty: "Введите название и сделайте ходы!",
+            errWrong: "❌ Ошибка! Не по варианту.",
+            correct: "Верно! Соперник ходит...",
+            yourTurn: "Ваш ход...",
+            done: "✅ Вариант полностью пройден!",
+            randomMsg: "Выбран случайный вариант: ",
+            noDebuts: "База дебютов пуста!"
+        },
+        en: {
+            turnW: "White's Turn", turnB: "Black's Turn",
+            flip: "🔃 Flip Board", reset: "Reset",
+            record: "RECORD", exam: "EXAM",
+            save: "Save Variant", random: "RANDOM DEBUT",
+            playW: "I PLAY WHITE", playB: "I PLAY BLACK",
+            listW: "White Repertoire", listB: "Black Repertoire",
+            modeRec: "Mode: Recording",
+            modeExam: "Mode: Exam",
+            namePh: "Name (e.g. Sicilian)",
+            errEmpty: "Enter name and make moves!",
+            errWrong: "❌ Wrong move! Not in variant.",
+            correct: "Correct! Opponent moving...",
+            yourTurn: "Your turn...",
+            done: "✅ Variant completed!",
+            randomMsg: "Random variant selected: ",
+            noDebuts: "No saved debuts found!"
+        }
+    };
+
+    let curLang = localStorage.getItem('chess_lang') || 'ru';
+
     const PIECES_SVG = {
         'P': 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg',
         'R': 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg',
@@ -126,6 +174,31 @@
     let debuts = JSON.parse(localStorage.getItem('chess_v2_data') || '{"W":{}, "B":{}}');
     let activeDebut = null;
 
+    function t(key) { return i18n[curLang][key]; }
+
+    function toggleLang() {
+        curLang = curLang === 'ru' ? 'en' : 'ru';
+        localStorage.setItem('chess_lang', curLang);
+        applyLang();
+        render();
+    }
+
+    function applyLang() {
+        document.getElementById('lang-btn').innerText = curLang === 'ru' ? 'EN' : 'RU';
+        document.getElementById('txt-flip').innerText = t('flip');
+        document.getElementById('txt-reset').innerText = t('reset');
+        document.getElementById('mode-record').innerText = t('record');
+        document.getElementById('mode-exam').innerText = t('exam');
+        document.getElementById('txt-save').innerText = t('save');
+        document.getElementById('btn-w').innerText = t('playW');
+        document.getElementById('btn-b').innerText = t('playB');
+        document.getElementById('txt-list-w').innerText = t('listW');
+        document.getElementById('txt-list-b').innerText = t('listB');
+        document.getElementById('debut-name').placeholder = t('namePh');
+        document.getElementById('txt-random').innerText = t('random');
+        statusEl.innerText = mode === 'record' ? t('modeRec') : t('modeExam');
+    }
+
     function render() {
         boardEl.innerHTML = '';
         const current = history[historyIndex].board;
@@ -147,13 +220,11 @@
                 boardEl.appendChild(sq);
             }
         }
-        turnEl.innerText = `Ход ${history[historyIndex].turn === 'white' ? 'БЕЛЫХ' : 'ЧЕРНЫХ'}`;
+        turnEl.innerText = history[historyIndex].turn === 'white' ? t('turnW') : t('turnB');
         updateListsUI();
     }
 
-    function toggleFlip() {
-        boardEl.classList.toggle('flipped');
-    }
+    function toggleFlip() { boardEl.classList.toggle('flipped'); }
 
     function setSaveSide(s) {
         saveSide = s;
@@ -165,11 +236,9 @@
         mode = m;
         document.getElementById('mode-record').className = m === 'record' ? 'active' : '';
         document.getElementById('mode-exam').className = m === 'exam' ? 'active exam' : '';
-        if (m === 'record') {
-            statusEl.innerText = "Режим: Запись вариантов";
-            statusEl.style.color = "#27ae60";
-            activeDebut = null;
-        }
+        statusEl.innerText = m === 'record' ? t('modeRec') : t('modeExam');
+        statusEl.style.color = m === 'record' ? "#27ae60" : "#2980b9";
+        if (m === 'record') activeDebut = null;
     }
 
     function onSquareClick(r, c) {
@@ -220,20 +289,21 @@
     function checkExam() {
         const path = activeDebut.moves;
         if (history[historyIndex].move !== path[historyIndex - 1]) {
-            statusEl.innerText = "❌ Ошибка! Не по варианту.";
+            statusEl.innerText = t('errWrong');
             statusEl.style.color = "#e74c3c";
             return;
         }
         if (path.length > historyIndex) {
-            statusEl.innerText = "Верно! Соперник ходит...";
+            statusEl.innerText = t('correct');
+            statusEl.style.color = "#fff";
             setTimeout(() => {
                 const m = path[historyIndex];
                 executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]), true);
-                statusEl.innerText = "Ваш ход...";
+                statusEl.innerText = t('yourTurn');
                 statusEl.style.color = "#2980b9";
             }, 600);
         } else {
-            statusEl.innerText = "✅ Вариант полностью пройден!";
+            statusEl.innerText = t('done');
             statusEl.style.color = "#27ae60";
         }
     }
@@ -246,13 +316,29 @@
         if (side === 'B') boardEl.classList.add('flipped');
         else boardEl.classList.remove('flipped');
 
-        statusEl.innerText = `Учим: ${name}`;
+        statusEl.innerText = `${t('randomMsg')} ${name}`;
+        
+        // Если играем за черных, программа делает первый ход белых
         if (side === 'B' && activeDebut.moves.length > 0) {
             setTimeout(() => {
                 const m = activeDebut.moves[0];
                 executeMove(+m[0], +m[1], +m[2], +m[3], getMoveType(+m[0], +m[1], +m[2], +m[3]), true);
+                statusEl.innerText = t('yourTurn');
             }, 500);
+        } else {
+            statusEl.innerText = `${t('yourTurn')} (${name})`;
         }
+    }
+
+    function startRandomExam() {
+        const all = [];
+        for (let name in debuts.W) all.push({side: 'W', name});
+        for (let name in debuts.B) all.push({side: 'B', name});
+        
+        if (all.length === 0) return alert(t('noDebuts'));
+        
+        const rand = all[Math.floor(Math.random() * all.length)];
+        selectDebut(rand.side, rand.name);
     }
 
     function getMoveType(fR, fC, tR, tC) {
@@ -294,7 +380,7 @@
 
     function saveDebut() {
         const name = document.getElementById('debut-name').value.trim();
-        if (!name || history.length < 2) return alert("Введите название и сделайте ходы!");
+        if (!name || history.length < 2) return alert(t('errEmpty'));
         debuts[saveSide][name] = history.slice(1).map(h => h.move);
         localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
         document.getElementById('debut-name').value = '';
@@ -303,7 +389,7 @@
 
     function deleteDebut(side, name, e) {
         e.stopPropagation();
-        if(confirm(`Удалить "${name}"?`)) {
+        if(confirm(`Delete "${name}"?`)) {
             delete debuts[side][name];
             localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
             updateListsUI();
@@ -325,9 +411,10 @@
     }
 
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
-    function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
+    function redo() { if (historyIndex < history.length - 1) { historyIndex++; redo(); } }
     function resetGame() { history = [history[0]]; historyIndex = 0; selected = null; validMoves = []; render(); }
 
+    applyLang();
     render();
     updateListsUI();
 </script>
