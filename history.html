@@ -43,7 +43,6 @@
     .country-header strong { color: var(--gold); font-size: 14px; }
 
     .btn-sm { padding: 4px 8px; font-size: 11px; background: #21262d; color: #c9d1d9; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
-    .btn-sm:hover { background: #30363d; }
 
     .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; z-index: 1000; background: rgba(13, 17, 23, 0.9); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px); }
     #yearSlider { width: 100%; accent-color: var(--accent); cursor: pointer; }
@@ -142,7 +141,7 @@ const drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 let currentGeoData = null;
-let editContext = null; // { countryId, stageIndex }
+let editContext = null; 
 
 map.on(L.Draw.Event.CREATED, (e) => {
     drawnItems.clearLayers();
@@ -167,10 +166,38 @@ slider.oninput = function() {
     renderAtlas(y);
 };
 
+// ЗАГРУЗКА ИЗ ОБЕИХ КОЛЛЕКЦИЙ
 async function loadHistory() {
     countriesData = [];
+    
+    // Новая база
     const snapNew = await getDocs(collection(db, "historical_countries"));
-    snapNew.forEach(d => countriesData.push({ id: d.id, ...d.data(), type: 'modern' }));
+    snapNew.forEach(d => {
+        const data = d.data();
+        if (data.history) {
+            countriesData.push({ id: d.id, ...data, type: 'modern' });
+        }
+    });
+
+    // Старая база (Египет тут)
+    const snapOld = await getDocs(collection(db, "history_atlas"));
+    snapOld.forEach(d => {
+        const data = d.data();
+        // Конвертируем старый формат в новый, чтобы всё работало одинаково
+        countriesData.push({
+            id: d.id,
+            name: data.name,
+            color: data.color || "#cd7f32",
+            history: data.history ? data.history : [{ 
+                start: data.start, 
+                end: data.end, 
+                geo: data.geo, 
+                desc: data.desc || "" 
+            }],
+            type: 'legacy'
+        });
+    });
+
     renderAtlas(parseInt(slider.value));
 }
 
@@ -184,62 +211,59 @@ function renderAtlas(year) {
         const stage = country.history[stageIndex];
         
         if (stage) {
-            const geo = JSON.parse(stage.geo);
-            const layer = L.geoJSON(geo, { style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } });
-            layer.bindPopup(`<b>${country.name}</b><br><small>${stage.start} - ${stage.end}</small><hr>${stage.desc || ""}`);
-            layer.addTo(mapLayers);
+            try {
+                const geo = JSON.parse(stage.geo);
+                const layer = L.geoJSON(geo, { style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } });
+                layer.bindPopup(`<b>${country.name}</b><br><small>${stage.start} - ${stage.end}</small><hr>${stage.desc || ""}`);
+                layer.addTo(mapLayers);
 
-            const center = L.geoJSON(geo).getBounds().getCenter();
-            L.marker(center, { icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [120, 30] }) }).addTo(mapLayers);
+                const center = L.geoJSON(geo).getBounds().getCenter();
+                L.marker(center, { icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [120, 30] }) }).addTo(mapLayers);
+            } catch(e) { console.error("GeoJSON error in", country.name); }
         }
 
         list.innerHTML += `
             <div class="country-card" style="border-left: 4px solid ${country.color}">
                 <div class="country-header">
-                    <strong>${country.name}</strong>
+                    <strong>${country.name} ${country.type === 'legacy' ? '📜' : ''}</strong>
                     <div style="display:flex; gap:3px;">
-                        <button class="btn-sm" title="Продлить (Новый этап)" onclick="prepareNewStage('${country.id}')">➕</button>
-                        <button class="btn-sm" title="Исправить текущий этап" onclick="editCurrentStage('${country.id}')">✎</button>
-                        <button class="btn-sm" onclick="deleteEntry('${country.id}')">🗑</button>
+                        <button class="btn-sm" title="Продлить" onclick="prepareNewStage('${country.id}')">➕</button>
+                        <button class="btn-sm" title="Исправить" onclick="editCurrentStage('${country.id}')">✎</button>
+                        <button class="btn-sm" onclick="deleteEntry('${country.id}', '${country.type}')">🗑</button>
                     </div>
                 </div>
             </div>`;
     });
 }
 
-// ✎ ИСПРАВИТЬ ТЕКУЩИЙ ЭТАП (тот, что на экране)
 window.editCurrentStage = function(id) {
     const year = parseInt(slider.value);
     const country = countriesData.find(c => c.id === id);
     const idx = country.history.findIndex(h => year >= h.start && year <= h.end);
 
-    if (idx === -1) return alert("Это государство не существовало в этом году. Передвиньте слайдер на нужный год.");
+    if (idx === -1) return alert("Государство не существовало в этом году на слайдере!");
 
     const stage = country.history[idx];
-    editContext = { countryId: id, stageIndex: idx };
+    editContext = { countryId: id, stageIndex: idx, type: country.type };
     
-    // Интерфейс
     document.getElementById("inputBox").classList.add("editing");
     document.getElementById("btn-save").innerText = i18n[window.currentLang].update;
     document.getElementById("btn-save").classList.add("editing");
     document.getElementById("cancelEdit").style.display = "block";
 
-    // Данные
     document.getElementById("countryName").value = country.name;
     document.getElementById("startYear").value = stage.start;
     document.getElementById("endYear").value = stage.end;
     document.getElementById("description").value = stage.desc || "";
     document.getElementById("objColor").value = country.color;
 
-    // Карта
     drawnItems.clearLayers();
     const geoJSON = JSON.parse(stage.geo);
-    L.geoJSON(geoJSON).eachLayer(l => { if (l instanceof L.Polygon || l instanceof L.Rectangle) drawnItems.addLayer(l); });
+    L.geoJSON(geoJSON).eachLayer(l => { if (l.editing) drawnItems.addLayer(l); });
     currentGeoData = geoJSON;
     map.fitBounds(drawnItems.getBounds());
 };
 
-// ➕ ПРОДЛИТЬ (Создать новый период на основе последнего)
 window.prepareNewStage = function(id) {
     resetInputs();
     const country = countriesData.find(c => c.id === id);
@@ -251,7 +275,7 @@ window.prepareNewStage = function(id) {
     
     drawnItems.clearLayers();
     const geoJSON = JSON.parse(last.geo);
-    L.geoJSON(geoJSON).eachLayer(l => { if (l instanceof L.Polygon || l instanceof L.Rectangle) drawnItems.addLayer(l); });
+    L.geoJSON(geoJSON).eachLayer(l => { if (l.editing) drawnItems.addLayer(l); });
     currentGeoData = geoJSON;
     map.fitBounds(drawnItems.getBounds());
 };
@@ -266,17 +290,17 @@ window.saveHistory = async function() {
 
     if (!name || isNaN(start) || !currentGeoData) return alert(i18n[window.currentLang].alert);
 
+    const coll = (editContext && editContext.type === 'legacy') ? "history_atlas" : "historical_countries";
+
     if (editContext) {
-        // РЕЖИМ ПЕРЕЗАПИСИ (ИСПРАВЛЕНИЯ)
         const country = countriesData.find(c => c.id === editContext.countryId);
         country.history[editContext.stageIndex] = { start, end, desc, geo };
-        await updateDoc(doc(db, "historical_countries", country.id), { history: country.history, color, name });
+        await updateDoc(doc(db, coll, country.id), { history: country.history, color, name });
     } else {
-        // РЕЖИМ ДОБАВЛЕНИЯ
         const existing = countriesData.find(c => c.name.toLowerCase() === name.toLowerCase());
         if (existing) {
             const updated = [...existing.history, { start, end, desc, geo }].sort((a,b) => a.start - b.start);
-            await updateDoc(doc(db, "historical_countries", existing.id), { history: updated, color });
+            await updateDoc(doc(db, existing.type === 'legacy' ? "history_atlas" : "historical_countries", existing.id), { history: updated, color });
         } else {
             await addDoc(collection(db, "historical_countries"), { name, color, history: [{ start, end, desc, geo }] });
         }
@@ -286,9 +310,10 @@ window.saveHistory = async function() {
     loadHistory();
 };
 
-window.deleteEntry = async function(id) {
+window.deleteEntry = async function(id, type) {
     if(confirm(i18n[window.currentLang].del)) {
-        await deleteDoc(doc(db, "historical_countries", id));
+        const coll = type === 'modern' ? "historical_countries" : "history_atlas";
+        await deleteDoc(doc(db, coll, id));
         loadHistory();
     }
 };
