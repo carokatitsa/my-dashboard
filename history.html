@@ -13,6 +13,7 @@
     :root { 
       --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #cd7f32; 
       --gold: #f1c40f; --text: #c9d1d9; --border: #30363d;
+      --edit-mode: #2980b9;
     }
     body { margin:0; font-family: -apple-system, sans-serif; background: var(--bg-dark); color: var(--text); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
@@ -29,17 +30,20 @@
     .map-container { flex: 1; position: relative; background: #2b2317; display: flex; flex-direction: column; }
     #map { flex: 1; width: 100%; filter: sepia(0.6) contrast(1.1) brightness(0.9) hue-rotate(-10deg); }
 
-    .input-group { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+    .input-group { background: #0d1117; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; transition: 0.3s; }
+    .input-group.editing { border: 2px solid var(--edit-mode); box-shadow: 0 0 15px rgba(41, 128, 185, 0.3); }
+    
     input, textarea { background: #161b22; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 8px; font-size: 13px; outline: none; }
     
     .btn-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
+    .btn-main.editing { background: var(--edit-mode); }
     
     .country-card { background: #0d1117; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; overflow: hidden; }
     .country-header { padding: 10px; background: #1c2128; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
     .country-header strong { color: var(--gold); font-size: 14px; }
-    .country-body { padding: 8px 12px; font-size: 12px; color: #8b949e; }
 
     .btn-sm { padding: 4px 8px; font-size: 11px; background: #21262d; color: #c9d1d9; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+    .btn-sm:hover { background: #30363d; }
 
     .timeline-box { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 85%; z-index: 1000; background: rgba(13, 17, 23, 0.9); padding: 10px 20px; border-radius: 50px; border: 1px solid var(--accent); backdrop-filter: blur(10px); }
     #yearSlider { width: 100%; accent-color: var(--accent); cursor: pointer; }
@@ -48,7 +52,6 @@
     .map-label { background: transparent; border: none; color: white; font-weight: 900; font-size: 14px; text-align: center; pointer-events: none; }
     .map-label-text { text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 0 2px 4px rgba(0,0,0,0.9); }
 
-    /* Исправление стиля Popup */
     .leaflet-popup-content-wrapper { background: #161b22; color: #c9d1d9; border: 1px solid var(--accent); }
     .leaflet-popup-tip { background: var(--accent); }
 
@@ -75,7 +78,7 @@
 
 <div class="layout">
   <div class="sidebar">
-    <div class="input-group">
+    <div id="inputBox" class="input-group">
       <input id="countryName" placeholder="Название страны">
       <div style="display:flex; gap:10px">
           <input id="startYear" type="number" placeholder="От">
@@ -84,6 +87,7 @@
       <input type="color" id="objColor" value="#cd7f32" style="height:35px; cursor:pointer; margin-bottom:8px">
       <textarea id="description" placeholder="Описание этапа..." rows="2"></textarea>
       <button class="btn-main" onclick="saveHistory()" id="btn-save">Вписать этап</button>
+      <button id="cancelEdit" style="display:none; background:transparent; border:none; color:#8b949e; cursor:pointer; font-size:11px; margin-top:5px;" onclick="resetInputs()">Отмена редактирования</button>
     </div>
 
     <h3 style="font-size: 11px; color: #8b949e; margin-bottom:10px; text-transform: uppercase;" id="txt-list-title">База государств</h3>
@@ -118,15 +122,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Интернационализация
 const i18n = {
-    ru: { home: "🏠 Главная", hist: "🏛 История", save: "Вписать этап", list: "База государств", name: "Название страны", desc: "Описание этапа...", del: "Удалить?", alert: "Заполни поля и нарисуй!" },
-    en: { home: "🏠 Home", hist: "🏛 History", save: "Add Stage", list: "States Database", name: "Country Name", desc: "Stage Description...", del: "Delete?", alert: "Fill fields and draw!" },
-    de: { home: "🏠 Start", hist: "🏛 Geschichte", save: "Phase hinzufügen", list: "Staaten-Datenbank", name: "Ländername", desc: "Beschreibung...", del: "Löschen?", alert: "Felder ausfüllen und zeichnen!" }
+    ru: { home: "🏠 Главная", hist: "🏛 История", save: "Вписать этап", update: "Сохранить изменения", list: "База государств", name: "Название страны", desc: "Описание этапа...", del: "Удалить?", alert: "Заполни поля и нарисуй!" },
+    en: { home: "🏠 Home", hist: "🏛 History", save: "Add Stage", update: "Save Changes", list: "States Database", name: "Country Name", desc: "Stage Description...", del: "Delete?", alert: "Fill fields and draw!" },
+    de: { home: "🏠 Start", hist: "🏛 Geschichte", save: "Phase hinzufügen", update: "Änderungen speichern", list: "Staaten-Datenbank", name: "Ländername", desc: "Beschreibung...", del: "Löschen?", alert: "Felder ausfüllen und zeichnen!" }
 };
 window.currentLang = localStorage.getItem('atlas_lang') || 'ru';
 
-// Инициализация карты
 const map = L.map('map', { zoomControl: false }).setView([30, 31], 3);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { opacity: 0.6 }).addTo(map);
@@ -140,6 +142,7 @@ const drawControl = new L.Control.Draw({
 map.addControl(drawControl);
 
 let currentGeoData = null;
+let editContext = null; // { countryId, stageIndex }
 
 map.on(L.Draw.Event.CREATED, (e) => {
     drawnItems.clearLayers();
@@ -168,16 +171,6 @@ async function loadHistory() {
     countriesData = [];
     const snapNew = await getDocs(collection(db, "historical_countries"));
     snapNew.forEach(d => countriesData.push({ id: d.id, ...d.data(), type: 'modern' }));
-
-    const snapOld = await getDocs(collection(db, "history_atlas"));
-    snapOld.forEach(d => {
-        const data = d.data();
-        countriesData.push({
-            id: d.id, name: data.name, color: data.color || "#cd7f32",
-            history: [{ start: data.start, end: data.end, geo: data.geo, desc: data.desc }],
-            type: 'legacy'
-        });
-    });
     renderAtlas(parseInt(slider.value));
 }
 
@@ -187,40 +180,81 @@ function renderAtlas(year) {
     list.innerHTML = "";
 
     countriesData.forEach(country => {
-        const stage = country.history.find(h => year >= h.start && year <= h.end);
+        const stageIndex = country.history.findIndex(h => year >= h.start && year <= h.end);
+        const stage = country.history[stageIndex];
+        
         if (stage) {
             const geo = JSON.parse(stage.geo);
-            const layer = L.geoJSON(geo, { 
-                style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } 
-            });
-
-            // КЛИК ДЛЯ ОПИСАНИЯ
-            layer.bindPopup(`
-                <b style="font-size:16px; color:var(--gold)">${country.name}</b><br>
-                <i style="font-size:11px;">${stage.start} — ${stage.end}</i><hr>
-                <div style="max-height:150px; overflow-y:auto">${stage.desc || "..."}</div>
-            `);
-            
+            const layer = L.geoJSON(geo, { style: { color: country.color, fillColor: country.color, fillOpacity: 0.4, weight: 2 } });
+            layer.bindPopup(`<b>${country.name}</b><br><small>${stage.start} - ${stage.end}</small><hr>${stage.desc || ""}`);
             layer.addTo(mapLayers);
 
             const center = L.geoJSON(geo).getBounds().getCenter();
-            L.marker(center, {
-                icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [120, 30] })
-            }).addTo(mapLayers);
+            L.marker(center, { icon: L.divIcon({ className: 'map-label', html: `<div class="map-label-text">${country.name}</div>`, iconSize: [120, 30] }) }).addTo(mapLayers);
         }
 
         list.innerHTML += `
             <div class="country-card" style="border-left: 4px solid ${country.color}">
                 <div class="country-header">
-                    <strong>${country.name} ${country.type === 'legacy' ? '📜' : ''}</strong>
-                    <div style="display:flex; gap:5px;">
-                        <button class="btn-sm" onclick="extendCountry('${country.id}')">➕</button>
-                        <button class="btn-sm" onclick="deleteEntry('${country.id}', '${country.type}')">🗑</button>
+                    <strong>${country.name}</strong>
+                    <div style="display:flex; gap:3px;">
+                        <button class="btn-sm" title="Продлить (Новый этап)" onclick="prepareNewStage('${country.id}')">➕</button>
+                        <button class="btn-sm" title="Исправить текущий этап" onclick="editCurrentStage('${country.id}')">✎</button>
+                        <button class="btn-sm" onclick="deleteEntry('${country.id}')">🗑</button>
                     </div>
                 </div>
             </div>`;
     });
 }
+
+// ✎ ИСПРАВИТЬ ТЕКУЩИЙ ЭТАП (тот, что на экране)
+window.editCurrentStage = function(id) {
+    const year = parseInt(slider.value);
+    const country = countriesData.find(c => c.id === id);
+    const idx = country.history.findIndex(h => year >= h.start && year <= h.end);
+
+    if (idx === -1) return alert("Это государство не существовало в этом году. Передвиньте слайдер на нужный год.");
+
+    const stage = country.history[idx];
+    editContext = { countryId: id, stageIndex: idx };
+    
+    // Интерфейс
+    document.getElementById("inputBox").classList.add("editing");
+    document.getElementById("btn-save").innerText = i18n[window.currentLang].update;
+    document.getElementById("btn-save").classList.add("editing");
+    document.getElementById("cancelEdit").style.display = "block";
+
+    // Данные
+    document.getElementById("countryName").value = country.name;
+    document.getElementById("startYear").value = stage.start;
+    document.getElementById("endYear").value = stage.end;
+    document.getElementById("description").value = stage.desc || "";
+    document.getElementById("objColor").value = country.color;
+
+    // Карта
+    drawnItems.clearLayers();
+    const geoJSON = JSON.parse(stage.geo);
+    L.geoJSON(geoJSON).eachLayer(l => { if (l instanceof L.Polygon || l instanceof L.Rectangle) drawnItems.addLayer(l); });
+    currentGeoData = geoJSON;
+    map.fitBounds(drawnItems.getBounds());
+};
+
+// ➕ ПРОДЛИТЬ (Создать новый период на основе последнего)
+window.prepareNewStage = function(id) {
+    resetInputs();
+    const country = countriesData.find(c => c.id === id);
+    const last = country.history[country.history.length - 1];
+    
+    document.getElementById("countryName").value = country.name;
+    document.getElementById("startYear").value = last.end;
+    document.getElementById("objColor").value = country.color;
+    
+    drawnItems.clearLayers();
+    const geoJSON = JSON.parse(last.geo);
+    L.geoJSON(geoJSON).eachLayer(l => { if (l instanceof L.Polygon || l instanceof L.Rectangle) drawnItems.addLayer(l); });
+    currentGeoData = geoJSON;
+    map.fitBounds(drawnItems.getBounds());
+};
 
 window.saveHistory = async function() {
     const name = document.getElementById("countryName").value.trim();
@@ -228,50 +262,49 @@ window.saveHistory = async function() {
     const end = parseInt(document.getElementById("endYear").value);
     const desc = document.getElementById("description").value;
     const color = document.getElementById("objColor").value;
+    const geo = JSON.stringify(currentGeoData);
 
     if (!name || isNaN(start) || !currentGeoData) return alert(i18n[window.currentLang].alert);
 
-    const newStage = { start, end: end || start, desc, geo: JSON.stringify(currentGeoData) };
-    const existing = countriesData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.type === 'modern');
-
-    if (existing) {
-        const updated = [...existing.history, newStage].sort((a,b) => a.start - b.start);
-        await updateDoc(doc(db, "historical_countries", existing.id), { history: updated, color });
+    if (editContext) {
+        // РЕЖИМ ПЕРЕЗАПИСИ (ИСПРАВЛЕНИЯ)
+        const country = countriesData.find(c => c.id === editContext.countryId);
+        country.history[editContext.stageIndex] = { start, end, desc, geo };
+        await updateDoc(doc(db, "historical_countries", country.id), { history: country.history, color, name });
     } else {
-        await addDoc(collection(db, "historical_countries"), { name, color, history: [newStage] });
+        // РЕЖИМ ДОБАВЛЕНИЯ
+        const existing = countriesData.find(c => c.name.toLowerCase() === name.toLowerCase());
+        if (existing) {
+            const updated = [...existing.history, { start, end, desc, geo }].sort((a,b) => a.start - b.start);
+            await updateDoc(doc(db, "historical_countries", existing.id), { history: updated, color });
+        } else {
+            await addDoc(collection(db, "historical_countries"), { name, color, history: [{ start, end, desc, geo }] });
+        }
     }
 
     resetInputs();
     loadHistory();
 };
 
-window.extendCountry = function(id) {
-    const country = countriesData.find(c => c.id === id);
-    const last = country.history[country.history.length - 1];
-    document.getElementById("countryName").value = country.name;
-    document.getElementById("startYear").value = last.end;
-    document.getElementById("objColor").value = country.color;
-    document.getElementById("description").value = last.desc || "";
-
-    // РЕДАКТИРОВАНИЕ ФОРМЫ
-    drawnItems.clearLayers();
-    const geoJSON = JSON.parse(last.geo);
-    L.geoJSON(geoJSON).eachLayer(l => {
-        const layer = l;
-        if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
-           drawnItems.addLayer(layer);
-        }
-    });
-    currentGeoData = geoJSON;
-    map.fitBounds(drawnItems.getBounds());
-};
-
-window.deleteEntry = async function(id, type) {
+window.deleteEntry = async function(id) {
     if(confirm(i18n[window.currentLang].del)) {
-        const coll = type === 'modern' ? "historical_countries" : "history_atlas";
-        await deleteDoc(doc(db, coll, id));
+        await deleteDoc(doc(db, "historical_countries", id));
         loadHistory();
     }
+};
+
+window.resetInputs = function() {
+    editContext = null;
+    document.getElementById("inputBox").classList.remove("editing");
+    document.getElementById("btn-save").innerText = i18n[window.currentLang].save;
+    document.getElementById("btn-save").classList.remove("editing");
+    document.getElementById("cancelEdit").style.display = "none";
+    document.getElementById("countryName").value = "";
+    document.getElementById("startYear").value = "";
+    document.getElementById("endYear").value = "";
+    document.getElementById("description").value = "";
+    drawnItems.clearLayers();
+    currentGeoData = null;
 };
 
 window.setLang = function(ln) {
@@ -284,21 +317,12 @@ function updateUI() {
     const t = i18n[window.currentLang];
     document.getElementById("nav-home").innerText = t.home;
     document.getElementById("nav-hist").innerText = t.hist;
-    document.getElementById("btn-save").innerText = t.save;
+    document.getElementById("btn-save").innerText = editContext ? t.update : t.save;
     document.getElementById("txt-list-title").innerText = t.list;
     document.getElementById("countryName").placeholder = t.name;
     document.getElementById("description").placeholder = t.desc;
     document.querySelectorAll('#lang-switcher button').forEach(b => b.classList.remove('active'));
     document.getElementById(`ln-${window.currentLang}`).classList.add('active');
-}
-
-function resetInputs() {
-    document.getElementById("countryName").value = "";
-    document.getElementById("startYear").value = "";
-    document.getElementById("endYear").value = "";
-    document.getElementById("description").value = "";
-    drawnItems.clearLayers();
-    currentGeoData = null;
 }
 
 updateUI();
