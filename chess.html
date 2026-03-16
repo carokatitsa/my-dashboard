@@ -7,7 +7,7 @@
     <style>
         :root { 
             --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); 
-            --sq-size: 65px; /* Размер для больших экранов */
+            --sq-size: 65px; 
         }
         body { 
             display: flex; background: var(--bg); color: #fff; 
@@ -27,13 +27,12 @@
             grid-template-rows: repeat(8, var(--sq-size)); 
             border: 8px solid #333; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             transition: transform 0.4s ease;
-            touch-action: none; /* Запрещает скролл при перетаскивании */
+            touch-action: none;
             user-select: none;
         }
         #board.flipped { transform: rotate(180deg); }
         #board.flipped .piece { transform: rotate(180deg); }
 
-        /* Адаптивность для телефонов */
         @media (max-width: 650px) {
             :root { --sq-size: 11.5vw; }
             body { padding: 10px; gap: 20px; }
@@ -49,14 +48,13 @@
         .piece { 
             width: 100%; height: 100%; 
             background-size: contain; background-repeat: no-repeat; 
-            z-index: 2; transition: opacity 0.2s;
-            cursor: grab;
+            z-index: 2; cursor: grab;
         }
         .piece.dragging { 
             position: fixed; 
             width: var(--sq-size); height: var(--sq-size);
             z-index: 1000; pointer-events: none; 
-            cursor: grabbing; transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
         }
 
         .selected { background-color: var(--hl) !important; }
@@ -70,7 +68,6 @@
 
         .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 20px;}
         button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
-        button.action:hover { background: #555; }
         
         .save-box { display: flex; flex-direction: column; gap: 8px; background: #1a1a1a; padding: 10px; border-radius: 5px; }
         input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
@@ -109,8 +106,8 @@
     <div id="record-tools" class="save-box">
         <input type="text" id="debut-name" placeholder="Name">
         <div style="display:flex; gap:5px">
-            <button id="btn-w" style="flex:1" class="action active" onclick="setSaveSide('W')">W</button>
-            <button id="btn-b" style="flex:1" class="action" onclick="setSaveSide('B')">B</button>
+            <button id="btn-w" style="flex:1" class="action active" onclick="setSaveSide('W')">Я ЗА БЕЛЫХ</button>
+            <button id="btn-b" style="flex:1" class="action" onclick="setSaveSide('B')">Я ЗА ЧЕРНЫХ</button>
         </div>
         <button class="action" onclick="saveDebut()" id="txt-save" style="background: #27ae60;">Save</button>
     </div>
@@ -124,9 +121,9 @@
 
 <script>
     const i18n = {
-        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", save: "Сохранить", random: "РАНДОМ", playW: "ЗА БЕЛЫХ", playB: "ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Запись", modeExam: "Экзамен", namePh: "Название...", errEmpty: "Заполни поля!", errWrong: "❌ ОШИБКА!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Готово!", noDebuts: "Пусто!" },
-        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", save: "Save", random: "RANDOM", playW: "WHITE", playB: "BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Record", modeExam: "Exam", namePh: "Name...", errEmpty: "Fill fields!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Done!", noDebuts: "Empty!" },
-        de: { turnW: "Weiß", turnB: "Schwarz", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", save: "Speichern", random: "ZUFALL", playW: "WEISS", playB: "SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!" }
+        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", save: "Сохранить", random: "РАНДОМНЫЙ ВАРИАНТ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!" },
+        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", save: "Save Variant", random: "RANDOM DEBUT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!" },
+        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", save: "Speichern", random: "ZUFALL", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!" }
     };
 
     const PIECES_SVG = {
@@ -170,6 +167,8 @@
         document.getElementById('txt-save').innerText = t('save');
         document.getElementById('txt-list-w').innerText = t('listW');
         document.getElementById('txt-list-b').innerText = t('listB');
+        document.getElementById('btn-w').innerText = t('playW');
+        document.getElementById('btn-b').innerText = t('playB');
         document.getElementById('debut-name').placeholder = t('namePh');
         document.getElementById('txt-random').innerText = t('random');
         statusEl.innerText = mode === 'record' ? t('modeRec') : t('modeExam');
@@ -203,28 +202,28 @@
         updateListsUI();
     }
 
-    // --- DRAG AND DROP LOGIC ---
-    function startDrag(e, r, c) {
+    function startDrag(e) {
+        const x = e.clientX || e.touches?.[0].clientX;
+        const y = e.clientY || e.touches?.[0].clientY;
+        const target = document.elementFromPoint(x, y);
+        const sq = target?.closest('.square');
+        if (!sq) return;
+        const r = +sq.dataset.r, c = +sq.dataset.c;
         const state = history[historyIndex];
         const piece = state.board[r][c];
-        const isWhite = piece && piece === piece.toUpperCase();
-        const canPick = (state.turn === 'white' && isWhite) || (state.turn === 'black' && piece && !isWhite);
-
-        if (!canPick) return;
+        if (!piece || (state.turn === 'white' && piece !== piece.toUpperCase()) || (state.turn === 'black' && piece === piece.toUpperCase())) return;
 
         selected = {r, c};
         validMoves = getValidMoves(r, c, state);
         render();
 
-        const el = e.target.closest('.piece');
+        const el = sq.querySelector('.piece');
         dragData = { piece, fromR: r, fromC: c, element: el };
         el.classList.add('dragging');
-        
         moveAt(e);
-        document.onmousemove = moveAt;
-        document.ontouchmove = moveAt;
-        document.onmouseup = endDrag;
-        document.ontouchend = endDrag;
+
+        document.onmousemove = document.ontouchmove = moveAt;
+        document.onmouseup = document.ontouchend = endDrag;
     }
 
     function moveAt(e) {
@@ -239,20 +238,16 @@
         if (!dragData.element) return;
         const x = e.clientX || e.changedTouches?.[0].clientX;
         const y = e.clientY || e.changedTouches?.[0].clientY;
-        
         dragData.element.style.display = 'none';
         const target = document.elementFromPoint(x, y);
         dragData.element.style.display = 'block';
-
         const sq = target?.closest('.square');
         if (sq) {
             const tr = +sq.dataset.r, tc = +sq.dataset.c;
             const move = validMoves.find(m => m.r === tr && m.c === tc);
             if (move) executeMove(dragData.fromR, dragData.fromC, tr, tc, move.type);
         }
-
         dragData.element.classList.remove('dragging');
-        dragData.element.style.left = ''; dragData.element.style.top = '';
         dragData = { piece: null, fromR: null, fromC: null, element: null };
         document.onmousemove = document.onmouseup = document.ontouchmove = document.ontouchend = null;
         render();
@@ -263,10 +258,8 @@
         const state = history[historyIndex];
         const move = validMoves.find(m => m.r === r && m.c === c);
         if (selected && move) { executeMove(selected.r, selected.c, r, c, move.type); return; }
-
         const piece = state.board[r][c];
-        const isWhite = piece && piece === piece.toUpperCase();
-        if ((state.turn === 'white' && isWhite) || (state.turn === 'black' && piece && !isWhite)) {
+        if (piece && ((state.turn === 'white' && piece === piece.toUpperCase()) || (state.turn === 'black' && piece !== piece.toUpperCase()))) {
             selected = {r, c}; validMoves = getValidMoves(r, c, state);
         } else { selected = null; validMoves = []; }
         render();
@@ -278,14 +271,26 @@
         let newCastling = JSON.parse(JSON.stringify(current.castling));
         const piece = newBoard[fR][fC];
 
+        // ЛОГИКА РОКИРОВКИ (Король + Ладья)
         if (type === 'castle') {
-            if (tC === 6) { newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; }
-            if (tC === 2) { newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; }
+            if (tC === 6) { // Королевский фланг
+                newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; 
+            } else if (tC === 2) { // Ферзевый фланг
+                newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; 
+            }
         }
         newBoard[tR][tC] = piece; newBoard[fR][fC] = '';
+        
+        // Превращение пешки
         if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
+        
+        // Обновление прав на рокировку
         if (piece === 'K') newCastling.W = {K:false, Q:false};
         if (piece === 'k') newCastling.B = {K:false, Q:false};
+        if (fR === 7 && fC === 7) newCastling.W.K = false;
+        if (fR === 7 && fC === 0) newCastling.W.Q = false;
+        if (fR === 0 && fC === 7) newCastling.B.K = false;
+        if (fR === 0 && fC === 0) newCastling.B.Q = false;
 
         history = history.slice(0, historyIndex + 1);
         history.push({ board: newBoard, turn: current.turn === 'white' ? 'black' : 'white', castling: newCastling, move: `${fR}${fC}${tR}${tC}` });
@@ -303,11 +308,29 @@
             return;
         }
         if (path.length > historyIndex) {
+            statusEl.innerText = t('correct');
             setTimeout(() => {
                 const m = path[historyIndex];
-                executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
-            }, 400);
+                const type = (Math.abs(+m[1] - +m[3]) > 1 && history[historyIndex].board[+m[0]][+m[1]].toLowerCase() === 'k') ? 'castle' : 'normal';
+                executeMove(+m[0], +m[1], +m[2], +m[3], type, true);
+                statusEl.innerText = t('yourTurn');
+            }, 500);
         } else { statusEl.innerText = t('done'); statusEl.style.color = "#27ae60"; }
+    }
+
+    function selectDebut(side, name) {
+        activeDebut = { side, name, moves: debuts[side][name] };
+        setMode('exam'); resetGame();
+        if (side === 'B') {
+            boardEl.classList.add('flipped');
+            if (activeDebut.moves.length > 0) {
+                setTimeout(() => {
+                    const m = activeDebut.moves[0];
+                    executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
+                }, 500);
+            }
+        } else boardEl.classList.remove('flipped');
+        statusEl.innerText = t('yourTurn');
     }
 
     function getValidMoves(r, c, state) {
@@ -315,8 +338,8 @@
         const dirs = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
         if (p === 'p') {
             const s = isW ? -1 : 1;
-            if (!b[r+s]?.[c]) { moves.push({r:r+s, c:c}); if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s][c]) moves.push({r:r+2*s, c:c}); }
-            [1,-1].forEach(dc => { const target = b[r+s]?.[c+dc]; if (target && (target === target.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); });
+            if (!b[r+s]?.[c]) { moves.push({r:r+s, c:c}); if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) moves.push({r:r+2*s, c:c}); }
+            [1,-1].forEach(dc => { const t = b[r+s]?.[c+dc]; if (t && (t === t.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); });
         } else if (dirs[p]) {
             for (let [dr, dc] of dirs[p]) {
                 let nr = r+dr, nc = c+dc;
@@ -336,12 +359,12 @@
     }
 
     function setMode(m) { mode = m; applyLang(); if (m==='record') activeDebut = null; }
-    function setSaveSide(s) { saveSide = s; document.getElementById('btn-w').classList.toggle('active', s==='W'); document.getElementById('btn-b').classList.toggle('active', s==='B'); }
+    function setSaveSide(s) { saveSide = s; document.getElementById('btn-w').className = 'action ' + (s==='W'?'active':''); document.getElementById('btn-b').className = 'action ' + (s==='B'?'active':''); }
     function toggleFlip() { boardEl.classList.toggle('flipped'); }
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
     function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
     function resetGame() { history = [history[0]]; historyIndex = 0; selected = null; validMoves = []; render(); }
-
+    
     function saveDebut() {
         const name = document.getElementById('debut-name').value.trim();
         if (!name || history.length < 2) return alert(t('errEmpty'));
@@ -356,9 +379,9 @@
             container.innerHTML = '';
             for (let name in debuts[side]) {
                 const el = document.createElement('div');
-                el.className = `debut-item ${activeDebut?.name === name ? 'active-debut' : ''}`;
-                el.innerHTML = `<span>${name}</span><span onclick="event.stopPropagation(); delete debuts['${side}']['${name}']; localStorage.setItem('chess_v2_data', JSON.stringify(debuts)); updateListsUI();">✕</span>`;
-                el.onclick = () => { activeDebut = {side, name, moves: debuts[side][name]}; setMode('exam'); resetGame(); if(side==='B') { boardEl.classList.add('flipped'); setTimeout(()=>checkExam(), 400); } else boardEl.classList.remove('flipped'); };
+                el.className = `debut-item ${activeDebut?.name === name && activeDebut?.side === side ? 'active-debut' : ''}`;
+                el.innerHTML = `<span>${name}</span><span style="color:#e74c3c" onclick="event.stopPropagation(); delete debuts['${side}']['${name}']; localStorage.setItem('chess_v2_data', JSON.stringify(debuts)); updateListsUI();">✕</span>`;
+                el.onclick = () => selectDebut(side, name);
                 container.appendChild(el);
             }
         });
@@ -366,10 +389,11 @@
 
     function startRandomExam() {
         const all = [];
-        for (let s in debuts) for (let n in debuts[s]) all.push({s, n});
+        for (let n in debuts.W) all.push({side: 'W', name: n});
+        for (let n in debuts.B) all.push({side: 'B', name: n});
         if (!all.length) return alert(t('noDebuts'));
         const r = all[Math.floor(Math.random()*all.length)];
-        activeDebut = {side: r.s, name: r.n, moves: debuts[r.s][r.n]}; setMode('exam'); resetGame();
+        selectDebut(r.side, r.name);
     }
 
     applyLang(); render();
