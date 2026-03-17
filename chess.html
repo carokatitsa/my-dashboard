@@ -143,7 +143,7 @@
         ['P','P','P','P','P','P','P','P'], ['R','N','B','Q','K','B','N','R']
     ];
 
-    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}, move: null}];
+    let history = [{board: JSON.parse(JSON.stringify(initialBoard)), turn: 'white', castling: {W:{K:true,Q:true}, B:{K:true,Q:true}}, enPassantTarget: null, move: null}];
     let historyIndex = 0;
     let selected = null;
     let validMoves = [];
@@ -269,16 +269,26 @@
         const current = history[historyIndex];
         let newBoard = current.board.map(row => [...row]);
         let newCastling = JSON.parse(JSON.stringify(current.castling));
+        let nextEnPassantTarget = null;
         const piece = newBoard[fR][fC];
 
-        // ЛОГИКА РОКИРОВКИ (Король + Ладья)
+        // ЛОГИКА РОКИРОВКИ
         if (type === 'castle') {
-            if (tC === 6) { // Королевский фланг
-                newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; 
-            } else if (tC === 2) { // Ферзевый фланг
-                newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; 
-            }
+            if (tC === 6) { newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; } 
+            else if (tC === 2) { newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; }
         }
+        
+        // ЛОГИКА ВЗЯТИЯ НА ПРОХОДЕ (Удаление пешки противника)
+        if (type === 'enPassant') {
+            const pawnRow = piece === 'P' ? tR + 1 : tR - 1;
+            newBoard[pawnRow][tC] = '';
+        }
+
+        // Детекция возможности взятия на проходе для следующего хода
+        if (piece.toLowerCase() === 'p' && Math.abs(fR - tR) === 2) {
+            nextEnPassantTarget = { r: (fR + tR) / 2, c: fC };
+        }
+
         newBoard[tR][tC] = piece; newBoard[fR][fC] = '';
         
         // Превращение пешки
@@ -293,7 +303,13 @@
         if (fR === 0 && fC === 0) newCastling.B.Q = false;
 
         history = history.slice(0, historyIndex + 1);
-        history.push({ board: newBoard, turn: current.turn === 'white' ? 'black' : 'white', castling: newCastling, move: `${fR}${fC}${tR}${tC}` });
+        history.push({ 
+            board: newBoard, 
+            turn: current.turn === 'white' ? 'black' : 'white', 
+            castling: newCastling, 
+            enPassantTarget: nextEnPassantTarget,
+            move: `${fR}${fC}${tR}${tC}` 
+        });
         historyIndex++; selected = null; validMoves = [];
         render();
         if (mode === 'exam' && activeDebut && !isAuto) checkExam();
@@ -311,7 +327,12 @@
             statusEl.innerText = t('correct');
             setTimeout(() => {
                 const m = path[historyIndex];
-                const type = (Math.abs(+m[1] - +m[3]) > 1 && history[historyIndex].board[+m[0]][+m[1]].toLowerCase() === 'k') ? 'castle' : 'normal';
+                const st = history[historyIndex];
+                const piece = st.board[+m[0]][+m[1]];
+                let type = 'normal';
+                if (piece.toLowerCase() === 'k' && Math.abs(+m[1] - +m[3]) > 1) type = 'castle';
+                if (piece.toLowerCase() === 'p' && +m[1] !== +m[3] && !st.board[+m[2]][+m[3]]) type = 'enPassant';
+                
                 executeMove(+m[0], +m[1], +m[2], +m[3], type, true);
                 statusEl.innerText = t('yourTurn');
             }, 500);
@@ -336,10 +357,23 @@
     function getValidMoves(r, c, state) {
         const moves = []; const b = state.board; const p = b[r][c].toLowerCase(); const isW = b[r][c] === b[r][c].toUpperCase();
         const dirs = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
+        
         if (p === 'p') {
             const s = isW ? -1 : 1;
-            if (!b[r+s]?.[c]) { moves.push({r:r+s, c:c}); if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) moves.push({r:r+2*s, c:c}); }
-            [1,-1].forEach(dc => { const t = b[r+s]?.[c+dc]; if (t && (t === t.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); });
+            // Ход вперед
+            if (!b[r+s]?.[c]) { 
+                moves.push({r:r+s, c:c}); 
+                if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) moves.push({r:r+2*s, c:c}); 
+            }
+            // Обычное взятие
+            [1,-1].forEach(dc => { 
+                const tPiece = b[r+s]?.[c+dc]; 
+                if (tPiece && (tPiece === tPiece.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); 
+                // ВЗЯТИЕ НА ПРОХОДЕ
+                if (state.enPassantTarget && state.enPassantTarget.r === r+s && state.enPassantTarget.c === c+dc) {
+                    moves.push({r:r+s, c:c+dc, type: 'enPassant'});
+                }
+            });
         } else if (dirs[p]) {
             for (let [dr, dc] of dirs[p]) {
                 let nr = r+dr, nc = c+dc;
