@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pro Nutri Tracker v3.2</title>
+    <title>Pro Nutri Tracker v3.5 - Menu Edition</title>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
@@ -32,37 +32,37 @@
         .bju-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
         .bju-row input { width: 100%; padding: 8px; text-align: center; font-size: 12px; background: #0d1117; border: 1px solid var(--border); color: white; border-radius: 6px; }
         
+        /* ВКЛАДКИ */
+        .panel-tabs { display: flex; gap: 10px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .tab-btn { background: none; border: none; color: var(--grey-text); cursor: pointer; font-weight: bold; font-size: 14px; padding: 5px 10px; }
+        .tab-btn.active { color: var(--blue); border-bottom: 2px solid var(--blue); }
+
         .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         .btn-add { background: var(--accent); color: white; }
         .btn-finish { background: var(--gold); color: #000; margin-top: 20px; font-size: 14px; }
 
-        /* База продуктов (Фикс кнопок) */
+        /* База продуктов */
         .lib-list { margin-top: 15px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
         .lib-card { background: #21262d; border: 1px solid var(--border); padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
         .lib-info { flex: 1; overflow: hidden; }
         .lib-info b { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: #fff; }
-        .lib-actions { display: flex; gap: 5px; flex-shrink: 0; }
+        .lib-actions { display: flex; gap: 5px; flex-shrink: 0; align-items: center; }
         .btn-sm { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: #30363d; color: #fff; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
+
+        /* СЕРДЕЧКО */
+        .fav-btn { background: none; border: none; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 0 5px; }
+        .fav-btn:hover { transform: scale(1.2); }
+        .fav-btn.active { color: #e74c3c; }
+        .fav-btn.inactive { color: var(--grey-text); opacity: 0.4; }
 
         /* История */
         .day-block { margin-bottom: 15px; background: #161b22; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; }
         .day-header { background: #1c2128; padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .day-info { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        
-        /* Строка КБЖУ в истории */
-        .day-stats-brief { 
-            font-size: 11px; 
-            color: #ccc; 
-            background: #2d333b; 
-            padding: 4px 12px; 
-            border-radius: 6px; 
-            display: flex; 
-            gap: 12px;
-            border: 1px solid var(--border);
-        }
-        .day-stats-brief b { color: #ffffff; font-weight: 800; } /* Белые и жирные БЖУ */
-        .stat-val-pos { color: var(--danger) !important; } /* Плюс - красный (жир +) */
-        .stat-val-neg { color: #56d364 !important; } /* Минус - зеленый (жир -) */
+        .day-stats-brief { font-size: 11px; color: #ccc; background: #2d333b; padding: 4px 12px; border-radius: 6px; display: flex; gap: 12px; border: 1px solid var(--border); }
+        .day-stats-brief b { color: #ffffff; font-weight: 800; }
+        .stat-val-pos { color: var(--danger) !important; }
+        .stat-val-neg { color: #56d364 !important; }
 
         .eat-list { padding: 10px; display: block; }
         .eat-list.collapsed { display: none; }
@@ -116,19 +116,25 @@
 
 <div class="container">
     <div class="panel">
-        <h2 style="margin: 0 0 15px 0; font-size: 18px;">📦 База продуктов</h2>
-        <input type="text" id="pName" class="main-input" placeholder="Название блюда">
-        <div class="bju-row">
-            <input type="number" id="pP" placeholder="Б">
-            <input type="number" id="pF" placeholder="Ж">
-            <input type="number" id="pC" placeholder="У">
-            <input type="number" id="pK" placeholder="Ккал">
+        <div class="panel-tabs">
+            <button id="tabLib" class="tab-btn active" onclick="switchTab('lib')">БАЗА</button>
+            <button id="tabMenu" class="tab-btn" onclick="switchTab('menu')">МЕНЮ ❤️</button>
         </div>
-        <label style="font-size:12px; color:var(--gold); display:flex; align-items:center; gap:5px; margin-bottom:15px; cursor:pointer;">
-            <input type="checkbox" id="pIsPortion"> Целая порция
-        </label>
-        <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
-        <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer; width:100%;" onclick="resetForm()">Отмена</button>
+
+        <div id="formContainer">
+            <input type="text" id="pName" class="main-input" placeholder="Название блюда">
+            <div class="bju-row">
+                <input type="number" id="pP" placeholder="Б">
+                <input type="number" id="pF" placeholder="Ж">
+                <input type="number" id="pC" placeholder="У">
+                <input type="number" id="pK" placeholder="Ккал">
+            </div>
+            <label style="font-size:12px; color:var(--gold); display:flex; align-items:center; gap:5px; margin-bottom:15px; cursor:pointer;">
+                <input type="checkbox" id="pIsPortion"> Целая порция
+            </label>
+            <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
+            <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer; width:100%;" onclick="resetForm()">Отмена</button>
+        </div>
         
         <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск..." oninput="renderLibrary()">
         <div id="libraryList" class="lib-list"></div>
@@ -158,19 +164,40 @@
     let totals = { k:0, p:0, f:0, c:0 };
     let editId = null;
     let isDayFinished = false;
+    let currentTab = 'lib';
 
     // --- ПОЛУЧЕНИЕ ДАННЫХ ---
     db.collection("food_library").onSnapshot(snap => { library = snap.docs.map(d => ({id: d.id, ...d.data()})); renderLibrary(); });
     db.collection("daily_summaries").onSnapshot(snap => { summaries = {}; snap.forEach(doc => { summaries[doc.data().date] = doc.data(); }); renderHistory(); });
     db.collection("day_logs").orderBy("ts", "desc").onSnapshot(snap => { logs = snap.docs.map(d => ({id: d.id, ...d.data()})); renderHistory(); });
 
+    // --- ЛОГИКА ВКЛАДОК ---
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tabLib').classList.toggle('active', tab === 'lib');
+        document.getElementById('tabMenu').classList.toggle('active', tab === 'menu');
+        // Скрываем форму ввода, если мы в режиме меню для чистоты
+        document.getElementById('formContainer').style.display = tab === 'menu' ? 'none' : 'block';
+        renderLibrary();
+    }
+
     // --- ОТРИСОВКА БАЗЫ ---
     function renderLibrary() {
         const q = document.getElementById('libSearch').value.toLowerCase();
         const list = document.getElementById('libraryList');
         list.innerHTML = "";
-        library.filter(i => i.name.toLowerCase().includes(q)).forEach(item => {
+        
+        let filtered = library.filter(i => i.name.toLowerCase().includes(q));
+        if (currentTab === 'menu') {
+            filtered = filtered.filter(i => i.isFavorite === true);
+        }
+
+        filtered.forEach(item => {
+            const isFav = item.isFavorite === true;
             list.innerHTML += `<div class="lib-card">
+                <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFavorite('${item.id}', ${isFav})">
+                    ${isFav ? '❤️' : '🤍'}
+                </button>
                 <div class="lib-info"><b>${item.name}</b><small>Б:${item.p} Ж:${item.f} К:${item.k}</small></div>
                 <div class="lib-actions">
                     <button class="btn-sm" style="background:var(--accent)" onclick="addToDay('${item.id}')">+</button>
@@ -179,6 +206,14 @@
                 </div>
             </div>`;
         });
+
+        if (currentTab === 'menu' && filtered.length === 0) {
+            list.innerHTML = `<div style="text-align:center; padding:20px; color:gray; font-size:12px;">Тут пока пусто. Нажми ❤️ на блюдах в базе!</div>`;
+        }
+    }
+
+    async function toggleFavorite(id, currentStatus) {
+        await db.collection("food_library").doc(id).update({ isFavorite: !currentStatus });
     }
 
     // --- ОТРИСОВКА ИСТОРИИ И ШАПКИ ---
@@ -196,7 +231,6 @@
             }
         });
 
-        // Обнуление шапки если нажата кнопка финиша
         const displayK = isDayFinished ? 0 : totals.k;
         const displayP = isDayFinished ? 0 : totals.p;
         const displayF = isDayFinished ? 0 : totals.f;
@@ -218,12 +252,10 @@
             let brief = "";
             
             if (s) {
-                // ПРОВЕРКА ЗНАКА ЖИРА ДЛЯ ЦВЕТА
                 const fatVal = parseFloat(s.fatChange);
                 const isNegative = fatVal < 0;
                 const fatClass = isNegative ? 'stat-val-neg' : 'stat-val-pos';
                 const sign = fatVal > 0 ? "+" : ""; 
-
                 brief = `<div class="day-stats-brief">
                     <span><b>${Math.round(s.totals.k)}</b> ккал</span>
                     <span>Б:<b>${Math.round(s.totals.p)}</b> Ж:<b>${Math.round(s.totals.f)}</b> У:<b>${Math.round(s.totals.c)}</b></span>
@@ -255,8 +287,6 @@
     async function finishDay() {
         const gK = parseFloat(document.getElementById('goalK').value) || 2300;
         const gP = parseFloat(document.getElementById('goalP').value) || 170;
-        
-        // РАСЧЕТ ДЕФИЦИТА: (Съел - Цель). Если 2200 - 2300 = -100.
         const kcalDiff = totals.k - gK; 
         const fatChange = parseFloat((kcalDiff / 7.7).toFixed(1)); 
         
@@ -267,7 +297,6 @@
             mStat = "УБЫЛЬ ⚠️"; 
         }
 
-        // Всплывающая карточка
         const fatResEl = document.getElementById('fatResult');
         fatResEl.innerText = (fatChange > 0 ? "+" : "") + fatChange + "г";
         fatResEl.style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
@@ -280,7 +309,6 @@
         document.getElementById('summaryDisplay').style.display = 'block';
         window.scrollTo({top: 0, behavior: 'smooth'});
 
-        // Сохранение в Firebase
         await db.collection("daily_summaries").doc(new Date().toLocaleDateString('ru-RU')).set({
             date: new Date().toLocaleDateString('ru-RU'),
             totals: {...totals},
@@ -299,7 +327,7 @@
         const k = parseFloat(document.getElementById('pK').value) || (p*4 + f*9 + c*4);
         const isPortion = document.getElementById('pIsPortion').checked;
         if(!name) return;
-        const data = { name, p, f, c, k: Math.round(k), isPortion };
+        const data = { name, p, f, c, k: Math.round(k), isPortion, isFavorite: false };
         if(editId) { await db.collection("food_library").doc(editId).update(data); editId = null; }
         else { await db.collection("food_library").add(data); }
         resetForm();
@@ -332,6 +360,7 @@
     
     function editProduct(id) {
         const i = library.find(x => x.id === id);
+        switchTab('lib'); // Возвращаемся в базу для редактирования
         document.getElementById('pName').value = i.name; document.getElementById('pP').value = i.p;
         document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
         document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
