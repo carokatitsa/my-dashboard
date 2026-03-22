@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Cloud Dashboard Elite</title>
+    <title>RPG Cloud Dashboard Hardcore</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -11,45 +11,28 @@
         :root {
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --accent: #a855f7; 
-            --accent-2: #3b82f6; 
-            --bg: #030712;
-            --text: #f8fafc;
-            --gold: #fbbf24;
-            --success: #22c55e;
+            --accent: #a855f7; --accent-2: #3b82f6; 
+            --bg: #030712; --text: #f8fafc; --gold: #fbbf24;
+            --success: #22c55e; --danger: #ef4444;
         }
 
         body {
-            margin: 0;
-            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0; font-family: 'Inter', system-ui, sans-serif;
             background: radial-gradient(circle at top left, #1e1b4b, #030712);
-            background-attachment: fixed;
-            color: var(--text);
+            background-attachment: fixed; color: var(--text);
             display: flex; flex-direction: column; min-height: 100vh;
         }
 
         .container {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 20px;
-            padding: 20px;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
+            display: grid; grid-template-columns: 320px 1fr; gap: 20px;
+            padding: 20px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;
         }
 
-        @media (max-width: 1000px) {
-            .container { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
 
         .glass-card {
-            background: var(--glass);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 24px;
+            background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border); border-radius: 24px; padding: 24px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
@@ -57,35 +40,28 @@
         h2 span { color: var(--accent); }
 
         /* БАЗА */
-        .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; }
-        input {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
-            padding: 12px; border-radius: 12px; color: white; font-size: 16px;
-        }
-        .btn-add {
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;
-        }
+        input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: white; font-size: 16px; }
+        .btn-add { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; }
 
-        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; max-height: 400px; overflow-y: auto; }
+        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
         .preset-item {
             background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-            padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
+            padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         }
-        .preset-item:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
-        .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
+        .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
+        .star-icon { color: #4b5563; transition: 0.3s; font-size: 18px; }
+        .star-icon.active { color: var(--gold); }
 
-        /* ЖУРНАЛ */
-        .table-wrap { overflow-x: auto; max-height: 500px; }
+        /* ТАБЛИЦЫ */
+        .table-wrap { overflow-x: auto; max-height: 400px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 10px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); }
         td { padding: 14px 10px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
-        .del-icon { color: #ef4444; cursor: pointer; padding: 0 10px; opacity: 0.6; }
+        .minus-xp { color: var(--danger) !important; font-weight: bold; }
 
-        /* ПРОГРЕСС И ГРАФИК (НИЖНЯЯ СЕКЦИЯ) */
+        /* НИЖНЯЯ СЕКЦИЯ */
         .bottom-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 20px; }
-        
         .progress-footer {
             display: flex; justify-content: space-between; align-items: center;
             padding: 15px 24px; background: rgba(168, 85, 247, 0.05); border-radius: 20px; border: 1px dashed var(--glass-border);
@@ -95,22 +71,18 @@
         .btn-finish {
             background: linear-gradient(135deg, var(--success), #059669);
             color: white; border: none; padding: 10px 20px; border-radius: 12px;
-            font-weight: 700; cursor: pointer; display: none; /* Скрыта по умолчанию */
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
-            animation: pulse 2s infinite;
+            font-weight: 700; cursor: pointer; display: none; animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
-            50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(34, 197, 94, 0.5); }
-            100% { transform: scale(1); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+            0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); }
         }
 
-        .chart-viewport { height: 300px; width: 100%; overflow-x: auto; }
+        .chart-viewport { height: 250px; width: 100%; overflow-x: auto; }
         .chart-container { height: 100%; min-width: 600px; }
 
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+        .archive-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .archive-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); text-align: center; }
     </style>
 </head>
 <body>
@@ -126,15 +98,18 @@
             </div>
             <div class="preset-list" id="actionBase"></div>
         </div>
+
+        <div class="glass-card" style="margin-top:20px;">
+            <h2><span>📜</span> АРХИВ ДНЕЙ</h2>
+            <div id="archiveDays" class="archive-list"></div>
+        </div>
     </div>
 
     <div class="main-content glass-card">
         <h2><span>⚡</span> ЖУРНАЛ ЗАДАЧ</h2>
         <div class="table-wrap">
             <table>
-                <thead>
-                    <tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr>
-                </thead>
+                <thead><tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr></thead>
                 <tbody id="logBody"></tbody>
             </table>
         </div>
@@ -143,18 +118,14 @@
     <div class="bottom-section glass-card">
         <div class="progress-footer">
             <div>
-                <span style="color: #64748b; font-size: 12px; font-weight: 700;">СЕГОДНЯ НАБРАНО</span>
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">ПРОГРЕСС СЕГОДНЯ</span>
                 <div class="total-value" id="todayTotal">0</div>
             </div>
-            <button id="finishBtn" class="btn-finish" onclick="finishDay()">ЗАСЧИТАТЬ ЭФФЕКТИВНЫЙ ДЕНЬ</button>
+            <button id="finishBtn" class="btn-finish" onclick="finishDay()">ЗАСЧИТАТЬ ДЕНЬ</button>
         </div>
         
-        <h2><span>📈</span> ДИНАМИКА РАЗВИТИЯ</h2>
-        <div class="chart-viewport" id="chartViewport">
-            <div class="chart-container" id="chartContainer">
-                <canvas id="mainChart"></canvas>
-            </div>
-        </div>
+        <h2><span>📈</span> ГРАФИК</h2>
+        <div class="chart-viewport"><div class="chart-container"><canvas id="mainChart"></canvas></div></div>
     </div>
 </div>
 
@@ -174,123 +145,128 @@
     const db = firebase.database();
     const logRef = db.ref('daily_log');
     const baseRef = db.ref('action_presets');
+    const archiveRef = db.ref('daily_archive');
     let chart;
 
-    function cleanDate(str) { return str ? str.split(/[\.\/]/).join('-') : ""; }
-    function getTodayClean() {
-        const d = new Date();
-        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
-    }
+    function getToday() { return new Date().toLocaleDateString('ru-RU').split(/[\.\/]/).join('-'); }
 
+    // БАЗА
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
-        if(title && !isNaN(xp)) { baseRef.push({ title, xp }); document.getElementById('baseTitle').value = ''; document.getElementById('baseXP').value = ''; }
+        if(title && !isNaN(xp)) baseRef.push({ title, xp, important: false });
     }
 
-    function deleteFromBase(e, id) { e.stopPropagation(); if(confirm('Удалить шаблон?')) baseRef.child(id).remove(); }
+    function toggleStar(e, id, current) {
+        e.stopPropagation();
+        baseRef.child(id).update({ important: !current });
+    }
 
     baseRef.on('value', snap => {
         const data = snap.val();
         const container = document.getElementById('actionBase');
         container.innerHTML = '';
         for(let id in data) {
+            const item = data[id];
             container.innerHTML += `
-                <div class="preset-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
-                    <span style="font-weight:600;">${data[id].title}</span>
+                <div class="preset-item ${item.important ? 'important' : ''}" onclick="addToLog('${item.title}', ${item.xp})">
+                    <span>${item.title}</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="xp-tag">+${data[id].xp}</span>
-                        <span class="del-icon" onclick="deleteFromBase(event, '${id}')">✕</span>
+                        <span class="xp-tag">+${item.xp}</span>
+                        <span class="star-icon ${item.important ? 'active' : ''}" onclick="toggleStar(event, '${id}', ${item.important})">★</span>
                     </div>
                 </div>`;
         }
     });
 
-    function addToLog(title, xp) {
-        const d = new Date();
-        const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-        logRef.push({ title, xp, date: dateStr, ts: Date.now() });
+    // ЛОГ
+    function addToLog(title, xp, isFine = false) {
+        const dateStr = new Date().toLocaleDateString('ru-RU');
+        logRef.push({ title, xp: isFine ? -xp : xp, date: dateStr, ts: Date.now(), isFine });
     }
 
-    function deleteLogItem(id) { if(confirm('Удалить?')) logRef.child(id).remove(); }
+    // ЗАВЕРШЕНИЕ ДНЯ
+    async function finishDay() {
+        const today = getToday();
+        const snapLog = await logRef.once('value');
+        const snapBase = await baseRef.once('value');
+        const logData = snapLog.val() || {};
+        const baseData = snapBase.val() || {};
+        
+        const todayLogs = Object.values(logData).filter(l => l.date.split(/[\.\/]/).join('-') === today);
+        const performedTitles = todayLogs.map(l => l.title);
+        
+        // Проверка штрафов
+        for(let id in baseData) {
+            const item = baseData[id];
+            if(item.important && !performedTitles.includes(item.title)) {
+                addToLog(`ШТРАФ: ${item.title}`, item.xp, true);
+            }
+        }
 
-    function finishDay() {
-        alert("Поздравляем! День официально засчитан как эффективный. Так держать! 🔥");
-        // Здесь можно добавить запись в отдельную ветку БД "Effective Days", если захочешь.
+        // Сохранение в архив
+        setTimeout(async () => {
+            const updatedLog = await logRef.once('value');
+            const data = updatedLog.val();
+            let total = 0;
+            Object.values(data).forEach(item => {
+                if(item.date.split(/[\.\/]/).join('-') === today) total += Number(item.xp);
+            });
+            archiveRef.child(today).set({ total, date: today });
+            alert(`День завершен! Итоговый опыт: ${total}`);
+        }, 1000);
     }
 
+    // ОТОБРАЖЕНИЕ
     logRef.on('value', snap => {
         const data = snap.val();
-        const body = document.getElementById('logBody');
-        const today = getTodayClean();
+        const today = getToday();
         let html = ''; let totalToday = 0; let chartData = {};
 
         if (data) {
-            const sortedIds = Object.keys(data).sort((a,b) => data[b].ts - data[a].ts);
-            sortedIds.forEach(id => {
+            Object.keys(data).sort((a,b) => data[b].ts - data[a].ts).forEach(id => {
                 const item = data[id];
-                const itemXP = Number(item.xp) || 0;
-                if(cleanDate(item.date) === today) totalToday += itemXP;
-                chartData[item.date] = (chartData[item.date] || 0) + itemXP;
+                const cleanD = item.date.split(/[\.\/]/).join('-');
+                if(cleanD === today) totalToday += Number(item.xp);
+                chartData[item.date] = (chartData[item.date] || 0) + Number(item.xp);
                 html += `<tr>
                     <td style="color:#64748b; font-size:11px;">${item.date}</td>
-                    <td style="font-weight:600">${item.title}</td>
-                    <td style="color:var(--accent); font-weight:800">+${itemXP}</td>
-                    <td style="text-align:right"><span class="del-icon" onclick="deleteLogItem('${id}')">✕</span></td>
+                    <td>${item.title}</td>
+                    <td class="${item.xp < 0 ? 'minus-xp' : ''}" style="color:var(--accent)">${item.xp > 0 ? '+' : ''}${item.xp}</td>
+                    <td style="text-align:right"><span style="cursor:pointer" onclick="logRef.child('${id}').remove()">✕</span></td>
                 </tr>`;
             });
         }
-        
-        body.innerHTML = html;
-        const totalDisplay = document.getElementById('todayTotal');
-        const finishBtn = document.getElementById('finishBtn');
-        totalDisplay.innerText = totalToday;
-        
-        // Логика кнопки и цвета
-        if(totalToday >= 100) {
-            totalDisplay.style.color = "var(--gold)";
-            totalDisplay.style.textShadow = "0 0 15px rgba(251, 191, 36, 0.4)";
-            finishBtn.style.display = "block";
-        } else {
-            totalDisplay.style.color = "var(--accent)";
-            totalDisplay.style.textShadow = "none";
-            finishBtn.style.display = "none";
-        }
+        document.getElementById('logBody').innerHTML = html;
+        document.getElementById('todayTotal').innerText = totalToday;
+        document.getElementById('finishBtn').style.display = totalToday >= 100 ? 'block' : 'none';
         updateChart(chartData);
+    });
+
+    archiveRef.on('value', snap => {
+        const data = snap.val();
+        const cont = document.getElementById('archiveDays');
+        cont.innerHTML = '';
+        for(let d in data) {
+            cont.innerHTML += `<div class="archive-item"><div style="font-size:10px; color:#64748b">${data[d].date}</div><div style="font-weight:bold; color:var(--gold)">${data[d].total} XP</div></div>`;
+        }
     });
 
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
-        const container = document.getElementById('chartContainer');
-        const viewport = document.getElementById('chartViewport');
-        const labels = Object.keys(chartData).sort((a, b) => {
-            const parse = (s) => new Date(s.split(/[\.\/]/).reverse().join('-'));
-            return parse(a) - parse(b);
-        });
-        const dataPoints = labels.map(l => chartData[l]);
-        container.style.width = Math.max(viewport.offsetWidth, labels.length * 85) + 'px';
-
+        const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{ 
-                    label: 'XP', data: dataPoints, borderColor: '#a855f7', 
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 4, fill: true, tension: 0.4,
-                    pointRadius: 5, pointBackgroundColor: '#fff'
+                    label: 'XP', data: labels.map(l => chartData[l]), borderColor: '#a855f7', 
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, fill: true, tension: 0.4 
                 }]
             },
-            options: {
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
-                }
-            }
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
-        setTimeout(() => { viewport.scrollLeft = viewport.scrollWidth; }, 300);
     }
 </script>
 </body>
