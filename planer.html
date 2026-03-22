@@ -3,83 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Planner Excel-Style</title>
+    <title>Ultimate RPG Planner</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { --bg: #0b141d; --panel: #16222e; --border: #2d3d4d; --text: #e1e8ef; --accent: #4ade80; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        :root { 
+            --bg: #0b141d; 
+            --panel: #16222e; 
+            --border: #2d3d4d; 
+            --text: #e1e8ef; 
+            --accent: #4ade80; 
+            --danger: #ff7675;
+        }
         
-        /* Левая часть - Главная таблица */
-        .main-content { flex: 3; padding: 20px; overflow-y: auto; border-right: 2px solid var(--border); }
-        /* Правая часть - База действий */
-        .sidebar { flex: 1; background: var(--panel); padding: 20px; overflow-y: auto; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
 
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.2em; }
-        
-        /* Стиль Excel таблицы */
-        table { width: 100%; border-collapse: collapse; background: #1a2a3a; margin-top: 10px; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
-        th { background: #243b53; color: var(--accent); text-transform: uppercase; font-size: 0.8em; }
+        /* ЛЕВАЯ ЧАСТЬ - Таблица и График */
+        .main-content { 
+            flex: 3; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            border-right: 2px solid var(--border); 
+            overflow-y: auto;
+        }
+
+        /* ПРАВАЯ ЧАСТЬ - База действий */
+        .sidebar { 
+            flex: 1; 
+            background: var(--panel); 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.1em; letter-spacing: 1px; }
+
+        /* ТАБЛИЦА EXCEL STYLE */
+        .table-container { flex-grow: 1; overflow-y: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.9em; }
+        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
+        th { background: #243b53; color: var(--accent); position: sticky; top: 0; }
         tr:hover { background: #243b53; }
+        .total-row { background: #243b53 !important; font-weight: bold; font-size: 1.1em; color: var(--accent); }
 
-        /* Формы и кнопки */
+        /* ГРАФИК С ПРОКРУТКОЙ */
+        .chart-viewport {
+            width: 100%;
+            overflow-x: auto; /* Горизонтальная прокрутка */
+            background: var(--panel);
+            border-radius: 8px;
+            margin-top: 20px;
+            min-height: 250px;
+            border: 1px solid var(--border);
+        }
+        .chart-container {
+            position: relative;
+            height: 230px;
+            min-width: 100%; /* Ширина будет расти через JS */
+        }
+
+        /* ИНТЕРФЕЙС БАЗЫ СПРАВА */
         .input-group { display: flex; gap: 5px; margin-bottom: 20px; }
-        input { background: #0b141d; border: 1px solid var(--border); color: white; padding: 8px; border-radius: 4px; }
-        button { cursor: pointer; border: none; border-radius: 4px; font-weight: bold; }
-        .add-btn { background: var(--accent); color: #000; padding: 8px 15px; }
-        
-        /* Кнопки в базе справа */
-        .base-item { background: #243b53; padding: 10px; border-radius: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
-        .base-item:hover { background: var(--accent); color: #000; }
-        
-        .total-row { font-weight: bold; background: #243b53 !important; }
-        .chart-box { margin-top: 30px; height: 200px; }
+        input { 
+            background: #0b141d; border: 1px solid var(--border); 
+            color: white; padding: 10px; border-radius: 4px; outline: none;
+        }
+        .add-btn { 
+            background: var(--accent); color: #000; padding: 10px; 
+            border: none; border-radius: 4px; font-weight: bold; cursor: pointer;
+        }
+        .base-item { 
+            background: #243b53; padding: 12px; border-radius: 6px; 
+            margin-bottom: 8px; display: flex; justify-content: space-between; 
+            align-items: center; cursor: pointer; transition: 0.2s; border: 1px solid transparent;
+        }
+        .base-item:hover { border-color: var(--accent); background: #2d4a68; }
+        .base-item b { color: var(--accent); }
+
+        /* Кнопка удаления в таблице */
+        .del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2em; }
+
+        /* Скроллбары */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="main-content">
-    <h2>📊 ЛОГ АКТИВНОСТИ (EXCEL STYLE)</h2>
-    <table id="logTable">
-        <thead>
-            <tr>
-                <th style="width: 150px;">Дата</th>
-                <th>Действие</th>
-                <th style="width: 80px;">XP</th>
-                <th style="width: 50px;"></th>
-            </tr>
-        </thead>
-        <tbody id="logBody">
-            </tbody>
-        <tfoot>
-            <tr class="total-row">
-                <td colspan="2">ИТОГО ЗА СЕГОДНЯ:</td>
-                <td id="todayTotal">0</td>
-                <td></td>
-            </tr>
-        </tfoot>
-    </table>
+    <h2>📊 ЛОГ АКТИВНОСТИ ЗА ВСЁ ВРЕМЯ</h2>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 120px;">Дата</th>
+                    <th>Действие</th>
+                    <th style="width: 70px;">XP</th>
+                    <th style="width: 40px;"></th>
+                </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+            <tfoot>
+                <tr class="total-row">
+                    <td colspan="2">СЕГОДНЯ НАБРАНО:</td>
+                    <td id="todayTotal">0</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
 
-    <div class="chart-box">
-        <canvas id="mainChart"></canvas>
+    <div class="chart-viewport" id="chartViewport">
+        <div class="chart-container" id="chartContainer">
+            <canvas id="mainChart"></canvas>
+        </div>
     </div>
 </div>
 
 <div class="sidebar">
-    <h2>🏗️ БАЗА ДЕЙСТВИЙ</h2>
+    <h2>🏗️ МОЯ БАЗА ДЕЙСТВИЙ</h2>
+    <p style="font-size: 0.8em; color: #888;">Добавь действие один раз, чтобы потом просто кликать по нему:</p>
     <div class="input-group">
-        <input type="text" id="baseTitle" placeholder="Название" style="flex:2">
+        <input type="text" id="baseTitle" placeholder="Что делаем?" style="flex:2">
         <input type="number" id="baseXP" placeholder="XP" style="flex:1">
         <button class="add-btn" onclick="saveToBase()">+</button>
     </div>
+    
     <div id="actionBase">
         </div>
 </div>
 
 <script>
-    // КОНФИГ FIREBASE (Вставь свои данные ниже)
+    // ТВОЙ КОНФИГ FIREBASE (Оставил твои данные из скрина)
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -98,7 +165,7 @@
 
     let chart;
 
-    // 1. Работа с базой заготовок (Справа)
+    // --- ФУНКЦИИ БАЗЫ (СПРАВА) ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
@@ -117,12 +184,12 @@
             container.innerHTML += `
                 <div class="base-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
                     <span>${data[id].title}</span>
-                    <b>+${data[id].xp}</b>
+                    <b>+${data[id].xp} XP</b>
                 </div>`;
         }
     });
 
-    // 2. Работа с логом (Слева)
+    // --- ФУНКЦИИ ТАБЛИЦЫ (СЛЕВА) ---
     function addToLog(title, xp) {
         logRef.push({
             title,
@@ -133,7 +200,7 @@
     }
 
     function deleteLogItem(id) {
-        if(confirm('Удалить запись?')) logRef.child(id).remove();
+        if(confirm('Удалить эту запись?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
@@ -141,46 +208,79 @@
         const body = document.getElementById('logBody');
         const today = new Date().toLocaleDateString();
         let html = '';
-        let total = 0;
+        let totalToday = 0;
         let chartData = {};
 
-        for(let id in data) {
+        // Сортируем записи по времени (новые сверху)
+        const sortedIds = Object.keys(data || {}).sort((a,b) => data[b].ts - data[a].ts);
+
+        sortedIds.forEach(id => {
             const item = data[id];
-            if(item.date === today) total += item.xp;
+            if(item.date === today) totalToday += item.xp;
             
-            // Данные для графика
+            // Собираем данные для точек графика (сумма за каждый день)
             chartData[item.date] = (chartData[item.date] || 0) + item.xp;
 
-            html = `<tr>
+            html += `<tr>
                 <td>${item.date}</td>
                 <td>${item.title}</td>
-                <td>${item.xp}</td>
-                <td><button onclick="deleteLogItem('${id}')" style="background:none; color:red;">✕</button></td>
-            </tr>` + html;
-        }
+                <td style="color: var(--accent); font-weight:bold;">+${item.xp}</td>
+                <td><button class="del-btn" onclick="deleteLogItem('${id}')">✕</button></td>
+            </tr>`;
+        });
+
         body.innerHTML = html;
-        document.getElementById('todayTotal').innerText = total;
+        document.getElementById('todayTotal').innerText = totalToday;
         updateChart(chartData);
     });
 
+    // --- ГРАФИК С ДИНАМИЧЕСКИМ СКРОЛЛОМ ---
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
+        const container = document.getElementById('chartContainer');
+        const viewport = document.getElementById('chartViewport');
+        
+        // Сортируем даты для правильной линии графика
+        const labels = Object.keys(chartData).sort((a, b) => {
+            return new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-'));
+        });
+        const dataPoints = labels.map(l => chartData[l]);
+
+        // РАСЧЕТ ШИРИНЫ: Минимум ширина экрана, либо по 120px на каждый день
+        const calculatedWidth = Math.max(viewport.offsetWidth, labels.length * 120);
+        container.style.width = calculatedWidth + 'px';
+
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: Object.keys(chartData),
+                labels: labels,
                 datasets: [{
-                    label: 'XP Progress',
-                    data: Object.values(chartData),
+                    label: 'Опыт (XP)',
+                    data: dataPoints,
                     borderColor: '#4ade80',
-                    tension: 0.3,
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                    borderWidth: 4,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#fff',
                     fill: true,
-                    backgroundColor: 'rgba(74, 222, 128, 0.1)'
+                    tension: 0.3
                 }]
             },
-            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#2d3d4d' }, ticks: { color: '#888' } },
+                    x: { grid: { color: '#2d3d4d' }, ticks: { color: '#e1e8ef' } }
+                }
+            }
         });
+
+        // Скроллим график в самый конец (к сегодняшнему дню) при обновлении
+        setTimeout(() => {
+            viewport.scrollLeft = viewport.scrollWidth;
+        }, 300);
     }
 </script>
 </body>
