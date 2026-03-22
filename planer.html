@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Cloud Dashboard Final</title>
+    <title>RPG Cloud Dashboard Elite</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -16,6 +16,7 @@
             --bg: #030712;
             --text: #f8fafc;
             --gold: #fbbf24;
+            --success: #22c55e;
         }
 
         body {
@@ -24,9 +25,7 @@
             background: radial-gradient(circle at top left, #1e1b4b, #030712);
             background-attachment: fixed;
             color: var(--text);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
         .container {
@@ -42,8 +41,6 @@
 
         @media (max-width: 1000px) {
             .container { grid-template-columns: 1fr; }
-            .sidebar { order: 2; }
-            .main-content { order: 1; }
         }
 
         .glass-card {
@@ -56,26 +53,22 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        h2 { margin-top: 0; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        h2 { margin-top: 0; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
         h2 span { color: var(--accent); }
 
-        /* БАЗА ШАБЛОНОВ */
+        /* БАЗА */
         .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; }
         input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--glass-border);
-            padding: 12px;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px;
+            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            padding: 12px; border-radius: 12px; color: white; font-size: 16px;
         }
         .btn-add {
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;
         }
 
-        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; max-height: 400px; overflow-y: auto; }
         .preset-item {
             background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
             padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
@@ -84,23 +77,36 @@
         .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
 
         /* ЖУРНАЛ */
-        .main-content { display: flex; flex-direction: column; gap: 20px; }
-        .table-wrap { overflow-x: auto; max-height: 400px; }
+        .table-wrap { overflow-x: auto; max-height: 500px; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 10px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); }
         td { padding: 14px 10px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
-        .row-date { color: #64748b; font-size: 11px; width: 80px; }
-        .del-icon { color: #ef4444; cursor: pointer; padding: 0 10px; font-weight: bold; }
+        .del-icon { color: #ef4444; cursor: pointer; padding: 0 10px; opacity: 0.6; }
 
-        .total-banner {
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), transparent);
-            padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent);
+        /* ПРОГРЕСС И ГРАФИК (НИЖНЯЯ СЕКЦИЯ) */
+        .bottom-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 20px; }
+        
+        .progress-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 24px; background: rgba(168, 85, 247, 0.05); border-radius: 20px; border: 1px dashed var(--glass-border);
         }
-        .total-value { font-size: 2rem; font-weight: 900; color: var(--accent); transition: 0.3s; }
+        .total-value { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+        
+        .btn-finish {
+            background: linear-gradient(135deg, var(--success), #059669);
+            color: white; border: none; padding: 10px 20px; border-radius: 12px;
+            font-weight: 700; cursor: pointer; display: none; /* Скрыта по умолчанию */
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+            animation: pulse 2s infinite;
+        }
 
-        /* ГРАФИК */
-        .chart-row { grid-column: 1 / -1; }
-        .chart-viewport { height: 280px; width: 100%; overflow-x: auto; }
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+            50% { transform: scale(1.03); box-shadow: 0 0 25px rgba(34, 197, 94, 0.5); }
+            100% { transform: scale(1); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        }
+
+        .chart-viewport { height: 300px; width: 100%; overflow-x: auto; }
         .chart-container { height: 100%; min-width: 600px; }
 
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -112,36 +118,38 @@
 <div class="container">
     <div class="sidebar">
         <div class="glass-card">
-            <h2><span>✦</span> База</h2>
+            <h2><span>✦</span> ШАБЛОНЫ</h2>
             <div class="input-group">
-                <input type="text" id="baseTitle" placeholder="Название...">
+                <input type="text" id="baseTitle" placeholder="Действие...">
                 <input type="number" id="baseXP" placeholder="XP">
-                <button class="btn-add" onclick="saveToBase()">ДОБАВИТЬ ШАБЛОН</button>
+                <button class="btn-add" onclick="saveToBase()">СОХРАНИТЬ</button>
             </div>
             <div class="preset-list" id="actionBase"></div>
         </div>
     </div>
 
-    <div class="main-content">
-        <div class="glass-card">
-            <h2><span>⚡</span> Журнал активности</h2>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr>
-                    </thead>
-                    <tbody id="logBody"></tbody>
-                </table>
-            </div>
-            <div class="total-banner">
-                <span style="font-weight: 700;">ПРОГРЕСС ЗА СЕГОДНЯ:</span>
-                <span class="total-value" id="todayTotal">0</span>
-            </div>
+    <div class="main-content glass-card">
+        <h2><span>⚡</span> ЖУРНАЛ ЗАДАЧ</h2>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr>
+                </thead>
+                <tbody id="logBody"></tbody>
+            </table>
         </div>
     </div>
 
-    <div class="chart-row glass-card">
-        <h2><span>📈</span> Динамика</h2>
+    <div class="bottom-section glass-card">
+        <div class="progress-footer">
+            <div>
+                <span style="color: #64748b; font-size: 12px; font-weight: 700;">СЕГОДНЯ НАБРАНО</span>
+                <div class="total-value" id="todayTotal">0</div>
+            </div>
+            <button id="finishBtn" class="btn-finish" onclick="finishDay()">ЗАСЧИТАТЬ ЭФФЕКТИВНЫЙ ДЕНЬ</button>
+        </div>
+        
+        <h2><span>📈</span> ДИНАМИКА РАЗВИТИЯ</h2>
         <div class="chart-viewport" id="chartViewport">
             <div class="chart-container" id="chartContainer">
                 <canvas id="mainChart"></canvas>
@@ -168,35 +176,19 @@
     const baseRef = db.ref('action_presets');
     let chart;
 
-    // Очистка даты от любых разделителей для точного сравнения
-    function cleanDate(str) {
-        if (!str) return "";
-        return str.split(/[\.\/]/).join('-');
-    }
-
-    // Получение текущей даты в формате ДД-ММ-ГГГГ
+    function cleanDate(str) { return str ? str.split(/[\.\/]/).join('-') : ""; }
     function getTodayClean() {
         const d = new Date();
-        const day = String(d.getDate()).padStart(2, '0');
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const year = d.getFullYear();
-        return `${day}-${month}-${year}`;
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
     }
 
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
-        if(title && !isNaN(xp)) { 
-            baseRef.push({ title, xp });
-            document.getElementById('baseTitle').value = ''; 
-            document.getElementById('baseXP').value = ''; 
-        }
+        if(title && !isNaN(xp)) { baseRef.push({ title, xp }); document.getElementById('baseTitle').value = ''; document.getElementById('baseXP').value = ''; }
     }
 
-    function deleteFromBase(e, id) {
-        e.stopPropagation();
-        if(confirm('Удалить шаблон?')) baseRef.child(id).remove();
-    }
+    function deleteFromBase(e, id) { e.stopPropagation(); if(confirm('Удалить шаблон?')) baseRef.child(id).remove(); }
 
     baseRef.on('value', snap => {
         const data = snap.val();
@@ -220,36 +212,30 @@
         logRef.push({ title, xp, date: dateStr, ts: Date.now() });
     }
 
-    function deleteLogItem(id) {
-        if(confirm('Удалить запись?')) logRef.child(id).remove();
+    function deleteLogItem(id) { if(confirm('Удалить?')) logRef.child(id).remove(); }
+
+    function finishDay() {
+        alert("Поздравляем! День официально засчитан как эффективный. Так держать! 🔥");
+        // Здесь можно добавить запись в отдельную ветку БД "Effective Days", если захочешь.
     }
 
     logRef.on('value', snap => {
         const data = snap.val();
         const body = document.getElementById('logBody');
         const today = getTodayClean();
-        
-        let html = ''; 
-        let totalToday = 0; 
-        let chartData = {};
+        let html = ''; let totalToday = 0; let chartData = {};
 
         if (data) {
             const sortedIds = Object.keys(data).sort((a,b) => data[b].ts - data[a].ts);
             sortedIds.forEach(id => {
                 const item = data[id];
                 const itemXP = Number(item.xp) || 0;
-                
-                // Сравнение дат через очистку
-                if(cleanDate(item.date) === today) {
-                    totalToday += itemXP;
-                }
-
+                if(cleanDate(item.date) === today) totalToday += itemXP;
                 chartData[item.date] = (chartData[item.date] || 0) + itemXP;
-
                 html += `<tr>
-                    <td class="row-date">${item.date}</td>
+                    <td style="color:#64748b; font-size:11px;">${item.date}</td>
                     <td style="font-weight:600">${item.title}</td>
-                    <td style="color:var(--accent); font-weight:bold">+${itemXP}</td>
+                    <td style="color:var(--accent); font-weight:800">+${itemXP}</td>
                     <td style="text-align:right"><span class="del-icon" onclick="deleteLogItem('${id}')">✕</span></td>
                 </tr>`;
             });
@@ -257,14 +243,18 @@
         
         body.innerHTML = html;
         const totalDisplay = document.getElementById('todayTotal');
+        const finishBtn = document.getElementById('finishBtn');
         totalDisplay.innerText = totalToday;
         
+        // Логика кнопки и цвета
         if(totalToday >= 100) {
             totalDisplay.style.color = "var(--gold)";
-            totalDisplay.style.textShadow = "0 0 20px rgba(251, 191, 36, 0.5)";
+            totalDisplay.style.textShadow = "0 0 15px rgba(251, 191, 36, 0.4)";
+            finishBtn.style.display = "block";
         } else {
             totalDisplay.style.color = "var(--accent)";
             totalDisplay.style.textShadow = "none";
+            finishBtn.style.display = "none";
         }
         updateChart(chartData);
     });
@@ -278,8 +268,7 @@
             return parse(a) - parse(b);
         });
         const dataPoints = labels.map(l => chartData[l]);
-        
-        container.style.width = Math.max(viewport.offsetWidth, labels.length * 80) + 'px';
+        container.style.width = Math.max(viewport.offsetWidth, labels.length * 85) + 'px';
 
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -289,7 +278,7 @@
                 datasets: [{ 
                     label: 'XP', data: dataPoints, borderColor: '#a855f7', 
                     backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 4, fill: true, tension: 0.4,
-                    pointRadius: 4, pointBackgroundColor: '#fff'
+                    pointRadius: 5, pointBackgroundColor: '#fff'
                 }]
             },
             options: {
