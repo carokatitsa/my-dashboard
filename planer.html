@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Planner Optimized</title>
+    <title>RPG Planner Fixed Layout</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -15,14 +15,14 @@
         
         body { 
             font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); 
-            margin: 0; display: flex; flex-direction: column; height: 100vh;
+            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
         }
 
-        /* КОНТЕЙНЕР ДЛЯ ВЕРХНЕЙ ЧАСТИ (ТАБЛИЦА + БАЗА) */
+        /* КОНТЕЙНЕР ДЛЯ ВЕРХНЕЙ ЧАСТИ */
         .top-row { 
             display: flex; 
-            flex: 1; 
-            min-height: 0; /* Важно для скролла внутри */
+            flex: 1; /* Занимает доступное место сверху */
+            min-height: 0; 
         }
 
         .main-content { 
@@ -32,7 +32,7 @@
             border-right: 1px solid var(--border); 
         }
 
-        /* ПРАВАЯ КОЛОНКА - ТЕПЕРЬ УЖЕ */
+        /* УЗКАЯ БАЗА */
         .sidebar { 
             width: 300px; 
             background: var(--panel); 
@@ -41,33 +41,35 @@
             flex-shrink: 0; 
         }
 
-        /* НИЖНЯЯ ЧАСТЬ - ГРАФИК */
+        /* ГРАФИК ТЕПЕРЬ СТРОГО ВНИЗУ НА ВСЮ ШИРИНУ */
         .bottom-row { 
-            height: 300px; 
-            padding: 10px 20px 20px 20px; 
+            width: 100%;
+            height: 280px; 
+            padding: 15px 20px; 
+            box-sizing: border-box;
             border-top: 1px solid var(--border);
             background: var(--bg);
+            flex-shrink: 0;
         }
 
         /* МОБИЛЬНАЯ АДАПТАЦИЯ */
         @media (max-width: 850px) {
-            .top-row { flex-direction: column; flex: none; }
+            .top-row { flex-direction: column; }
             .sidebar { 
                 position: fixed; bottom: -100%; left: 0; width: 100% !important; height: 70%; 
-                z-index: 1000; border-radius: 20px 20px 0 0; border-top: 2px solid var(--accent);
-                transition: 0.4s;
+                z-index: 1000; transition: 0.4s; border-radius: 20px 20px 0 0;
             }
             .sidebar.active { bottom: 0; }
-            .main-content { border: none; padding-bottom: 80px; }
-            .bottom-row { height: 250px; flex-shrink: 0; }
-            .mobile-add-trigger { 
-                display: block; position: fixed; bottom: 20px; right: 20px; 
-                background: var(--accent); color: #000; padding: 15px 25px; 
-                border-radius: 50px; font-weight: bold; z-index: 999; border: none;
-            }
+            .bottom-row { height: 220px; }
+            .mobile-add-trigger { display: block; }
         }
         
-        .mobile-add-trigger { display: none; }
+        .mobile-add-trigger { 
+            display: none; position: fixed; bottom: 20px; right: 20px; 
+            background: var(--accent); color: #000; padding: 15px 25px; 
+            border-radius: 50px; font-weight: bold; z-index: 999; border: none;
+        }
+
         h2 { border-bottom: 2px solid var(--accent); padding-bottom: 8px; font-size: 1.1em; margin-top: 0; }
 
         /* ТАБЛИЦА */
@@ -84,10 +86,10 @@
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         input { background: #0b141d; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; }
         .add-btn { background: var(--accent); color: #000; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .base-item { background: #243b53; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .base-item { background: #243b53; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
         .del-btn { background: none; border: none; color: var(--danger); font-size: 1.2em; cursor: pointer; }
 
-        .close-sidebar { display: none; width: 100%; margin-bottom: 10px; padding: 10px; background: none; border: 1px solid var(--border); color: #fff; }
+        .close-sidebar { display: none; width: 100%; margin-bottom: 10px; padding: 10px; color: #fff; border: 1px solid var(--border); background: none; }
         @media (max-width: 850px) { .close-sidebar { display: block; } }
     </style>
 </head>
@@ -136,7 +138,6 @@
 </div>
 
 <script>
-    // ИСПОЛЬЗУЙ СВОИ КЛЮЧИ ТУТ
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
