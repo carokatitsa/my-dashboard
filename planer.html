@@ -19,7 +19,6 @@
             --nav-bg: #0f172a;
         }
 
-        /* --- ОБНОВЛЕННЫЕ СТИЛИ (HEADER + BODY) --- */
         body {
             margin: 0; font-family: 'Inter', sans-serif;
             background: #030712; color: var(--text);
@@ -49,7 +48,6 @@
             gap: 20px; width: 100%; max-width: 1400px; padding: 25px; box-sizing: border-box;
         }
 
-        /* --- ОСТАЛЬНЫЕ СТИЛИ --- */
         .glass-card {
             background: var(--glass); backdrop-filter: blur(20px);
             border: 1px solid var(--glass-border); border-radius: 24px;
@@ -65,7 +63,13 @@
         .btn-add { background: linear-gradient(135deg, var(--accent), #6366f1); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
         
         .preset-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
-        .preset-item { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .preset-item { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.3s; }
+        
+        /* Стили для штрафов в базе */
+        .preset-item.penalty { border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
+        .preset-item.penalty:hover { background: rgba(239, 68, 68, 0.15); border-color: var(--danger); }
+        .preset-item.penalty b { color: var(--danger); }
+
         .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
         .star { color: #334155; font-size: 20px; transition: 0.3s; }
         .star.active { color: var(--gold); text-shadow: 0 0 15px var(--gold); }
@@ -106,7 +110,7 @@
         <h2><span>✦</span> ШАБЛОНЫ</h2>
         <div class="input-group">
             <input type="text" id="baseTitle" placeholder="Действие...">
-            <input type="number" id="baseXP" placeholder="XP">
+            <input type="number" id="baseXP" placeholder="XP (можно -50)">
             <button class="btn-add" onclick="saveToBase()">СОХРАНИТЬ</button>
         </div>
         <div class="preset-list" id="actionBase"></div>
@@ -163,10 +167,20 @@
 
     function getToday() { return new Date().toLocaleDateString('ru-RU').replace(/\//g, '.'); }
 
+    // ИЗМЕНЕНО: Добавляем метку штрафа, если XP отрицательное
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
-        if(title && !isNaN(xp)) { baseRef.push({ title, xp, important: false }); }
+        if(title && !isNaN(xp)) { 
+            baseRef.push({ 
+                title, 
+                xp, 
+                important: false,
+                isPenalty: xp < 0 // Если меньше нуля — это штраф
+            }); 
+            document.getElementById('baseTitle').value = '';
+            document.getElementById('baseXP').value = '';
+        }
     }
 
     baseRef.on('value', snap => {
@@ -175,16 +189,20 @@
         container.innerHTML = '';
         for(let id in data) {
             const item = data[id];
+            const isPenalty = item.isPenalty || item.xp < 0; // На всякий случай проверяем и значение
             container.innerHTML += `
-                <div class="preset-item ${item.important ? 'important' : ''}" onclick="addToLog('${item.title}', ${item.xp})">
-                    <span>${item.title} <b>+${item.xp}</b></span>
-                    <span class="star ${item.important ? 'active' : ''}" onclick="event.stopPropagation(); baseRef.child('${id}').update({important:!${item.important}})">★</span>
+                <div class="preset-item ${item.important ? 'important' : ''} ${isPenalty ? 'penalty' : ''}" onclick="addToLog('${item.title}', ${item.xp})">
+                    <span>${isPenalty ? '💀 ' : ''}${item.title} <b>${item.xp > 0 ? '+' : ''}${item.xp}</b></span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="star ${item.important ? 'active' : ''}" onclick="event.stopPropagation(); baseRef.child('${id}').update({important:!${item.important}})">★</span>
+                        <span style="color:rgba(255,255,255,0.2); font-size:12px;" onclick="event.stopPropagation(); if(confirm('Удалить шаблон?')) baseRef.child('${id}').remove()">✕</span>
+                    </div>
                 </div>`;
         }
     });
 
-    function addToLog(title, xp, isFine = false) {
-        logRef.push({ title, xp: isFine ? -xp : xp, date: getToday(), ts: Date.now() });
+    function addToLog(title, xp) {
+        logRef.push({ title, xp: xp, date: getToday(), ts: Date.now() });
     }
 
     logRef.on('value', snap => {
@@ -196,11 +214,20 @@
                 const item = data[id];
                 if(item.date === today) total += Number(item.xp);
                 chartData[item.date] = (chartData[item.date] || 0) + Number(item.xp);
-                html += `<tr><td>${item.date}</td><td>${item.title}</td><td style="color:var(--accent); font-weight:800">${item.xp} XP</td><td style="color:red; cursor:pointer;" onclick="logRef.child('${id}').remove()">✕</td></tr>`;
+                
+                // Цвет в таблице: красный для минуса, фиолетовый для плюса
+                const valStyle = item.xp < 0 ? 'color:var(--danger)' : 'color:var(--accent)';
+                html += `<tr>
+                    <td>${item.date}</td>
+                    <td>${item.title}</td>
+                    <td style="${valStyle}; font-weight:800">${item.xp > 0 ? '+' : ''}${item.xp} XP</td>
+                    <td style="color:red; cursor:pointer;" onclick="logRef.child('${id}').remove()">✕</td>
+                </tr>`;
             });
         }
         document.getElementById('logBody').innerHTML = html;
         document.getElementById('todayTotal').innerText = total;
+        // Кнопка завершения появляется, только если ты в плюсе (минимум 100)
         document.getElementById('finishBtn').style.display = total >= 100 ? 'block' : 'none';
         updateChart(chartData);
     });
@@ -211,7 +238,10 @@
         const logs = (await logRef.once('value')).val();
         const done = Object.values(logs || {}).filter(l => l.date === today).map(l => l.title);
         for(let id in base) {
-            if(base[id].important && !done.includes(base[id].title)) addToLog(`ШТРАФ: ${base[id].title}`, base[id].xp, true);
+            // Если важное дело не сделано (и это не штрафной шаблон сам по себе)
+            if(base[id].important && !done.includes(base[id].title) && base[id].xp > 0) {
+                addToLog(`ПРОПУСК: ${base[id].title}`, -base[id].xp);
+            }
         }
         setTimeout(() => {
             archiveRef.child(today.replace(/\./g, '_')).set({ total: document.getElementById('todayTotal').innerText, date: today });
