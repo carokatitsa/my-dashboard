@@ -2,130 +2,139 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RPG Cloud Dashboard Hardcore</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root {
-            --glass: rgba(255, 255, 255, 0.05);
+            --glass: rgba(30, 30, 50, 0.6);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --accent: #a855f7; --accent-2: #3b82f6; 
-            --bg: #030712; --text: #f8fafc; --gold: #fbbf24;
-            --success: #22c55e; --danger: #ef4444;
+            --accent: #a855f7;
+            --gold: #fbbf24;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --text: #f8fafc;
         }
 
         body {
-            margin: 0; font-family: 'Inter', system-ui, sans-serif;
-            background: radial-gradient(circle at top left, #1e1b4b, #030712);
-            background-attachment: fixed; color: var(--text);
-            display: flex; flex-direction: column; min-height: 100vh;
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: #030712; color: var(--text);
+            display: flex; justify-content: center; padding: 20px;
         }
 
-        .container {
-            display: grid; grid-template-columns: 320px 1fr; gap: 20px;
-            padding: 20px; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;
+        .main-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            grid-template-rows: auto auto;
+            gap: 15px; width: 100%; max-width: 1300px;
         }
-
-        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
 
         .glass-card {
-            background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border); border-radius: 24px; padding: 24px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            background: var(--glass); backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        h2 { margin-top: 0; font-weight: 700; font-size: 1rem; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+        h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; color: #94a3b8; display: flex; align-items: center; gap: 8px; }
         h2 span { color: var(--accent); }
 
-        /* БАЗА */
-        .input-group { display: flex; flex-direction: column; gap: 10px; }
-        input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: white; font-size: 16px; }
-        .btn-add { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        /* КНОПКИ И ВВОД */
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        input { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); padding: 10px; border-radius: 10px; color: white; }
+        
+        .btn-main {
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border: none; color: white; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(168, 85, 247, 0.6); }
 
-        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        /* СПИСОК ШАБЛОНОВ */
+        .preset-list { display: flex; flex-direction: column; gap: 6px; max-height: 350px; overflow-y: auto; padding-right: 5px; }
         .preset-item {
             background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-            padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+            padding: 10px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: 0.2s;
         }
-        .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
-        .star-icon { color: #4b5563; transition: 0.3s; font-size: 18px; }
-        .star-icon.active { color: var(--gold); }
-
-        /* ТАБЛИЦЫ */
-        .table-wrap { overflow-x: auto; max-height: 400px; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 10px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); }
-        td { padding: 14px 10px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
-        .minus-xp { color: var(--danger) !important; font-weight: bold; }
-
-        /* НИЖНЯЯ СЕКЦИЯ */
-        .bottom-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 20px; }
-        .progress-footer {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 24px; background: rgba(168, 85, 247, 0.05); border-radius: 20px; border: 1px dashed var(--glass-border);
-        }
-        .total-value { font-size: 1.8rem; font-weight: 900; color: var(--accent); }
+        .preset-item:hover { background: rgba(168, 85, 247, 0.1); border-color: var(--accent); }
+        .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); box-shadow: inset 0 0 10px rgba(251, 191, 36, 0.1); }
         
+        .star { color: #334155; font-size: 18px; transition: 0.3s; }
+        .star.active { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+
+        /* ТАБЛИЦА */
+        .log-container { max-height: 480px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        td, th { padding: 12px 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .xp-plus { color: var(--accent); font-weight: bold; }
+        .xp-minus { color: var(--danger); font-weight: bold; }
+
+        /* ПРОГРЕСС БАР */
+        .progress-section { 
+            grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; 
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), transparent);
+            padding: 15px 25px; border-radius: 15px; border-left: 4px solid var(--accent);
+        }
+        .xp-counter { font-size: 2rem; font-weight: 900; color: var(--accent); }
+
         .btn-finish {
             background: linear-gradient(135deg, var(--success), #059669);
-            color: white; border: none; padding: 10px 20px; border-radius: 12px;
-            font-weight: 700; cursor: pointer; display: none; animation: pulse 2s infinite;
+            color: white; border: none; padding: 12px 25px; border-radius: 12px; font-weight: bold;
+            cursor: pointer; box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); animation: glow 2s infinite;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); }
-        }
+        @keyframes glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; box-shadow: 0 0 25px rgba(34, 197, 94, 0.6); } }
 
-        .chart-viewport { height: 250px; width: 100%; overflow-x: auto; }
-        .chart-container { height: 100%; min-width: 600px; }
+        /* ГРАФИК И АРХИВ */
+        .footer-grid { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 350px; gap: 15px; }
+        .chart-box { height: 200px; }
+        .archive-box { display: flex; flex-wrap: wrap; gap: 8px; }
+        .archive-tag { background: rgba(255,255,255,0.05); padding: 5px 10px; border-radius: 8px; font-size: 11px; border: 1px solid var(--glass-border); }
 
-        .archive-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-        .archive-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); text-align: center; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="sidebar">
-        <div class="glass-card">
-            <h2><span>✦</span> ШАБЛОНЫ</h2>
-            <div class="input-group">
-                <input type="text" id="baseTitle" placeholder="Действие...">
-                <input type="number" id="baseXP" placeholder="XP">
-                <button class="btn-add" onclick="saveToBase()">СОХРАНИТЬ</button>
-            </div>
-            <div class="preset-list" id="actionBase"></div>
+<div class="main-grid">
+    <div class="glass-card">
+        <h2><span>✦</span> Шаблоны</h2>
+        <div class="input-group">
+            <input type="text" id="baseTitle" placeholder="Действие...">
+            <input type="number" id="baseXP" placeholder="XP">
+            <button class="btn-main" onclick="saveToBase()">ДОБАВИТЬ</button>
         </div>
-
-        <div class="glass-card" style="margin-top:20px;">
-            <h2><span>📜</span> АРХИВ ДНЕЙ</h2>
-            <div id="archiveDays" class="archive-list"></div>
-        </div>
+        <div class="preset-list" id="actionBase"></div>
     </div>
 
-    <div class="main-content glass-card">
-        <h2><span>⚡</span> ЖУРНАЛ ЗАДАЧ</h2>
-        <div class="table-wrap">
+    <div class="glass-card">
+        <h2><span>⚡</span> Активность</h2>
+        <div class="log-container">
             <table>
-                <thead><tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr></thead>
                 <tbody id="logBody"></tbody>
             </table>
         </div>
     </div>
 
-    <div class="bottom-section glass-card">
-        <div class="progress-footer">
-            <div>
-                <span style="color: #64748b; font-size: 12px; font-weight: 700;">ПРОГРЕСС СЕГОДНЯ</span>
-                <div class="total-value" id="todayTotal">0</div>
-            </div>
-            <button id="finishBtn" class="btn-finish" onclick="finishDay()">ЗАСЧИТАТЬ ДЕНЬ</button>
+    <div class="progress-section glass-card">
+        <div>
+            <div style="font-size: 11px; font-weight: bold; color: #64748b;">ПРОГРЕСС ЗА СЕГОДНЯ</div>
+            <div class="xp-counter" id="todayTotal">0</div>
         </div>
-        
-        <h2><span>📈</span> ГРАФИК</h2>
-        <div class="chart-viewport"><div class="chart-container"><canvas id="mainChart"></canvas></div></div>
+        <button id="finishBtn" class="btn-finish" style="display:none" onclick="finishDay()">ЗАСЧИТАТЬ ДЕНЬ</button>
+    </div>
+
+    <div class="footer-grid">
+        <div class="glass-card chart-box">
+            <canvas id="mainChart"></canvas>
+        </div>
+        <div class="glass-card">
+            <h2><span>📜</span> Архив</h2>
+            <div id="archiveDays" class="archive-box"></div>
+        </div>
     </div>
 </div>
 
@@ -148,18 +157,13 @@
     const archiveRef = db.ref('daily_archive');
     let chart;
 
-    function getToday() { return new Date().toLocaleDateString('ru-RU').split(/[\.\/]/).join('-'); }
+    function getToday() { return new Date().toLocaleDateString('ru-RU').replace(/\//g, '.'); }
 
-    // БАЗА
+    // --- БАЗА ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
-        if(title && !isNaN(xp)) baseRef.push({ title, xp, important: false });
-    }
-
-    function toggleStar(e, id, current) {
-        e.stopPropagation();
-        baseRef.child(id).update({ important: !current });
+        if(title && !isNaN(xp)) { baseRef.push({ title, xp, important: false }); document.getElementById('baseTitle').value = ''; document.getElementById('baseXP').value = ''; }
     }
 
     baseRef.on('value', snap => {
@@ -170,100 +174,78 @@
             const item = data[id];
             container.innerHTML += `
                 <div class="preset-item ${item.important ? 'important' : ''}" onclick="addToLog('${item.title}', ${item.xp})">
-                    <span>${item.title}</span>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span class="xp-tag">+${item.xp}</span>
-                        <span class="star-icon ${item.important ? 'active' : ''}" onclick="toggleStar(event, '${id}', ${item.important})">★</span>
-                    </div>
+                    <span style="font-weight:600">${item.title} <small style="color:var(--accent)">+${item.xp}</small></span>
+                    <span class="star ${item.important ? 'active' : ''}" onclick="event.stopPropagation(); baseRef.child('${id}').update({important:!${item.important}})">★</span>
                 </div>`;
         }
     });
 
-    // ЛОГ
+    // --- ЖУРНАЛ ---
     function addToLog(title, xp, isFine = false) {
-        const dateStr = new Date().toLocaleDateString('ru-RU');
-        logRef.push({ title, xp: isFine ? -xp : xp, date: dateStr, ts: Date.now(), isFine });
+        logRef.push({ title, xp: isFine ? -xp : xp, date: getToday(), ts: Date.now() });
     }
 
-    // ЗАВЕРШЕНИЕ ДНЯ
-    async function finishDay() {
-        const today = getToday();
-        const snapLog = await logRef.once('value');
-        const snapBase = await baseRef.once('value');
-        const logData = snapLog.val() || {};
-        const baseData = snapBase.val() || {};
-        
-        const todayLogs = Object.values(logData).filter(l => l.date.split(/[\.\/]/).join('-') === today);
-        const performedTitles = todayLogs.map(l => l.title);
-        
-        // Проверка штрафов
-        for(let id in baseData) {
-            const item = baseData[id];
-            if(item.important && !performedTitles.includes(item.title)) {
-                addToLog(`ШТРАФ: ${item.title}`, item.xp, true);
-            }
-        }
-
-        // Сохранение в архив
-        setTimeout(async () => {
-            const updatedLog = await logRef.once('value');
-            const data = updatedLog.val();
-            let total = 0;
-            Object.values(data).forEach(item => {
-                if(item.date.split(/[\.\/]/).join('-') === today) total += Number(item.xp);
-            });
-            archiveRef.child(today).set({ total, date: today });
-            alert(`День завершен! Итоговый опыт: ${total}`);
-        }, 1000);
-    }
-
-    // ОТОБРАЖЕНИЕ
     logRef.on('value', snap => {
         const data = snap.val();
         const today = getToday();
-        let html = ''; let totalToday = 0; let chartData = {};
+        let html = ''; let total = 0; let chartData = {};
 
-        if (data) {
+        if(data) {
             Object.keys(data).sort((a,b) => data[b].ts - data[a].ts).forEach(id => {
                 const item = data[id];
-                const cleanD = item.date.split(/[\.\/]/).join('-');
-                if(cleanD === today) totalToday += Number(item.xp);
+                if(item.date === today) total += Number(item.xp);
                 chartData[item.date] = (chartData[item.date] || 0) + Number(item.xp);
                 html += `<tr>
-                    <td style="color:#64748b; font-size:11px;">${item.date}</td>
-                    <td>${item.title}</td>
-                    <td class="${item.xp < 0 ? 'minus-xp' : ''}" style="color:var(--accent)">${item.xp > 0 ? '+' : ''}${item.xp}</td>
-                    <td style="text-align:right"><span style="cursor:pointer" onclick="logRef.child('${id}').remove()">✕</span></td>
+                    <td style="color:#64748b; width:70px">${item.date}</td>
+                    <td style="font-weight:500">${item.title}</td>
+                    <td class="${item.xp < 0 ? 'xp-minus' : 'xp-plus'}">${item.xp > 0 ? '+' : ''}${item.xp} XP</td>
+                    <td style="text-align:right; color:#ef4444; cursor:pointer" onclick="logRef.child('${id}').remove()">✕</td>
                 </tr>`;
             });
         }
         document.getElementById('logBody').innerHTML = html;
-        document.getElementById('todayTotal').innerText = totalToday;
-        document.getElementById('finishBtn').style.display = totalToday >= 100 ? 'block' : 'none';
+        const display = document.getElementById('todayTotal');
+        display.innerText = total;
+        display.style.color = total >= 100 ? 'var(--gold)' : 'var(--accent)';
+        document.getElementById('finishBtn').style.display = total >= 100 ? 'block' : 'none';
         updateChart(chartData);
     });
 
+    // --- ФИНАЛ ДНЯ ---
+    async function finishDay() {
+        const today = getToday();
+        const base = (await baseRef.once('value')).val();
+        const logs = (await logRef.once('value')).val();
+        const doneTitles = Object.values(logs || {}).filter(l => l.date === today).map(l => l.title);
+        
+        for(let id in base) {
+            if(base[id].important && !doneTitles.includes(base[id].title)) {
+                addToLog(`ШТРАФ: ${base[id].title}`, base[id].important ? base[id].xp : 0, true);
+            }
+        }
+
+        setTimeout(async () => {
+            const finalXP = document.getElementById('todayTotal').innerText;
+            archiveRef.child(today.replace(/\./g, '_')).set({ total: finalXP, date: today });
+            alert("День заархивирован!");
+        }, 1000);
+    }
+
     archiveRef.on('value', snap => {
         const data = snap.val();
-        const cont = document.getElementById('archiveDays');
-        cont.innerHTML = '';
-        for(let d in data) {
-            cont.innerHTML += `<div class="archive-item"><div style="font-size:10px; color:#64748b">${data[d].date}</div><div style="font-weight:bold; color:var(--gold)">${data[d].total} XP</div></div>`;
-        }
+        const cont = document.getElementById('archiveDays'); cont.innerHTML = '';
+        for(let d in data) { cont.innerHTML += `<div class="archive-tag"><b>${data[d].date}</b>: ${data[d].total} XP</div>`; }
     });
 
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
-        const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
+        const labels = Object.keys(chartData).sort();
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{ 
-                    label: 'XP', data: labels.map(l => chartData[l]), borderColor: '#a855f7', 
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 3, fill: true, tension: 0.4 
-                }]
+                datasets: [{ label: 'XP', data: labels.map(l => chartData[l]), borderColor: '#a855f7', tension: 0.4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.1)' }]
             },
             options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
         });
