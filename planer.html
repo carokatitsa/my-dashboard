@@ -2,137 +2,181 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Planner Fixed Layout</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPG Cloud Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
-        :root { 
-            --bg: #0b141d; --panel: #16222e; --border: #2d3d4d; 
-            --text: #e1e8ef; --accent: #4ade80; --danger: #ff7675;
-        }
-        
-        body { 
-            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); 
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-        }
-
-        /* КОНТЕЙНЕР ДЛЯ ВЕРХНЕЙ ЧАСТИ */
-        .top-row { 
-            display: flex; 
-            flex: 1; /* Занимает доступное место сверху */
-            min-height: 0; 
+        :root {
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --accent: #a855f7; /* Магический фиолетовый */
+            --accent-2: #3b82f6; /* Неоновый синий */
+            --bg: #030712;
+            --text: #f8fafc;
         }
 
-        .main-content { 
-            flex: 1; 
-            padding: 20px; 
-            overflow-y: auto; 
-            border-right: 1px solid var(--border); 
+        body {
+            margin: 0;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at top left, #1e1b4b, #030712);
+            background-attachment: fixed;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
 
-        /* УЗКАЯ БАЗА */
-        .sidebar { 
-            width: 300px; 
-            background: var(--panel); 
-            padding: 20px; 
-            overflow-y: auto; 
-            flex-shrink: 0; 
-        }
-
-        /* ГРАФИК ТЕПЕРЬ СТРОГО ВНИЗУ НА ВСЮ ШИРИНУ */
-        .bottom-row { 
+        /* ОСНОВНАЯ СЕТКА */
+        .container {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
             width: 100%;
-            height: 280px; 
-            padding: 15px 20px; 
             box-sizing: border-box;
-            border-top: 1px solid var(--border);
-            background: var(--bg);
-            flex-shrink: 0;
         }
 
-        /* МОБИЛЬНАЯ АДАПТАЦИЯ */
-        @media (max-width: 850px) {
-            .top-row { flex-direction: column; }
-            .sidebar { 
-                position: fixed; bottom: -100%; left: 0; width: 100% !important; height: 70%; 
-                z-index: 1000; transition: 0.4s; border-radius: 20px 20px 0 0;
-            }
-            .sidebar.active { bottom: 0; }
-            .bottom-row { height: 220px; }
-            .mobile-add-trigger { display: block; }
-        }
-        
-        .mobile-add-trigger { 
-            display: none; position: fixed; bottom: 20px; right: 20px; 
-            background: var(--accent); color: #000; padding: 15px 25px; 
-            border-radius: 50px; font-weight: bold; z-index: 999; border: none;
+        @media (max-width: 1000px) {
+            .container { grid-template-columns: 1fr; }
+            .sidebar { order: 2; }
+            .main-content { order: 1; }
+            .bottom-row { order: 3; }
         }
 
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 8px; font-size: 1.1em; margin-top: 0; }
+        /* СТЕКЛЯННЫЕ КАРТОЧКИ */
+        .glass-card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
 
-        /* ТАБЛИЦА */
-        .table-container { width: 100%; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.9em; }
-        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
-        th { background: #243b53; color: var(--accent); }
+        h2 { margin-top: 0; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        h2 span { color: var(--accent); }
 
-        /* ГРАФИК */
-        .chart-viewport { width: 100%; height: 100%; overflow-x: auto; background: var(--panel); border-radius: 8px; border: 1px solid var(--border); }
-        .chart-container { position: relative; height: 100%; }
+        /* БАЗА ДЕЙСТВИЙ (СЛЕВА) */
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; }
+        input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            padding: 12px 16px;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
 
-        /* ИНТЕРФЕЙС БАЗЫ */
-        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        input { background: #0b141d; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; }
-        .add-btn { background: var(--accent); color: #000; padding: 10px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .base-item { background: #243b53; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
-        .del-btn { background: none; border: none; color: var(--danger); font-size: 1.2em; cursor: pointer; }
+        .btn-add {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-add:active { transform: scale(0.95); }
 
-        .close-sidebar { display: none; width: 100%; margin-bottom: 10px; padding: 10px; color: #fff; border: 1px solid var(--border); background: none; }
-        @media (max-width: 850px) { .close-sidebar { display: block; } }
+        .preset-list { display: flex; flex-direction: column; gap: 10px; }
+        .preset-item {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            padding: 14px;
+            border-radius: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .preset-item:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
+        .preset-item .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+
+        /* ЛОГ АКТИВНОСТИ (ЦЕНТР) */
+        .main-content { min-height: 400px; }
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; padding: 12px; color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 16px 12px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
+        .row-date { color: #64748b; font-size: 12px; }
+        .del-icon { color: #ef4444; cursor: pointer; opacity: 0.5; transition: 0.3s; }
+        .del-icon:hover { opacity: 1; }
+
+        .total-banner {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), transparent);
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-value { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+
+        /* ГРАФИК (ВНИЗУ) */
+        .bottom-row { grid-column: 1 / -1; min-height: 350px; }
+        .chart-viewport { height: 280px; width: 100%; overflow-x: auto; }
+        .chart-container { height: 100%; min-width: 600px; }
+
+        /* СКРОЛЛБАР */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
+
     </style>
 </head>
 <body>
 
-<button class="mobile-add-trigger" onclick="toggleSidebar()">+ ДОБАВИТЬ</button>
+<div class="container">
+    <div class="sidebar">
+        <div class="glass-card">
+            <h2><span>✦</span> БАЗА</h2>
+            <div class="input-group">
+                <input type="text" id="baseTitle" placeholder="Название действия...">
+                <input type="number" id="baseXP" placeholder="Очки XP">
+                <button class="btn-add" onclick="saveToBase()">СОЗДАТЬ ШАБЛОН</button>
+            </div>
+            <div class="preset-list" id="actionBase" style="margin-top: 20px;"></div>
+        </div>
+    </div>
 
-<div class="top-row">
-    <div class="main-content">
-        <h2>📊 ЛОГ АКТИВНОСТИ</h2>
-        <div class="table-container">
+    <div class="main-content glass-card">
+        <h2><span>⚡</span> АКТИВНОСТЬ</h2>
+        <div class="table-wrap">
             <table>
-                <thead><tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr></thead>
-                <tbody id="logBody"></tbody>
-                <tfoot>
-                    <tr style="background:#243b53; font-weight:bold; color:var(--accent)">
-                        <td colspan="2">СЕГОДНЯ:</td>
-                        <td id="todayTotal">0</td>
-                        <td></td>
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Действие</th>
+                        <th>XP</th>
+                        <th></th>
                     </tr>
-                </tfoot>
+                </thead>
+                <tbody id="logBody"></tbody>
             </table>
         </div>
-    </div>
-
-    <div class="sidebar" id="sidebar">
-        <button class="close-sidebar" onclick="toggleSidebar()">✕ ЗАКРЫТЬ</button>
-        <h2>🏗️ БАЗА</h2>
-        <div class="input-group">
-            <input type="text" id="baseTitle" placeholder="Что делаем?">
-            <div style="display:flex; gap:5px;">
-                <input type="number" id="baseXP" placeholder="XP" style="flex:1">
-                <button class="add-btn" onclick="saveToBase()" style="flex:1">+</button>
-            </div>
+        <div class="total-banner">
+            <span>СЕГОДНЯШНИЙ ПРОГРЕСС</span>
+            <span class="total-value" id="todayTotal">0</span>
         </div>
-        <div id="actionBase"></div>
     </div>
-</div>
 
-<div class="bottom-row">
-    <div class="chart-viewport" id="chartViewport">
-        <div class="chart-container" id="chartContainer">
-            <canvas id="mainChart"></canvas>
+    <div class="bottom-row glass-card">
+        <h2><span>📈</span> ДИНАМИКА РАЗВИТИЯ</h2>
+        <div class="chart-viewport" id="chartViewport">
+            <div class="chart-container" id="chartContainer">
+                <canvas id="mainChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
@@ -155,8 +199,6 @@
     const baseRef = db.ref('action_presets');
     let chart;
 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
-
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
@@ -174,9 +216,12 @@
         container.innerHTML = '';
         for(let id in data) {
             container.innerHTML += `
-                <div class="base-item" onclick="addToLog('${data[id].title}', ${data[id].xp}); if(window.innerWidth < 850) toggleSidebar();">
-                    <span>${data[id].title} <b>+${data[id].xp}</b></span>
-                    <button class="del-btn" onclick="deleteFromBase(event, '${id}')">✕</button>
+                <div class="preset-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
+                    <span>${data[id].title}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="xp-tag">+${data[id].xp}</span>
+                        <span class="del-icon" onclick="deleteFromBase(event, '${id}')">✕</span>
+                    </div>
                 </div>`;
         }
     });
@@ -186,7 +231,7 @@
     }
 
     function deleteLogItem(id) {
-        if(confirm('Удалить запись?')) logRef.child(id).remove();
+        if(confirm('Стереть запись?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
@@ -200,7 +245,12 @@
             const item = data[id];
             if(item.date === today) totalToday += item.xp;
             chartData[item.date] = (chartData[item.date] || 0) + item.xp;
-            html += `<tr><td>${item.date}</td><td>${item.title}</td><td style="color:var(--accent)">+${item.xp}</td><td><button class="del-btn" onclick="deleteLogItem('${id}')">✕</button></td></tr>`;
+            html += `<tr>
+                <td class="row-date">${item.date}</td>
+                <td style="font-weight:600">${item.title}</td>
+                <td style="color:var(--accent); font-weight:bold">+${item.xp}</td>
+                <td style="text-align:right"><span class="del-icon" onclick="deleteLogItem('${id}')">✕</span></td>
+            </tr>`;
         });
         body.innerHTML = html;
         document.getElementById('todayTotal').innerText = totalToday;
@@ -214,7 +264,7 @@
         const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
         const dataPoints = labels.map(l => chartData[l]);
         
-        container.style.width = Math.max(viewport.offsetWidth, labels.length * 100) + 'px';
+        container.style.width = Math.max(viewport.offsetWidth, labels.length * 80) + 'px';
 
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -222,14 +272,23 @@
             data: {
                 labels: labels,
                 datasets: [{ 
-                    label: 'XP', data: dataPoints, borderColor: '#4ade80', 
-                    backgroundColor: 'rgba(74, 222, 128, 0.1)', borderWidth: 3, fill: true, tension: 0.3 
+                    label: 'Опыт (XP)', data: dataPoints, 
+                    borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', 
+                    borderWidth: 4, fill: true, tension: 0.4, pointRadius: 6, pointBackgroundColor: '#fff'
                 }]
             },
-            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true }, x: { grid: { display: false } } } }
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                }
+            }
         });
         setTimeout(() => { viewport.scrollLeft = viewport.scrollWidth; }, 300);
     }
 </script>
+
 </body>
 </html>
