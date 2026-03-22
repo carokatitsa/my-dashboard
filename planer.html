@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RPG Cloud Dashboard v2</title>
+    <title>RPG Cloud Dashboard Final</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -20,7 +20,7 @@
 
         body {
             margin: 0;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background: radial-gradient(circle at top left, #1e1b4b, #030712);
             background-attachment: fixed;
             color: var(--text);
@@ -32,7 +32,6 @@
         .container {
             display: grid;
             grid-template-columns: 320px 1fr;
-            grid-template-rows: auto auto;
             gap: 20px;
             padding: 20px;
             max-width: 1400px;
@@ -45,7 +44,6 @@
             .container { grid-template-columns: 1fr; }
             .sidebar { order: 2; }
             .main-content { order: 1; }
-            .bottom-row { order: 3; }
         }
 
         .glass-card {
@@ -58,77 +56,54 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        h2 { margin-top: 0; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        h2 { margin-top: 0; font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
         h2 span { color: var(--accent); }
 
-        /* БАЗА ДЕЙСТВИЙ */
+        /* БАЗА ШАБЛОНОВ */
         .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; }
         input {
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--glass-border);
-            padding: 12px 16px;
-            border-radius: 12px;
-            color: white;
-            font-size: 16px; /* Против зума на iOS */
-            transition: 0.3s;
-        }
-        input:focus { border-color: var(--accent); outline: none; }
-
-        .btn-add {
-            background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            color: white;
-            border: none;
             padding: 12px;
             border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.2s;
+            color: white;
+            font-size: 16px;
         }
-        .btn-add:active { transform: scale(0.95); }
+        .btn-add {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; cursor: pointer;
+        }
 
-        .preset-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
+        .preset-list { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
         .preset-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border);
-            padding: 14px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: 0.3s;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+            padding: 12px 16px; border-radius: 14px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s;
         }
         .preset-item:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
-        .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+        .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 3px 8px; border-radius: 6px; font-weight: 600; font-size: 12px; }
 
-        /* ТАБЛИЦА ЛОГА */
-        .main-content { min-height: 400px; }
-        .table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
-        td { padding: 14px 12px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
-        .row-date { color: #64748b; font-size: 11px; }
-        .del-icon { color: #ef4444; cursor: pointer; font-size: 18px; padding: 0 5px; }
+        /* ЖУРНАЛ */
+        .main-content { display: flex; flex-direction: column; gap: 20px; }
+        .table-wrap { overflow-x: auto; max-height: 400px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px; color: #64748b; font-size: 11px; text-transform: uppercase; border-bottom: 1px solid var(--glass-border); }
+        td { padding: 14px 10px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
+        .row-date { color: #64748b; font-size: 11px; width: 80px; }
+        .del-icon { color: #ef4444; cursor: pointer; padding: 0 10px; font-weight: bold; }
 
         .total-banner {
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), transparent);
-            padding: 20px;
-            border-radius: 16px;
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid var(--accent);
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), transparent);
+            padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid var(--accent);
         }
-        .total-value { font-size: 1.8rem; font-weight: 800; color: var(--accent); transition: 0.5s; }
+        .total-value { font-size: 2rem; font-weight: 900; color: var(--accent); transition: 0.3s; }
 
         /* ГРАФИК */
-        .bottom-row { grid-column: 1 / -1; }
-        .chart-viewport { height: 300px; width: 100%; overflow-x: auto; padding-top: 10px; }
+        .chart-row { grid-column: 1 / -1; }
+        .chart-viewport { height: 280px; width: 100%; overflow-x: auto; }
         .chart-container { height: 100%; min-width: 600px; }
 
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
     </style>
 </head>
@@ -137,39 +112,36 @@
 <div class="container">
     <div class="sidebar">
         <div class="glass-card">
-            <h2><span>✦</span> ШАБЛОНЫ</h2>
+            <h2><span>✦</span> База</h2>
             <div class="input-group">
-                <input type="text" id="baseTitle" placeholder="Что сделали?">
-                <input type="number" id="baseXP" placeholder="Сколько XP?">
-                <button class="btn-add" onclick="saveToBase()">СОХРАНИТЬ В БАЗУ</button>
+                <input type="text" id="baseTitle" placeholder="Название...">
+                <input type="number" id="baseXP" placeholder="XP">
+                <button class="btn-add" onclick="saveToBase()">ДОБАВИТЬ ШАБЛОН</button>
             </div>
-            <div class="preset-list" id="actionBase" style="margin-top: 20px;"></div>
+            <div class="preset-list" id="actionBase"></div>
         </div>
     </div>
 
-    <div class="main-content glass-card">
-        <h2><span>⚡</span> ЖУРНАЛ ЗАДАЧ</h2>
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Действие</th>
-                        <th>XP</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody id="logBody"></tbody>
-            </table>
-        </div>
-        <div class="total-banner" id="totalBanner">
-            <span style="font-weight: 600; letter-spacing: 0.5px;">ПРОГРЕСС ЗА СЕГОДНЯ</span>
-            <span class="total-value" id="todayTotal">0</span>
+    <div class="main-content">
+        <div class="glass-card">
+            <h2><span>⚡</span> Журнал активности</h2>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Дата</th><th>Действие</th><th>XP</th><th></th></tr>
+                    </thead>
+                    <tbody id="logBody"></tbody>
+                </table>
+            </div>
+            <div class="total-banner">
+                <span style="font-weight: 700;">ПРОГРЕСС ЗА СЕГОДНЯ:</span>
+                <span class="total-value" id="todayTotal">0</span>
+            </div>
         </div>
     </div>
 
-    <div class="bottom-row glass-card">
-        <h2><span>📈</span> ИСТОРИЯ РАЗВИТИЯ</h2>
+    <div class="chart-row glass-card">
+        <h2><span>📈</span> Динамика</h2>
         <div class="chart-viewport" id="chartViewport">
             <div class="chart-container" id="chartContainer">
                 <canvas id="mainChart"></canvas>
@@ -179,7 +151,6 @@
 </div>
 
 <script>
-    // --- КОНФИГУРАЦИЯ ---
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -197,12 +168,26 @@
     const baseRef = db.ref('action_presets');
     let chart;
 
-    // --- ЛОГИКА БАЗЫ ---
+    // Очистка даты от любых разделителей для точного сравнения
+    function cleanDate(str) {
+        if (!str) return "";
+        return str.split(/[\.\/]/).join('-');
+    }
+
+    // Получение текущей даты в формате ДД-ММ-ГГГГ
+    function getTodayClean() {
+        const d = new Date();
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
         if(title && !isNaN(xp)) { 
-            baseRef.push({ title, xp }); 
+            baseRef.push({ title, xp });
             document.getElementById('baseTitle').value = ''; 
             document.getElementById('baseXP').value = ''; 
         }
@@ -220,8 +205,8 @@
         for(let id in data) {
             container.innerHTML += `
                 <div class="preset-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
-                    <span style="font-weight:500;">${data[id].title}</span>
-                    <div style="display:flex; align-items:center; gap:12px;">
+                    <span style="font-weight:600;">${data[id].title}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
                         <span class="xp-tag">+${data[id].xp}</span>
                         <span class="del-icon" onclick="deleteFromBase(event, '${id}')">✕</span>
                     </div>
@@ -229,21 +214,20 @@
         }
     });
 
-    // --- ЛОГИКА ЖУРНАЛА ---
     function addToLog(title, xp) {
-        // Записываем дату строго в формате ДД.ММ.ГГГГ для сравнения
-        const todayStr = new Date().toLocaleDateString('ru-RU');
-        logRef.push({ title, xp, date: todayStr, ts: Date.now() });
+        const d = new Date();
+        const dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+        logRef.push({ title, xp, date: dateStr, ts: Date.now() });
     }
 
     function deleteLogItem(id) {
-        if(confirm('Удалить эту запись?')) logRef.child(id).remove();
+        if(confirm('Удалить запись?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
         const data = snap.val();
         const body = document.getElementById('logBody');
-        const todayStr = new Date().toLocaleDateString('ru-RU'); 
+        const today = getTodayClean();
         
         let html = ''; 
         let totalToday = 0; 
@@ -251,13 +235,12 @@
 
         if (data) {
             const sortedIds = Object.keys(data).sort((a,b) => data[b].ts - data[a].ts);
-
             sortedIds.forEach(id => {
                 const item = data[id];
                 const itemXP = Number(item.xp) || 0;
-
-                // Важное сравнение дат
-                if(item.date === todayStr) {
+                
+                // Сравнение дат через очистку
+                if(cleanDate(item.date) === today) {
                     totalToday += itemXP;
                 }
 
@@ -273,36 +256,30 @@
         }
         
         body.innerHTML = html;
+        const totalDisplay = document.getElementById('todayTotal');
+        totalDisplay.innerText = totalToday;
         
-        // Обновляем прогресс-бар
-        const display = document.getElementById('todayTotal');
-        display.innerText = totalToday;
-        
-        // Визуальная цель: 100 XP
         if(totalToday >= 100) {
-            display.style.color = "var(--gold)";
-            display.style.textShadow = "0 0 20px rgba(251, 191, 36, 0.6)";
+            totalDisplay.style.color = "var(--gold)";
+            totalDisplay.style.textShadow = "0 0 20px rgba(251, 191, 36, 0.5)";
         } else {
-            display.style.color = "var(--accent)";
-            display.style.textShadow = "none";
+            totalDisplay.style.color = "var(--accent)";
+            totalDisplay.style.textShadow = "none";
         }
-
         updateChart(chartData);
     });
 
-    // --- ГРАФИК ---
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
         const container = document.getElementById('chartContainer');
         const viewport = document.getElementById('chartViewport');
         const labels = Object.keys(chartData).sort((a, b) => {
-            const dateA = new Date(a.split('.').reverse().join('-'));
-            const dateB = new Date(b.split('.').reverse().join('-'));
-            return dateA - dateB;
+            const parse = (s) => new Date(s.split(/[\.\/]/).reverse().join('-'));
+            return parse(a) - parse(b);
         });
         const dataPoints = labels.map(l => chartData[l]);
         
-        container.style.width = Math.max(viewport.offsetWidth, labels.length * 85) + 'px';
+        container.style.width = Math.max(viewport.offsetWidth, labels.length * 80) + 'px';
 
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -310,12 +287,9 @@
             data: {
                 labels: labels,
                 datasets: [{ 
-                    label: 'XP', data: dataPoints, 
-                    borderColor: '#a855f7', 
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)', 
-                    borderWidth: 4, fill: true, tension: 0.4,
-                    pointRadius: 5, pointBackgroundColor: '#fff',
-                    pointHoverRadius: 8
+                    label: 'XP', data: dataPoints, borderColor: '#a855f7', 
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)', borderWidth: 4, fill: true, tension: 0.4,
+                    pointRadius: 4, pointBackgroundColor: '#fff'
                 }]
             },
             options: {
