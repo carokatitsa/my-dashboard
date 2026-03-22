@@ -24,40 +24,59 @@
             margin: 0; 
             display: flex; 
             height: 100vh; 
-            overflow: hidden; 
+            flex-direction: row; /* На ПК в ряд */
         }
 
-        /* ЛЕВАЯ ЧАСТЬ - Таблица и График */
+        /* ЛЕВАЯ ЧАСТЬ */
         .main-content { 
             flex: 3; 
-            padding: 20px; 
+            padding: 15px; 
             display: flex; 
             flex-direction: column; 
             border-right: 2px solid var(--border); 
             overflow-y: auto;
+            min-width: 0; /* Важно для Chart.js */
         }
 
-        /* ПРАВАЯ ЧАСТЬ - База действий */
+        /* ПРАВАЯ ЧАСТЬ */
         .sidebar { 
-            flex: 1; 
+            flex: 1.2; 
             background: var(--panel); 
-            padding: 20px; 
+            padding: 15px; 
             display: flex; 
             flex-direction: column;
             overflow-y: auto;
         }
 
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.1em; letter-spacing: 1px; }
+        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНА --- */
+        @media (max-width: 768px) {
+            body { 
+                flex-direction: column; /* На телефоне блоки друг под другом */
+                height: auto; 
+                overflow-y: auto; 
+            }
+            .main-content { 
+                border-right: none; 
+                border-bottom: 2px solid var(--border);
+                flex: none;
+                height: auto;
+            }
+            .sidebar { 
+                flex: none; 
+                height: auto;
+            }
+            .chart-viewport { height: 200px; }
+        }
 
-        /* ТАБЛИЦА EXCEL STYLE */
-        .table-container { flex-grow: 1; overflow-y: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.9em; }
-        th, td { border: 1px solid var(--border); padding: 12px; text-align: left; }
-        th { background: #243b53; color: var(--accent); position: sticky; top: 0; }
-        tr:hover { background: #243b53; }
-        .total-row { background: #243b53 !important; font-weight: bold; font-size: 1.1em; color: var(--accent); }
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.1em; }
 
-        /* ГРАФИК С ПРОКРУТКОЙ */
+        /* ТАБЛИЦА */
+        .table-container { width: 100%; overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.85em; }
+        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        th { background: #243b53; color: var(--accent); }
+
+        /* ГРАФИК */
         .chart-viewport {
             width: 100%;
             overflow-x: auto; 
@@ -67,61 +86,50 @@
             min-height: 250px;
             border: 1px solid var(--border);
         }
-        .chart-container {
-            position: relative;
-            height: 230px;
-            min-width: 100%; 
-        }
+        .chart-container { position: relative; height: 230px; }
 
-        /* ИНТЕРФЕЙС БАЗЫ СПРАВА */
-        .input-group { display: flex; gap: 5px; margin-bottom: 20px; }
+        /* ИНТЕРФЕЙС БАЗЫ */
+        .input-group { display: flex; gap: 5px; margin-bottom: 15px; }
         input { 
             background: #0b141d; border: 1px solid var(--border); 
-            color: white; padding: 10px; border-radius: 4px; outline: none;
+            color: white; padding: 10px; border-radius: 4px; width: 100%;
+            box-sizing: border-box;
         }
         .add-btn { 
-            background: var(--accent); color: #000; padding: 10px; 
+            background: var(--accent); color: #000; padding: 10px 15px; 
             border: none; border-radius: 4px; font-weight: bold; cursor: pointer;
         }
         .base-item { 
             background: #243b53; padding: 12px; border-radius: 6px; 
             margin-bottom: 8px; display: flex; align-items: center; 
-            cursor: pointer; transition: 0.2s; border: 1px solid transparent;
-            gap: 10px;
+            cursor: pointer; gap: 10px;
         }
-        .base-item:hover { border-color: var(--accent); background: #2d4a68; }
-        .base-item .title { flex-grow: 1; }
-        .base-item b { color: var(--accent); white-space: nowrap; }
+        .base-item .title { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; }
+        .del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2em; }
 
-        /* Кнопки удаления */
-        .del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2em; padding: 0 5px; }
-        .del-btn:hover { transform: scale(1.2); }
-
-        /* Скроллбары */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="main-content">
-    <h2>📊 ЛОГ АКТИВНОСТИ ЗА ВСЁ ВРЕМЯ</h2>
-    
+    <h2>📊 ЛОГ АКТИВНОСТИ</h2>
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th style="width: 120px;">Дата</th>
+                    <th>Дата</th>
                     <th>Действие</th>
-                    <th style="width: 70px;">XP</th>
-                    <th style="width: 40px;"></th>
+                    <th>XP</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody id="logBody"></tbody>
             <tfoot>
-                <tr class="total-row">
-                    <td colspan="2">СЕГОДНЯ НАБРАНО:</td>
-                    <td id="todayTotal">0</td>
+                <tr style="background:#243b53; font-weight:bold;">
+                    <td colspan="2">СЕГОДНЯ:</td>
+                    <td id="todayTotal" style="color:var(--accent)">0</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -136,17 +144,17 @@
 </div>
 
 <div class="sidebar">
-    <h2>🏗️ МОЯ БАЗА ДЕЙСТВИЙ</h2>
+    <h2>🏗️ БАЗА ДЕЙСТВИЙ</h2>
     <div class="input-group">
-        <input type="text" id="baseTitle" placeholder="Что делаем?" style="flex:2">
+        <input type="text" id="baseTitle" placeholder="Действие" style="flex:2">
         <input type="number" id="baseXP" placeholder="XP" style="flex:1">
         <button class="add-btn" onclick="saveToBase()">+</button>
     </div>
-    
     <div id="actionBase"></div>
 </div>
 
 <script>
+    // ИСПОЛЬЗУЙ СВОИ КЛЮЧИ ТУТ
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -165,7 +173,6 @@
 
     let chart;
 
-    // --- ФУНКЦИИ БАЗЫ ШАБЛОНОВ (СПРАВА) ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
@@ -176,12 +183,9 @@
         }
     }
 
-    // Удаление именно шаблона из правой колонки
     function deleteFromBase(e, id) {
-        e.stopPropagation(); // Чтобы не сработало добавление в таблицу при нажатии на крестик
-        if(confirm('Удалить этот шаблон из базы?')) {
-            baseRef.child(id).remove();
-        }
+        e.stopPropagation();
+        if(confirm('Удалить шаблон?')) baseRef.child(id).remove();
     }
 
     baseRef.on('value', snap => {
@@ -192,24 +196,18 @@
             container.innerHTML += `
                 <div class="base-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
                     <span class="title">${data[id].title}</span>
-                    <b>+${data[id].xp} XP</b>
+                    <b>+${data[id].xp}</b>
                     <button class="del-btn" onclick="deleteFromBase(event, '${id}')">✕</button>
                 </div>`;
         }
     });
 
-    // --- ФУНКЦИИ ТАБЛИЦЫ ЛОГА (СЛЕВА) ---
     function addToLog(title, xp) {
-        logRef.push({
-            title,
-            xp,
-            date: new Date().toLocaleDateString(),
-            ts: Date.now()
-        });
+        logRef.push({ title, xp, date: new Date().toLocaleDateString(), ts: Date.now() });
     }
 
     function deleteLogItem(id) {
-        if(confirm('Удалить эту запись из лога?')) logRef.child(id).remove();
+        if(confirm('Удалить запись?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
@@ -230,7 +228,7 @@
             html += `<tr>
                 <td>${item.date}</td>
                 <td>${item.title}</td>
-                <td style="color: var(--accent); font-weight:bold;">+${item.xp}</td>
+                <td style="color:var(--accent)">+${item.xp}</td>
                 <td><button class="del-btn" onclick="deleteLogItem('${id}')">✕</button></td>
             </tr>`;
         });
@@ -240,19 +238,16 @@
         updateChart(chartData);
     });
 
-    // --- ГРАФИК ---
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
         const container = document.getElementById('chartContainer');
         const viewport = document.getElementById('chartViewport');
         
-        const labels = Object.keys(chartData).sort((a, b) => {
-            return new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-'));
-        });
+        const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
         const dataPoints = labels.map(l => chartData[l]);
 
-        const calculatedWidth = Math.max(viewport.offsetWidth, labels.length * 120);
-        container.style.width = calculatedWidth + 'px';
+        const step = window.innerWidth < 768 ? 80 : 120; // На телефоне точки поплотнее
+        container.style.width = Math.max(viewport.offsetWidth, labels.length * step) + 'px';
 
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -264,23 +259,19 @@
                     data: dataPoints,
                     borderColor: '#4ade80',
                     backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                    borderWidth: 4,
-                    pointRadius: 6,
-                    pointBackgroundColor: '#fff',
+                    borderWidth: 3,
                     fill: true,
                     tension: 0.3
                 }]
             },
             options: {
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
                 scales: {
-                    y: { beginAtZero: true, grid: { color: '#2d3d4d' }, ticks: { color: '#888' } },
-                    x: { grid: { color: '#2d3d4d' }, ticks: { color: '#e1e8ef' } }
+                    y: { beginAtZero: true, grid: { color: '#2d3d4d' } },
+                    x: { grid: { color: '#2d3d4d' } }
                 }
             }
         });
-
         setTimeout(() => { viewport.scrollLeft = viewport.scrollWidth; }, 300);
     }
 </script>
