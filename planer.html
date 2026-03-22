@@ -2,112 +2,73 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate RPG Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPG Planner Mobile Fixed</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         :root { 
-            --bg: #0b141d; 
-            --panel: #16222e; 
-            --border: #2d3d4d; 
-            --text: #e1e8ef; 
-            --accent: #4ade80; 
-            --danger: #ff7675;
+            --bg: #0b141d; --panel: #16222e; --border: #2d3d4d; 
+            --text: #e1e8ef; --accent: #4ade80; --danger: #ff7675;
         }
         
         body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            flex-direction: row; /* На ПК в ряд */
+            font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); 
+            margin: 0; display: flex; flex-direction: row; height: 100vh;
         }
 
-        /* ЛЕВАЯ ЧАСТЬ */
+        /* --- ГЛАВНЫЕ КОНТЕЙНЕРЫ --- */
         .main-content { 
-            flex: 3; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            border-right: 2px solid var(--border); 
-            overflow-y: auto;
-            min-width: 0; /* Важно для Chart.js */
+            flex: 2; padding: 15px; display: flex; flex-direction: column; 
+            border-right: 2px solid var(--border); overflow-y: auto;
         }
-
-        /* ПРАВАЯ ЧАСТЬ */
         .sidebar { 
-            flex: 1.2; 
-            background: var(--panel); 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column;
-            overflow-y: auto;
+            flex: 1; background: var(--panel); padding: 15px; 
+            display: flex; flex-direction: column; overflow-y: auto;
         }
 
-        /* --- АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНА --- */
-        @media (max-width: 768px) {
-            body { 
-                flex-direction: column; /* На телефоне блоки друг под другом */
-                height: auto; 
-                overflow-y: auto; 
-            }
-            .main-content { 
-                border-right: none; 
-                border-bottom: 2px solid var(--border);
-                flex: none;
-                height: auto;
-            }
-            .sidebar { 
-                flex: none; 
-                height: auto;
-            }
-            .chart-viewport { height: 200px; }
+        /* МОБИЛЬНАЯ ВЕРСИЯ (ОСНОВНОЕ ИСПРАВЛЕНИЕ) */
+        @media (max-width: 850px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .main-content { border-right: none; border-bottom: 2px solid var(--border); width: 100%; box-sizing: border-box; }
+            .sidebar { width: 100%; box-sizing: border-box; }
+            .chart-viewport { height: 250px; }
         }
 
-        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 10px; font-size: 1.1em; }
+        h2 { border-bottom: 2px solid var(--accent); padding-bottom: 8px; font-size: 1.1em; margin-top: 0; }
 
         /* ТАБЛИЦА */
-        .table-container { width: 100%; overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.85em; }
-        th, td { border: 1px solid var(--border); padding: 10px; text-align: left; }
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: #1a2a3a; font-size: 0.9em; }
+        th, td { border: 1px solid var(--border); padding: 12px 8px; text-align: left; }
         th { background: #243b53; color: var(--accent); }
+        .total-row { background: #243b53; font-weight: bold; color: var(--accent); }
 
         /* ГРАФИК */
         .chart-viewport {
-            width: 100%;
-            overflow-x: auto; 
-            background: var(--panel);
-            border-radius: 8px;
-            margin-top: 20px;
-            min-height: 250px;
-            border: 1px solid var(--border);
+            width: 100%; overflow-x: auto; background: var(--panel);
+            border-radius: 8px; margin-top: 15px; border: 1px solid var(--border);
         }
-        .chart-container { position: relative; height: 230px; }
+        .chart-container { position: relative; height: 220px; }
 
-        /* ИНТЕРФЕЙС БАЗЫ */
-        .input-group { display: flex; gap: 5px; margin-bottom: 15px; }
+        /* БАЗА ДЕЙСТВИЙ */
+        .input-group { display: flex; gap: 8px; margin-bottom: 15px; }
         input { 
-            background: #0b141d; border: 1px solid var(--border); 
-            color: white; padding: 10px; border-radius: 4px; width: 100%;
-            box-sizing: border-box;
+            background: #0b141d; border: 1px solid var(--border); color: white; 
+            padding: 12px; border-radius: 6px; outline: none; font-size: 16px; /* 16px предотвращает зум на iPhone */
         }
-        .add-btn { 
-            background: var(--accent); color: #000; padding: 10px 15px; 
-            border: none; border-radius: 4px; font-weight: bold; cursor: pointer;
-        }
+        .add-btn { background: var(--accent); color: #000; padding: 10px 20px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
         .base-item { 
-            background: #243b53; padding: 12px; border-radius: 6px; 
-            margin-bottom: 8px; display: flex; align-items: center; 
-            cursor: pointer; gap: 10px;
+            background: #243b53; padding: 15px; border-radius: 8px; margin-bottom: 10px; 
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
         }
-        .base-item .title { flex-grow: 1; overflow: hidden; text-overflow: ellipsis; }
-        .del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 1.2em; }
+        .base-item .title { flex-grow: 1; font-weight: 500; }
+        .base-item b { color: var(--accent); }
+        .del-btn { background: none; border: none; color: var(--danger); font-size: 1.4em; cursor: pointer; padding: 5px; }
 
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
     </style>
 </head>
@@ -127,9 +88,9 @@
             </thead>
             <tbody id="logBody"></tbody>
             <tfoot>
-                <tr style="background:#243b53; font-weight:bold;">
-                    <td colspan="2">СЕГОДНЯ:</td>
-                    <td id="todayTotal" style="color:var(--accent)">0</td>
+                <tr class="total-row">
+                    <td colspan="2">СЕГОДНЯ НАБРАНО:</td>
+                    <td id="todayTotal">0</td>
                     <td></td>
                 </tr>
             </tfoot>
@@ -144,9 +105,9 @@
 </div>
 
 <div class="sidebar">
-    <h2>🏗️ БАЗА ДЕЙСТВИЙ</h2>
+    <h2>🏗️ МОЯ БАЗА</h2>
     <div class="input-group">
-        <input type="text" id="baseTitle" placeholder="Действие" style="flex:2">
+        <input type="text" id="baseTitle" placeholder="Что делаем?" style="flex:2">
         <input type="number" id="baseXP" placeholder="XP" style="flex:1">
         <button class="add-btn" onclick="saveToBase()">+</button>
     </div>
@@ -154,7 +115,7 @@
 </div>
 
 <script>
-    // ИСПОЛЬЗУЙ СВОИ КЛЮЧИ ТУТ
+    // ТВОЙ FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -170,9 +131,9 @@
     const db = firebase.database();
     const logRef = db.ref('daily_log');
     const baseRef = db.ref('action_presets');
-
     let chart;
 
+    // Сохранение шаблона в базу
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
@@ -183,6 +144,7 @@
         }
     }
 
+    // Удаление шаблона из базы
     function deleteFromBase(e, id) {
         e.stopPropagation();
         if(confirm('Удалить шаблон?')) baseRef.child(id).remove();
@@ -207,7 +169,7 @@
     }
 
     function deleteLogItem(id) {
-        if(confirm('Удалить запись?')) logRef.child(id).remove();
+        if(confirm('Удалить запись из истории?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
@@ -219,20 +181,17 @@
         let chartData = {};
 
         const sortedIds = Object.keys(data || {}).sort((a,b) => data[b].ts - data[a].ts);
-
         sortedIds.forEach(id => {
             const item = data[id];
             if(item.date === today) totalToday += item.xp;
             chartData[item.date] = (chartData[item.date] || 0) + item.xp;
-
             html += `<tr>
                 <td>${item.date}</td>
                 <td>${item.title}</td>
-                <td style="color:var(--accent)">+${item.xp}</td>
+                <td style="color:var(--accent); font-weight:bold;">+${item.xp}</td>
                 <td><button class="del-btn" onclick="deleteLogItem('${id}')">✕</button></td>
             </tr>`;
         });
-
         body.innerHTML = html;
         document.getElementById('todayTotal').innerText = totalToday;
         updateChart(chartData);
@@ -242,11 +201,10 @@
         const ctx = document.getElementById('mainChart').getContext('2d');
         const container = document.getElementById('chartContainer');
         const viewport = document.getElementById('chartViewport');
-        
         const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
         const dataPoints = labels.map(l => chartData[l]);
 
-        const step = window.innerWidth < 768 ? 80 : 120; // На телефоне точки поплотнее
+        const step = window.innerWidth < 850 ? 90 : 130;
         container.style.width = Math.max(viewport.offsetWidth, labels.length * step) + 'px';
 
         if(chart) chart.destroy();
@@ -255,13 +213,8 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'XP',
-                    data: dataPoints,
-                    borderColor: '#4ade80',
-                    backgroundColor: 'rgba(74, 222, 128, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.3
+                    label: 'XP', data: dataPoints, borderColor: '#4ade80',
+                    backgroundColor: 'rgba(74, 222, 128, 0.1)', borderWidth: 3, fill: true, tension: 0.3
                 }]
             },
             options: {
