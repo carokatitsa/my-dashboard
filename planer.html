@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Cloud Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RPG Cloud Dashboard v2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -11,10 +11,11 @@
         :root {
             --glass: rgba(255, 255, 255, 0.05);
             --glass-border: rgba(255, 255, 255, 0.1);
-            --accent: #a855f7; /* Магический фиолетовый */
-            --accent-2: #3b82f6; /* Неоновый синий */
+            --accent: #a855f7; 
+            --accent-2: #3b82f6; 
             --bg: #030712;
             --text: #f8fafc;
+            --gold: #fbbf24;
         }
 
         body {
@@ -28,7 +29,6 @@
             min-height: 100vh;
         }
 
-        /* ОСНОВНАЯ СЕТКА */
         .container {
             display: grid;
             grid-template-columns: 320px 1fr;
@@ -48,7 +48,6 @@
             .bottom-row { order: 3; }
         }
 
-        /* СТЕКЛЯННЫЕ КАРТОЧКИ */
         .glass-card {
             background: var(--glass);
             backdrop-filter: blur(12px);
@@ -62,7 +61,7 @@
         h2 { margin-top: 0; font-weight: 700; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
         h2 span { color: var(--accent); }
 
-        /* БАЗА ДЕЙСТВИЙ (СЛЕВА) */
+        /* БАЗА ДЕЙСТВИЙ */
         .sidebar { display: flex; flex-direction: column; gap: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; }
         input {
@@ -71,10 +70,10 @@
             padding: 12px 16px;
             border-radius: 12px;
             color: white;
-            font-size: 14px;
+            font-size: 16px; /* Против зума на iOS */
             transition: 0.3s;
         }
-        input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 10px rgba(168, 85, 247, 0.3); }
+        input:focus { border-color: var(--accent); outline: none; }
 
         .btn-add {
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
@@ -88,7 +87,7 @@
         }
         .btn-add:active { transform: scale(0.95); }
 
-        .preset-list { display: flex; flex-direction: column; gap: 10px; }
+        .preset-list { display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto; }
         .preset-item {
             background: rgba(255,255,255,0.03);
             border: 1px solid var(--glass-border);
@@ -101,38 +100,36 @@
             transition: 0.3s;
         }
         .preset-item:hover { background: rgba(255,255,255,0.08); transform: translateX(5px); }
-        .preset-item .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
+        .xp-tag { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; padding: 4px 10px; border-radius: 8px; font-weight: 600; font-size: 13px; }
 
-        /* ЛОГ АКТИВНОСТИ (ЦЕНТР) */
+        /* ТАБЛИЦА ЛОГА */
         .main-content { min-height: 400px; }
-        .table-wrap { overflow-x: auto; }
+        .table-wrap { overflow-x: auto; max-height: 500px; overflow-y: auto; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th { text-align: left; padding: 12px; color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 16px 12px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
-        .row-date { color: #64748b; font-size: 12px; }
-        .del-icon { color: #ef4444; cursor: pointer; opacity: 0.5; transition: 0.3s; }
-        .del-icon:hover { opacity: 1; }
+        th { text-align: left; padding: 12px; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
+        td { padding: 14px 12px; border-bottom: 1px solid var(--glass-border); font-size: 14px; }
+        .row-date { color: #64748b; font-size: 11px; }
+        .del-icon { color: #ef4444; cursor: pointer; font-size: 18px; padding: 0 5px; }
 
         .total-banner {
             background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), transparent);
-            padding: 15px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 16px;
             margin-top: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-left: 4px solid var(--accent);
         }
-        .total-value { font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+        .total-value { font-size: 1.8rem; font-weight: 800; color: var(--accent); transition: 0.5s; }
 
-        /* ГРАФИК (ВНИЗУ) */
-        .bottom-row { grid-column: 1 / -1; min-height: 350px; }
-        .chart-viewport { height: 280px; width: 100%; overflow-x: auto; }
+        /* ГРАФИК */
+        .bottom-row { grid-column: 1 / -1; }
+        .chart-viewport { height: 300px; width: 100%; overflow-x: auto; padding-top: 10px; }
         .chart-container { height: 100%; min-width: 600px; }
 
-        /* СКРОЛЛБАР */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 10px; }
-
     </style>
 </head>
 <body>
@@ -140,18 +137,18 @@
 <div class="container">
     <div class="sidebar">
         <div class="glass-card">
-            <h2><span>✦</span> БАЗА</h2>
+            <h2><span>✦</span> ШАБЛОНЫ</h2>
             <div class="input-group">
-                <input type="text" id="baseTitle" placeholder="Название действия...">
-                <input type="number" id="baseXP" placeholder="Очки XP">
-                <button class="btn-add" onclick="saveToBase()">СОЗДАТЬ ШАБЛОН</button>
+                <input type="text" id="baseTitle" placeholder="Что сделали?">
+                <input type="number" id="baseXP" placeholder="Сколько XP?">
+                <button class="btn-add" onclick="saveToBase()">СОХРАНИТЬ В БАЗУ</button>
             </div>
             <div class="preset-list" id="actionBase" style="margin-top: 20px;"></div>
         </div>
     </div>
 
     <div class="main-content glass-card">
-        <h2><span>⚡</span> АКТИВНОСТЬ</h2>
+        <h2><span>⚡</span> ЖУРНАЛ ЗАДАЧ</h2>
         <div class="table-wrap">
             <table>
                 <thead>
@@ -165,14 +162,14 @@
                 <tbody id="logBody"></tbody>
             </table>
         </div>
-        <div class="total-banner">
-            <span>СЕГОДНЯШНИЙ ПРОГРЕСС</span>
+        <div class="total-banner" id="totalBanner">
+            <span style="font-weight: 600; letter-spacing: 0.5px;">ПРОГРЕСС ЗА СЕГОДНЯ</span>
             <span class="total-value" id="todayTotal">0</span>
         </div>
     </div>
 
     <div class="bottom-row glass-card">
-        <h2><span>📈</span> ДИНАМИКА РАЗВИТИЯ</h2>
+        <h2><span>📈</span> ИСТОРИЯ РАЗВИТИЯ</h2>
         <div class="chart-viewport" id="chartViewport">
             <div class="chart-container" id="chartContainer">
                 <canvas id="mainChart"></canvas>
@@ -182,6 +179,7 @@
 </div>
 
 <script>
+    // --- КОНФИГУРАЦИЯ ---
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -199,10 +197,15 @@
     const baseRef = db.ref('action_presets');
     let chart;
 
+    // --- ЛОГИКА БАЗЫ ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
-        if(title && xp) { baseRef.push({ title, xp }); document.getElementById('baseTitle').value = ''; document.getElementById('baseXP').value = ''; }
+        if(title && !isNaN(xp)) { 
+            baseRef.push({ title, xp }); 
+            document.getElementById('baseTitle').value = ''; 
+            document.getElementById('baseXP').value = ''; 
+        }
     }
 
     function deleteFromBase(e, id) {
@@ -217,8 +220,8 @@
         for(let id in data) {
             container.innerHTML += `
                 <div class="preset-item" onclick="addToLog('${data[id].title}', ${data[id].xp})">
-                    <span>${data[id].title}</span>
-                    <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-weight:500;">${data[id].title}</span>
+                    <div style="display:flex; align-items:center; gap:12px;">
                         <span class="xp-tag">+${data[id].xp}</span>
                         <span class="del-icon" onclick="deleteFromBase(event, '${id}')">✕</span>
                     </div>
@@ -226,45 +229,80 @@
         }
     });
 
+    // --- ЛОГИКА ЖУРНАЛА ---
     function addToLog(title, xp) {
-        logRef.push({ title, xp, date: new Date().toLocaleDateString(), ts: Date.now() });
+        // Записываем дату строго в формате ДД.ММ.ГГГГ для сравнения
+        const todayStr = new Date().toLocaleDateString('ru-RU');
+        logRef.push({ title, xp, date: todayStr, ts: Date.now() });
     }
 
     function deleteLogItem(id) {
-        if(confirm('Стереть запись?')) logRef.child(id).remove();
+        if(confirm('Удалить эту запись?')) logRef.child(id).remove();
     }
 
     logRef.on('value', snap => {
         const data = snap.val();
         const body = document.getElementById('logBody');
-        const today = new Date().toLocaleDateString();
-        let html = ''; let totalToday = 0; let chartData = {};
-        const sortedIds = Object.keys(data || {}).sort((a,b) => data[b].ts - data[a].ts);
+        const todayStr = new Date().toLocaleDateString('ru-RU'); 
+        
+        let html = ''; 
+        let totalToday = 0; 
+        let chartData = {};
 
-        sortedIds.forEach(id => {
-            const item = data[id];
-            if(item.date === today) totalToday += item.xp;
-            chartData[item.date] = (chartData[item.date] || 0) + item.xp;
-            html += `<tr>
-                <td class="row-date">${item.date}</td>
-                <td style="font-weight:600">${item.title}</td>
-                <td style="color:var(--accent); font-weight:bold">+${item.xp}</td>
-                <td style="text-align:right"><span class="del-icon" onclick="deleteLogItem('${id}')">✕</span></td>
-            </tr>`;
-        });
+        if (data) {
+            const sortedIds = Object.keys(data).sort((a,b) => data[b].ts - data[a].ts);
+
+            sortedIds.forEach(id => {
+                const item = data[id];
+                const itemXP = Number(item.xp) || 0;
+
+                // Важное сравнение дат
+                if(item.date === todayStr) {
+                    totalToday += itemXP;
+                }
+
+                chartData[item.date] = (chartData[item.date] || 0) + itemXP;
+
+                html += `<tr>
+                    <td class="row-date">${item.date}</td>
+                    <td style="font-weight:600">${item.title}</td>
+                    <td style="color:var(--accent); font-weight:bold">+${itemXP}</td>
+                    <td style="text-align:right"><span class="del-icon" onclick="deleteLogItem('${id}')">✕</span></td>
+                </tr>`;
+            });
+        }
+        
         body.innerHTML = html;
-        document.getElementById('todayTotal').innerText = totalToday;
+        
+        // Обновляем прогресс-бар
+        const display = document.getElementById('todayTotal');
+        display.innerText = totalToday;
+        
+        // Визуальная цель: 100 XP
+        if(totalToday >= 100) {
+            display.style.color = "var(--gold)";
+            display.style.textShadow = "0 0 20px rgba(251, 191, 36, 0.6)";
+        } else {
+            display.style.color = "var(--accent)";
+            display.style.textShadow = "none";
+        }
+
         updateChart(chartData);
     });
 
+    // --- ГРАФИК ---
     function updateChart(chartData) {
         const ctx = document.getElementById('mainChart').getContext('2d');
         const container = document.getElementById('chartContainer');
         const viewport = document.getElementById('chartViewport');
-        const labels = Object.keys(chartData).sort((a, b) => new Date(a.split('.').reverse().join('-')) - new Date(b.split('.').reverse().join('-')));
+        const labels = Object.keys(chartData).sort((a, b) => {
+            const dateA = new Date(a.split('.').reverse().join('-'));
+            const dateB = new Date(b.split('.').reverse().join('-'));
+            return dateA - dateB;
+        });
         const dataPoints = labels.map(l => chartData[l]);
         
-        container.style.width = Math.max(viewport.offsetWidth, labels.length * 80) + 'px';
+        container.style.width = Math.max(viewport.offsetWidth, labels.length * 85) + 'px';
 
         if(chart) chart.destroy();
         chart = new Chart(ctx, {
@@ -272,16 +310,19 @@
             data: {
                 labels: labels,
                 datasets: [{ 
-                    label: 'Опыт (XP)', data: dataPoints, 
-                    borderColor: '#a855f7', backgroundColor: 'rgba(168, 85, 247, 0.1)', 
-                    borderWidth: 4, fill: true, tension: 0.4, pointRadius: 6, pointBackgroundColor: '#fff'
+                    label: 'XP', data: dataPoints, 
+                    borderColor: '#a855f7', 
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)', 
+                    borderWidth: 4, fill: true, tension: 0.4,
+                    pointRadius: 5, pointBackgroundColor: '#fff',
+                    pointHoverRadius: 8
                 }]
             },
             options: {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
+                    y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
                     x: { grid: { display: false }, ticks: { color: '#64748b' } }
                 }
             }
@@ -289,6 +330,5 @@
         setTimeout(() => { viewport.scrollLeft = viewport.scrollWidth; }, 300);
     }
 </script>
-
 </body>
 </html>
