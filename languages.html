@@ -35,12 +35,11 @@
     /* Стили для экзамена */
     .test-word { font-size: 36px; color: var(--gold); margin: 20px 0; font-weight: bold; text-align: center; word-wrap: break-word; }
     
-    /* ⭐ ИСПРАВЛЕННЫЕ СТИЛИ ДЛЯ КОМПАКТНОГО ТОПА ЭКЗАМЕНА ⭐ */
     .test-header-row { 
         display: flex; 
         justify-content: space-between; 
         align-items: center; 
-        margin-bottom: 10px; /* Убрали лишнее место снизу */
+        margin-bottom: 10px; 
         padding-bottom: 5px;
         border-bottom: 1px solid #1e2a44;
     }
@@ -49,12 +48,17 @@
     .feedback-note { background: #000; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--accent); color: var(--text-muted); font-size: 14px; }
     .muted { color: var(--text-muted); font-size: 14px; }
     
-    /* Стили сердечек */
     .fav-btn { cursor: pointer; font-size: 20px; transition: 0.2s; background: none; border: none; padding: 0; line-height: 1; }
     .fav-btn.active { color: var(--heart); }
     .fav-btn.inactive { color: #333; }
 
     .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    
+    /* Стили для проверки дубликатов */
+    .duplicate-warning { font-size: 12px; margin-top: 5px; display: none; align-items: center; gap: 5px; }
+    .is-duplicate { color: var(--error); display: flex; }
+    .is-unique { color: var(--success); display: flex; }
+
     @media (max-width: 600px) { 
         .add-grid { grid-template-columns: 1fr; }
         main { padding: 15px; }
@@ -107,11 +111,14 @@
   <div class="card" style="border: 1px solid var(--accent)">
     <h3 style="margin-top:0">➕ Добавить новое</h3>
     <div class="add-grid">
-        <input id="text" placeholder="Слово / Фраза">
+        <div>
+            <input id="text" placeholder="Слово / Фраза" oninput="checkDuplicate(this.value)">
+            <div id="dupMsg" class="duplicate-warning"></div>
+        </div>
         <input id="translation" placeholder="Перевод">
     </div>
     <textarea id="note" placeholder="Заметка (необязательно)" rows="2"></textarea>
-    <button class="btn" style="width:100%; margin-top:10px" onclick="add()">Сохранить в базу</button>
+    <button class="btn" id="addBtn" style="width:100%; margin-top:10px" onclick="add()">Сохранить в базу</button>
   </div>
 
   <div style="display:flex; gap:10px; margin-bottom:20px">
@@ -149,6 +156,31 @@ let fullSnapshotData = [];
 let onlyFavoritesTest = false;
 
 window.onload = () => { loadData(); };
+
+// Функция мгновенной проверки на дубликат
+window.checkDuplicate = (val) => {
+    const msgDiv = document.getElementById("dupMsg");
+    const addBtn = document.getElementById("addBtn");
+    const cleanVal = val.trim().toLowerCase();
+
+    if (cleanVal.length < 2) {
+        msgDiv.style.display = "none";
+        return;
+    }
+
+    const exists = fullSnapshotData.find(i => i.text.toLowerCase() === cleanVal);
+
+    msgDiv.style.display = "flex";
+    if (exists) {
+        msgDiv.className = "duplicate-warning is-duplicate";
+        msgDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Уже есть в базе (${exists.translation})`;
+        // addBtn.style.opacity = "0.5"; // Можно заблокировать кнопку, если нужно
+    } else {
+        msgDiv.className = "duplicate-warning is-unique";
+        msgDiv.innerHTML = `<i class="fas fa-check-circle"></i> Новое слово`;
+        addBtn.style.opacity = "1";
+    }
+};
 
 async function loadData() {
   const list = document.getElementById("list");
@@ -217,6 +249,7 @@ async function add() {
   document.getElementById("text").value = "";
   document.getElementById("translation").value = "";
   document.getElementById("note").value = "";
+  document.getElementById("dupMsg").style.display = "none";
   loadData();
 }
 
@@ -226,9 +259,6 @@ window.applySearch = () => {
     renderList(filtered);
 };
 
-// =======================
-// 🧠 TEST LOGIC
-// =======================
 let testWords = [];
 let testIndex = 0;
 
@@ -253,7 +283,6 @@ async function beginTest() {
   const count = Number(countInput.value);
   let pool = onlyFavoritesTest ? fullSnapshotData.filter(i => i.favorite === true) : fullSnapshotData;
 
-  // Если слов меньше, чем запрошено, берем все доступные
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
   testIndex = 0;
   document.getElementById("setupTest").style.display = "none";
@@ -270,7 +299,6 @@ function showQuestion() {
   const word = testWords[testIndex];
   const isFav = word.favorite === true;
 
-  // ⭐ ПРИМЕНЯЕМ FLEX ДЛЯ ВЫРАВНИВАНИЯ СЕРДЦА И ТЕКСТА ВОПРОСА В ОДИН РЯД ⭐
   area.innerHTML = `
     <div class="test-header-row">
         <p class="test-q-count">Вопрос ${testIndex + 1} из ${testWords.length}</p>
@@ -288,24 +316,17 @@ function showQuestion() {
   `;
 }
 
-// Специальная функция для теста (без перезагрузки списка)
 window.toggleFavInTest = async (id, currentState) => {
     const wordDoc = doc(db, "languages", id);
     const newState = !currentState;
-    
-    // Оптимистичное обновление UI (сразу меняем иконку)
     const btn = document.querySelector("#testArea .fav-btn");
     btn.className = `fav-btn ${newState ? 'active' : 'inactive'}`;
     btn.innerHTML = `<i class="${newState ? 'fas' : 'far'} fa-heart"></i>`;
-    // Перепривязываем функцию с новым состоянием
     btn.onclick = () => toggleFavInTest(id, newState);
 
-    // Обновляем в базе и локальном пуле теста
     await updateDoc(wordDoc, { favorite: newState });
     const wordInTest = testWords.find(w => w.id === id);
     if(wordInTest) wordInTest.favorite = newState;
-    
-    // Также обновляем в основном snapshot, чтобы при выходе из теста состояние сохранилось
     const wordInMain = fullSnapshotData.find(w => w.id === id);
     if(wordInMain) wordInMain.favorite = newState;
 };
@@ -326,7 +347,6 @@ function nextQuestion() { testIndex++; showQuestion(); }
 function setLang(l) { currentLang = l; loadData(); }
 function setType(t) { currentType = t; loadData(); }
 
-// Привязки
 window.add = add; window.removeItem = removeItem; window.setLang = setLang; 
 window.setType = setType; window.startTestMode = startTestMode; 
 window.beginTest = beginTest; window.revealAnswer = revealAnswer; 
