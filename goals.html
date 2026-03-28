@@ -1,1 +1,153 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goals & Future Plans</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --accent: #a855f7;
+            --nav-bg: #0f172a;
+            --text: #f8fafc;
+        }
 
+        body {
+            margin: 0; font-family: 'Inter', sans-serif;
+            background: #030712; color: var(--text);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        /* Навигация как в планере */
+        .top-nav {
+            width: 100%; background: var(--nav-bg); 
+            border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: center; padding: 12px 0;
+            position: sticky; top: 0; z-index: 1000;
+        }
+        .nav-container { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .nav-link {
+            text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 500;
+            padding: 6px 12px; border-radius: 8px; transition: 0.3s;
+        }
+        .nav-link:hover { color: white; background: rgba(255,255,255,0.05); }
+        .nav-link.active { color: white; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
+
+        .container {
+            width: 95%; max-width: 1200px; padding: 25px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px; box-sizing: border-box;
+        }
+
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 24px; display: flex; flex-direction: column; gap: 15px;
+        }
+
+        h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; margin: 0; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
+        h2 span { color: var(--accent); }
+
+        textarea {
+            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            border-radius: 12px; color: white; padding: 15px; min-height: 250px;
+            resize: vertical; font-family: inherit; line-height: 1.6; outline: none; transition: 0.3s;
+        }
+        textarea:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
+
+        .status-msg { font-size: 12px; color: #64748b; text-align: right; }
+        
+        .save-hint {
+            grid-column: 1 / -1; text-align: center; color: #64748b; font-size: 14px; margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-container">
+        <a href="index.html" class="nav-link">🏠 Главная</a>
+        <a href="planer.html" class="nav-link">🚀 Планер</a>
+        <a href="goals.html" class="nav-link active">🎯 Цели</a>
+        </div>
+</nav>
+
+<div class="container">
+    <div class="save-hint">Данные сохраняются автоматически при каждом изменении ☁️</div>
+
+    <div class="glass-card">
+        <h2><span>📅</span> План на завтра</h2>
+        <textarea id="tomorrow_plan" placeholder="Что нужно сделать завтра? (список дел...)"></textarea>
+        <div class="status-msg" id="msg_tomorrow_plan">Облако синхронизировано</div>
+    </div>
+
+    <div class="glass-card">
+        <h2><span>🚀</span> Ближайшие цели</h2>
+        <textarea id="short_term_goals" placeholder="Цели на месяц / сезон..."></textarea>
+        <div class="status-msg" id="msg_short_term_goals">Облако синхронизировано</div>
+    </div>
+
+    <div class="glass-card">
+        <h2><span>🌌</span> Глобальные цели</h2>
+        <textarea id="long_term_goals" placeholder="Чего я хочу достичь в жизни?"></textarea>
+        <div class="status-msg" id="msg_long_term_goals">Облако синхронизировано</div>
+    </div>
+</div>
+
+<script>
+    // Тот же конфиг, что и в планере
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
+        authDomain: "my-dashboard-dc67a.firebaseapp.com",
+        databaseURL: "https://my-dashboard-dc67a-default-rtdb.firebaseio.com",
+        projectId: "my-dashboard-dc67a",
+        storageBucket: "my-dashboard-dc67a.appspot.com",
+        messagingSenderId: "710702954120",
+        appId: "1:710702954120:web:f06b1038c48d3bd328913d",
+        measurementId: "G-74720EWKSB"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const goalsRef = db.ref('user_goals');
+
+    const fields = ['tomorrow_plan', 'short_term_goals', 'long_term_goals'];
+
+    // Загрузка данных
+    goalsRef.on('value', snap => {
+        const data = snap.val() || {};
+        fields.forEach(field => {
+            // Обновляем текст только если пользователь сейчас не пишет в этом поле
+            if (document.activeElement !== document.getElementById(field)) {
+                document.getElementById(field).value = data[field] || '';
+            }
+        });
+    });
+
+    // Автосохранение при вводе
+    fields.forEach(field => {
+        const el = document.getElementById(field);
+        const msg = document.getElementById('msg_' + field);
+
+        el.addEventListener('input', () => {
+            msg.innerText = "Сохранение...";
+            msg.style.color = "#fbbf24";
+
+            // Сохраняем конкретное поле
+            goalsRef.update({
+                [field]: el.value
+            }).then(() => {
+                setTimeout(() => {
+                    msg.innerText = "Облако синхронизировано";
+                    msg.style.color = "#64748b";
+                }, 1000);
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
