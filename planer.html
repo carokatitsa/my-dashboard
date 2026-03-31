@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Life Planer v4.5 - Hardcore Edition</title>
+    <title>RPG Life Planer v5.0 - Hardcore Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -16,65 +16,90 @@
             --danger: #ef4444;
             --success: #22c55e;
             --text: #f8fafc;
-            --nav-bg: #0f172a;
+            --bg: #030712;
         }
 
         body {
             margin: 0; font-family: 'Inter', sans-serif;
-            background: #030712; color: var(--text);
+            background: var(--bg); color: var(--text);
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- RPG UI --- */
-        .level-card {
+        /* --- Layout --- */
+        .container {
+            display: grid;
+            grid-template-columns: 350px 1fr 350px; /* Три колонки */
+            gap: 20px; width: 100%; max-width: 1600px; padding: 20px; box-sizing: border-box;
+        }
+
+        .glass-card {
+            background: var(--glass); backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            padding: 20px; display: flex; flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        /* --- RPG Level Header --- */
+        .level-header {
             grid-column: 1 / -1;
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(239, 68, 68, 0.1));
-            border: 1px solid var(--glass-border);
-            border-radius: 20px; padding: 20px; margin-bottom: 20px;
-            display: flex; align-items: center; gap: 25px;
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.15), rgba(0,0,0,0));
+            border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 20px; display: flex; align-items: center; gap: 20px;
         }
-
         .level-circle {
-            width: 70px; height: 70px; border: 4px solid var(--accent);
+            width: 60px; height: 60px; border: 3px solid var(--accent);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 24px; font-weight: 900; color: var(--accent);
-            background: rgba(0,0,0,0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            font-size: 22px; font-weight: 900; color: var(--accent); background: #000;
         }
+        .exp-bar-bg { flex-grow: 1; height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; position: relative; }
+        .exp-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: 1s cubic-bezier(0.4, 0, 0.2, 1); }
 
-        .exp-container { flex-grow: 1; }
-        .exp-bar-bg { height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; margin-top: 8px; }
-        .exp-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: 1s; }
+        /* --- UI Elements --- */
+        h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        h2 span { color: var(--accent); }
 
-        .container { display: grid; grid-template-columns: 350px 1fr; gap: 20px; width: 100%; max-width: 1400px; padding: 20px; box-sizing: border-box; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 20px; }
+        .input-group input { 
+            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); 
+            padding: 10px; border-radius: 10px; color: white; margin-bottom: 8px; width: 100%; box-sizing: border-box;
+        }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-add:hover { opacity: 0.8; transform: translateY(-2px); }
 
-        /* --- ITEMS --- */
-        .preset-item { 
-            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); 
-            padding: 12px; border-radius: 12px; margin-bottom: 8px;
+        /* --- Items & Lists --- */
+        .preset-item {
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+            padding: 12px; border-radius: 15px; margin-bottom: 8px;
             display: flex; justify-content: space-between; align-items: center; cursor: pointer;
         }
         .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
         .preset-item.penalty { border-color: var(--danger); }
-        
         .star { color: #334155; font-size: 18px; }
         .star.active { color: var(--gold); }
 
-        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
-        
         table { width: 100%; border-collapse: collapse; }
-        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+        td { padding: 12px 8px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
 
-        .archive-day { background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 5px; padding: 10px; cursor: pointer; }
+        /* --- Archive Right Panel --- */
+        .archive-list { overflow-y: auto; max-height: 600px; }
+        .archive-item {
+            padding: 12px; border-bottom: 1px solid var(--glass-border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .archive-item b { color: var(--accent); }
+
+        @media (max-width: 1100px) {
+            .container { grid-template-columns: 1fr; }
+            .level-header { grid-column: auto; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="level-card">
+    <div class="level-header">
         <div class="level-circle" id="userLvl">1</div>
-        <div class="exp-container">
-            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
+        <div style="flex-grow: 1;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold; margin-bottom:5px;">
                 <span id="rankName">НОВИЧОК</span>
                 <span><span id="currentExp">0</span> / <span id="targetExp">100</span> XP</span>
             </div>
@@ -83,28 +108,37 @@
     </div>
 
     <div class="glass-card">
-        <h2><span>★</span> БАЗА ДЕЙСТВИЙ</h2>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;">
-            <input type="text" id="baseTitle" placeholder="Действие..." style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; color:white; border-radius:8px;">
-            <input type="number" id="baseXP" placeholder="XP (напр. -50 или 100)" style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; color:white; border-radius:8px;">
-            <button class="btn-add" onclick="saveToBase()">ДОБАВИТЬ ШАБЛОН</button>
+        <h2><span>★</span> БАЗА МИССИЙ</h2>
+        <div class="input-group">
+            <input type="text" id="baseTitle" placeholder="Действие...">
+            <input type="number" id="baseXP" placeholder="XP (напр. -50 или 100)">
+            <button class="btn-add" onclick="saveToBase()" style="width:100%">ДОБАВИТЬ ШАБЛОН</button>
         </div>
-        <div id="actionBase"></div>
+        <div id="actionBase" style="margin-top: 15px;"></div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="glass-card" style="height: 300px;">
+            <h2><span>📈</span> ДИНАМИКА XP</h2>
+            <canvas id="mainChart"></canvas>
+        </div>
+        
+        <div class="glass-card">
+            <h2 style="display:flex; justify-content:space-between;">
+                <span>⚡ ЖУРНАЛ СЕГОДНЯ</span>
+                <span id="todayTotal" style="color:var(--gold); font-weight:900;">0 XP</span>
+            </h2>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <table>
+                    <tbody id="logBody"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="glass-card">
-        <h2 style="display:flex; justify-content:space-between;">
-            <span>⚡ ЖУРНАЛ СЕГОДНЯ</span>
-            <span id="todayTotal" style="color:var(--gold)">0 XP</span>
-        </h2>
-        <table id="logTable">
-            <tbody id="logBody"></tbody>
-        </table>
-    </div>
-
-    <div class="glass-card" style="grid-column: 1/-1;">
-        <h2><span>📜</span> АРХИВ ДНЕЙ</h2>
-        <div id="archiveDays" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;"></div>
+        <h2><span>📜</span> ИСТОРИЯ ДНЕЙ</h2>
+        <div class="archive-list" id="archiveDays"></div>
     </div>
 </div>
 
@@ -126,9 +160,10 @@
     const statsRef = db.ref('user_stats');
     const archiveRef = db.ref('daily_archive');
 
+    let chart;
     function getToday() { return new Date().toLocaleDateString('ru-RU').replace(/\//g, '.'); }
 
-    // --- RPG ЛОГИКА ---
+    // --- RPG Logic ---
     function updateRPG(totalXP) {
         const level = Math.floor(Math.sqrt(totalXP / 100)) + 1;
         const currentLevelStartXP = Math.pow(level - 1, 2) * 100;
@@ -139,6 +174,9 @@
         document.getElementById('currentExp').innerText = Math.floor(totalXP - currentLevelStartXP);
         document.getElementById('targetExp').innerText = nextLevelStartXP - currentLevelStartXP;
         document.getElementById('expFill').style.width = progress + '%';
+        
+        const ranks = ["Новичок", "Авантюрист", "Воин", "Мастер", "Легенда"];
+        document.getElementById('rankName').innerText = ranks[Math.min(Math.floor(level/5), 4)].toUpperCase();
     }
 
     statsRef.on('value', snap => { if(snap.val()) updateRPG(snap.val().totalXP || 0); });
@@ -149,14 +187,13 @@
         statsRef.update({ totalXP: Math.max(0, current + amount) });
     }
 
-    // --- БАЗА ШАБЛОНОВ ---
+    // --- Templates ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
         if(title && !isNaN(xp)) {
             baseRef.push({ title, xp, important: false });
-            document.getElementById('baseTitle').value = '';
-            document.getElementById('baseXP').value = '';
+            document.getElementById('baseTitle').value = ''; document.getElementById('baseXP').value = '';
         }
     }
 
@@ -170,14 +207,12 @@
             container.innerHTML += `
                 <div class="preset-item ${item.important?'important':''} ${isPenalty?'penalty':''}" onclick="addToLog('${item.title}', ${item.xp})">
                     <span>${isPenalty?'💀':'🔹'} ${item.title} <b>${item.xp>0?'+':''}${item.xp}</b></span>
-                    <span class="star ${item.important?'active':''}" onclick="event.stopPropagation(); toggleStar('${id}', ${item.important})">★</span>
+                    <span class="star ${item.important?'active':''}" onclick="event.stopPropagation(); baseRef.child('${id}').update({important:!${item.important}})">★</span>
                 </div>`;
         }
     });
 
-    function toggleStar(id, current) { baseRef.child(id).update({ important: !current }); }
-
-    // --- ЖУРНАЛ ---
+    // --- Log & Auto-Archive ---
     function addToLog(title, xp) {
         const time = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         logRef.push({ title, xp, date: getToday(), time, ts: Date.now() });
@@ -189,64 +224,65 @@
         const body = document.getElementById('logBody');
         let total = 0; body.innerHTML = '';
         const data = snap.val();
-        
-        // ПРОВЕРКА АВТО-ЗАКРЫТИЯ (Если дата сменилась)
+        let chartData = {};
+
         if(data) {
             const entries = Object.entries(data);
             const lastDate = entries[entries.length-1][1].date;
-            if(lastDate !== today) { 
-                autoArchiveYesterday(data); 
-                return;
-            }
+            
+            if(lastDate !== today) { autoArchiveYesterday(data); return; }
 
             entries.reverse().forEach(([id, item]) => {
+                chartData[item.date] = (chartData[item.date] || 0) + item.xp;
                 if(item.date === today) {
                     total += item.xp;
                     body.innerHTML += `<tr>
-                        <td style="opacity:0.5; width:50px">${item.time}</td>
+                        <td style="opacity:0.4; width:50px">${item.time}</td>
                         <td>${item.title}</td>
-                        <td style="color:${item.xp>0?'var(--accent)':'var(--danger)'}; text-align:right"><b>${item.xp>0?'+':''}${item.xp} XP</b></td>
+                        <td style="text-align:right; color:${item.xp>=0?'var(--accent)':'var(--danger)'}"><b>${item.xp>0?'+':''}${item.xp} XP</b></td>
+                        <td style="width:20px; cursor:pointer; opacity:0.3;" onclick="deleteLog('${id}', ${item.xp})">✕</td>
                     </tr>`;
                 }
             });
         }
         document.getElementById('todayTotal').innerText = total + ' XP';
+        updateChart(chartData);
     });
 
-    // --- АВТОМАТИЧЕСКОЕ ЗАКРЫТИЕ ДНЯ ---
+    function deleteLog(id, xp) { if(confirm('Удалить запись?')) { logRef.child(id).remove(); changeXP(-xp); } }
+
     async function autoArchiveYesterday(allLogs) {
         const datesInLog = [...new Set(Object.values(allLogs).map(l => l.date))];
         const yesterday = datesInLog.find(d => d !== getToday());
-        
         if(!yesterday) return;
 
         const dayLogs = Object.values(allLogs).filter(l => l.date === yesterday);
         const presets = (await baseRef.once('value')).val();
         let dayTotal = dayLogs.reduce((sum, item) => sum + item.xp, 0);
 
-        // Проверка пропущенных звезд
         const doneTitles = dayLogs.map(l => l.title);
         for(let id in presets) {
             if(presets[id].important && !doneTitles.includes(presets[id].title)) {
-                const penalty = -presets[id].xp;
-                dayTotal += penalty;
-                changeXP(penalty); // Вычитаем из общего уровня за пропуск
+                dayTotal -= presets[id].xp;
+                changeXP(-presets[id].xp);
             }
         }
-
-        // Сохраняем в архив
-        await archiveRef.child(yesterday.replace(/\./g, '_')).set({
-            date: yesterday,
-            total: dayTotal,
-            logs: dayLogs
-        });
-
-        // Чистим старые логи из оперативной ветки
+        await archiveRef.child(yesterday.replace(/\./g, '_')).set({ date: yesterday, total: dayTotal });
         const updates = {};
-        Object.keys(allLogs).forEach(key => {
-            if(allLogs[key].date === yesterday) updates[key] = null;
-        });
+        Object.keys(allLogs).forEach(key => { if(allLogs[key].date === yesterday) updates[key] = null; });
         logRef.update(updates);
+    }
+
+    // --- Chart & History UI ---
+    function updateChart(chartData) {
+        const ctx = document.getElementById('mainChart').getContext('2d');
+        const labels = Object.keys(chartData).sort();
+        if(chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: { labels, datasets: [{ label: 'XP', data: labels.map(l => chartData[l]), borderColor: '#a855f7', tension: 0.4, fill: true, backgroundColor: 'rgba(168, 85, 247, 0.05)' }] },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+        });
     }
 
     archiveRef.on('value', snap => {
@@ -255,11 +291,9 @@
         const data = snap.val();
         if(data) {
             Object.values(data).reverse().forEach(day => {
-                cont.innerHTML += `<div class="archive-day">
-                    <div style="display:flex; justify-content:space-between">
-                        <b>${day.date}</b>
-                        <span style="color:var(--accent)">${day.total} XP</span>
-                    </div>
+                cont.innerHTML += `<div class="archive-item">
+                    <span>📅 ${day.date}</span>
+                    <b>${day.total} XP</b>
                 </div>`;
             });
         }
