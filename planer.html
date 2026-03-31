@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RPG Life Planer v4.0</title>
+    <title>RPG Life Planer v4.5 - Hardcore Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -25,127 +25,90 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        /* --- RPG LEVEL STYLES --- */
+        /* --- RPG UI --- */
         .level-card {
             grid-column: 1 / -1;
-            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(99, 102, 241, 0.1));
-            border: 1px solid var(--accent);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 25px;
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.1), rgba(239, 68, 68, 0.1));
+            border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 20px; margin-bottom: 20px;
+            display: flex; align-items: center; gap: 25px;
         }
 
         .level-circle {
-            width: 70px; height: 70px;
-            border: 4px solid var(--accent);
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
+            width: 70px; height: 70px; border: 4px solid var(--accent);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
             font-size: 24px; font-weight: 900; color: var(--accent);
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.4); box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
         }
 
         .exp-container { flex-grow: 1; }
-        .exp-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
-        .exp-bar-bg { height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; border: 1px solid var(--glass-border); }
-        .exp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #6366f1); width: 0%; transition: 1s cubic-bezier(0.22, 1, 0.36, 1); }
+        .exp-bar-bg { height: 10px; background: rgba(255,255,255,0.05); border-radius: 5px; overflow: hidden; margin-top: 8px; }
+        .exp-bar-fill { height: 100%; background: var(--accent); width: 0%; transition: 1s; }
 
-        /* --- ОСТАЛЬНЫЕ СТИЛИ (ТВОИ ОРИГИНАЛЬНЫЕ) --- */
-        .top-nav { width: 100%; background: var(--nav-bg); border-bottom: 1px solid var(--glass-border); display: flex; justify-content: center; padding: 12px 0; position: sticky; top: 0; z-index: 1000; }
-        .nav-container { display: flex; gap: 15px; max-width: 1400px; width: 95%; justify-content: center; align-items: center; flex-wrap: wrap; }
-        .nav-link { text-decoration: none; color: #94a3b8; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 6px; transition: 0.3s; padding: 6px 12px; border-radius: 8px; }
-        .nav-link:hover { color: white; background: rgba(255,255,255,0.05); }
-        .nav-link.active { color: white; background: rgba(168, 85, 247, 0.15); border: 1px solid rgba(168, 85, 247, 0.3); }
-        .container { display: grid; grid-template-columns: 350px 1fr; gap: 20px; width: 100%; max-width: 1400px; padding: 25px; box-sizing: border-box; }
-        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.4); display: flex; flex-direction: column; }
-        h2 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 20px 0; color: #94a3b8; display: flex; align-items: center; gap: 10px; }
-        h2 span { color: var(--accent); }
-        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        input { background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); padding: 12px; border-radius: 12px; color: white; outline: none; }
-        .btn-add { background: linear-gradient(135deg, var(--accent), #6366f1); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; }
-        .preset-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
-        .preset-item { background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: 0.2s; }
-        .preset-item:hover { background: rgba(255,255,255,0.05); transform: translateX(5px); }
-        .table-wrap { flex-grow: 1; overflow-y: auto; }
+        .container { display: grid; grid-template-columns: 350px 1fr; gap: 20px; width: 100%; max-width: 1400px; padding: 20px; box-sizing: border-box; }
+        .glass-card { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid var(--glass-border); border-radius: 24px; padding: 20px; }
+
+        /* --- ITEMS --- */
+        .preset-item { 
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); 
+            padding: 12px; border-radius: 12px; margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
+        }
+        .preset-item.important { border-color: var(--gold); background: rgba(251, 191, 36, 0.05); }
+        .preset-item.penalty { border-color: var(--danger); }
+        
+        .star { color: #334155; font-size: 18px; }
+        .star.active { color: var(--gold); }
+
+        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; width: 100%; }
+        
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; color: #475569; font-size: 11px; padding: 10px; border-bottom: 1px solid var(--glass-border); }
-        td { padding: 12px 10px; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 14px; }
-        .bottom-area { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 400px; gap: 20px; margin-top: 20px; }
-        .archive-day { background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 15px; margin-bottom: 8px; }
-        .archive-header { padding: 12px 15px; cursor: pointer; display: flex; justify-content: space-between; }
-        .archive-details { display: none; padding: 10px 15px; border-top: 1px solid var(--glass-border); color: #94a3b8; font-size: 12px; }
-        .archive-day.open .archive-details { display: block; }
+        td { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.02); }
+
+        .archive-day { background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 5px; padding: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-<nav class="top-nav">
-    <div class="nav-container">
-        <a href="#" class="nav-link">🏠 Главная</a>
-        <a href="#" class="nav-link active">🚀 Планер</a>
-        <a href="#" class="nav-link">🍎 КБЖУ</a>
-    </div>
-</nav>
 
 <div class="container">
     <div class="level-card">
         <div class="level-circle" id="userLvl">1</div>
         <div class="exp-container">
-            <div class="exp-header">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:12px;">
                 <span id="rankName">НОВИЧОК</span>
                 <span><span id="currentExp">0</span> / <span id="targetExp">100</span> XP</span>
             </div>
-            <div class="exp-bar-bg">
-                <div class="exp-bar-fill" id="expFill"></div>
-            </div>
+            <div class="exp-bar-bg"><div class="exp-bar-fill" id="expFill"></div></div>
         </div>
     </div>
 
     <div class="glass-card">
-        <h2><span>✦</span> МИССИИ И ДЕЙСТВИЯ</h2>
-        <div class="input-group">
-            <input type="text" id="baseTitle" placeholder="Название миссии...">
-            <input type="number" id="baseXP" placeholder="XP награда">
-            <input type="hidden" id="editKey">
-            <button class="btn-add" id="saveBtn" onclick="saveToBase()">ДОБАВИТЬ В БАЗУ</button>
+        <h2><span>★</span> БАЗА ДЕЙСТВИЙ</h2>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px;">
+            <input type="text" id="baseTitle" placeholder="Действие..." style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; color:white; border-radius:8px;">
+            <input type="number" id="baseXP" placeholder="XP (напр. -50 или 100)" style="background:rgba(0,0,0,0.2); border:1px solid var(--glass-border); padding:10px; color:white; border-radius:8px;">
+            <button class="btn-add" onclick="saveToBase()">ДОБАВИТЬ ШАБЛОН</button>
         </div>
-        <div class="preset-list" id="actionBase"></div>
+        <div id="actionBase"></div>
     </div>
 
     <div class="glass-card">
-        <h2><span>⚡</span> ЖУРНАЛ ЗАДАНИЙ (СЕГОДНЯ)</h2>
-        <div class="table-wrap">
-            <table>
-                <thead><tr><th>Время</th><th>Миссия</th><th>Награда</th><th></th></tr></thead>
-                <tbody id="logBody"></tbody>
-            </table>
-        </div>
-        <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <div style="font-size: 11px; color: #64748b;">ДОХОД ЗА ДЕНЬ</div>
-                <div style="font-size: 24px; font-weight: 900; color: var(--gold);" id="todayTotal">0 XP</div>
-            </div>
-            <button class="btn-add" style="background: var(--success);" onclick="finishDay()">ЗАВЕРШИТЬ ДЕНЬ</button>
-        </div>
+        <h2 style="display:flex; justify-content:space-between;">
+            <span>⚡ ЖУРНАЛ СЕГОДНЯ</span>
+            <span id="todayTotal" style="color:var(--gold)">0 XP</span>
+        </h2>
+        <table id="logTable">
+            <tbody id="logBody"></tbody>
+        </table>
     </div>
 
-    <div class="bottom-area">
-        <div class="glass-card" style="height: 300px;">
-            <h2><span>📈</span> ПРОГРЕСС</h2>
-            <canvas id="mainChart"></canvas>
-        </div>
-        <div class="glass-card">
-            <h2><span>📜</span> ИСТОРИЯ СВЕРШЕНИЙ</h2>
-            <div id="archiveDays" class="archive-list"></div>
-        </div>
+    <div class="glass-card" style="grid-column: 1/-1;">
+        <h2><span>📜</span> АРХИВ ДНЕЙ</h2>
+        <div id="archiveDays" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;"></div>
     </div>
 </div>
 
 <script>
-    // --- FIREBASE CONFIG (Твой оригинальный) ---
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZks9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -158,56 +121,35 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    
-    // Ссылки
     const logRef = db.ref('daily_log');
     const baseRef = db.ref('action_presets');
+    const statsRef = db.ref('user_stats');
     const archiveRef = db.ref('daily_archive');
-    const statsRef = db.ref('user_stats'); // Новая ветка для RPG системы
-
-    let chart;
 
     function getToday() { return new Date().toLocaleDateString('ru-RU').replace(/\//g, '.'); }
 
-    // --- RPG SYSTEM LOGIC ---
-    // Формула: Уровень = Корень(Всего_XP / 100) + 1
-    // Это значит: 1ур = 0 XP, 2ур = 400 XP, 3ур = 900 XP, 10ур = 10 000 XP
+    // --- RPG ЛОГИКА ---
     function updateRPG(totalXP) {
         const level = Math.floor(Math.sqrt(totalXP / 100)) + 1;
-        const currentLevelXP = Math.pow(level - 1, 2) * 100;
-        const nextLevelXP = Math.pow(level, 2) * 100;
-        
-        const neededForLevel = nextLevelXP - currentLevelXP;
-        const earnedInLevel = totalXP - currentLevelXP;
-        const progressPercent = (earnedInLevel / neededForLevel) * 100;
+        const currentLevelStartXP = Math.pow(level - 1, 2) * 100;
+        const nextLevelStartXP = Math.pow(level, 2) * 100;
+        const progress = ((totalXP - currentLevelStartXP) / (nextLevelStartXP - currentLevelStartXP)) * 100;
 
         document.getElementById('userLvl').innerText = level;
-        document.getElementById('currentExp').innerText = Math.floor(earnedInLevel);
-        document.getElementById('targetExp').innerText = neededForLevel;
-        document.getElementById('expFill').style.width = progressPercent + '%';
-
-        // Ранги
-        const ranks = ["Новичок", "Ученик", "Авантюрист", "Воин", "Мастер", "Герой", "Легенда", "Демиург"];
-        const rankIdx = Math.min(Math.floor(level / 5), ranks.length - 1);
-        document.getElementById('rankName').innerText = ranks[rankIdx].toUpperCase();
+        document.getElementById('currentExp').innerText = Math.floor(totalXP - currentLevelStartXP);
+        document.getElementById('targetExp').innerText = nextLevelStartXP - currentLevelStartXP;
+        document.getElementById('expFill').style.width = progress + '%';
     }
 
-    // Загрузка статистики
-    statsRef.on('value', snap => {
-        const stats = snap.val() || { totalXP: 0 };
-        updateRPG(stats.totalXP);
-    });
+    statsRef.on('value', snap => { if(snap.val()) updateRPG(snap.val().totalXP || 0); });
 
-    // Добавление XP в общую копилку
-    async function addGlobalXP(amount) {
+    async function changeXP(amount) {
         const snap = await statsRef.once('value');
-        const current = snap.val() || { totalXP: 0 };
-        const newXP = Math.max(0, current.totalXP + amount);
-        statsRef.update({ totalXP: newXP });
+        const current = snap.val() ? snap.val().totalXP : 0;
+        statsRef.update({ totalXP: Math.max(0, current + amount) });
     }
 
-    // --- ТВОИ ОРИГИНАЛЬНЫЕ ФУНКЦИИ (С ИНТЕГРАЦИЕЙ XP) ---
-
+    // --- БАЗА ШАБЛОНОВ ---
     function saveToBase() {
         const title = document.getElementById('baseTitle').value;
         const xp = parseInt(document.getElementById('baseXP').value);
@@ -219,101 +161,109 @@
     }
 
     baseRef.on('value', snap => {
-        const data = snap.val();
         const container = document.getElementById('actionBase');
         container.innerHTML = '';
+        const data = snap.val();
         for(let id in data) {
             const item = data[id];
+            const isPenalty = item.xp < 0;
             container.innerHTML += `
-                <div class="preset-item" onclick="addToLog('${item.title}', ${item.xp})">
-                    <span>${item.title} <b style="color:var(--accent)">+${item.xp}</b></span>
-                    <span style="opacity:0.3" onclick="event.stopPropagation(); baseRef.child('${id}').remove()">✕</span>
+                <div class="preset-item ${item.important?'important':''} ${isPenalty?'penalty':''}" onclick="addToLog('${item.title}', ${item.xp})">
+                    <span>${isPenalty?'💀':'🔹'} ${item.title} <b>${item.xp>0?'+':''}${item.xp}</b></span>
+                    <span class="star ${item.important?'active':''}" onclick="event.stopPropagation(); toggleStar('${id}', ${item.important})">★</span>
                 </div>`;
         }
     });
 
+    function toggleStar(id, current) { baseRef.child(id).update({ important: !current }); }
+
+    // --- ЖУРНАЛ ---
     function addToLog(title, xp) {
-        const now = new Date();
-        const time = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+        const time = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
         logRef.push({ title, xp, date: getToday(), time, ts: Date.now() });
-        addGlobalXP(xp); // Добавляем в общий уровень
+        changeXP(xp);
     }
 
     logRef.on('value', snap => {
-        const data = snap.val();
         const today = getToday();
-        let total = 0; let html = ''; let chartData = {};
+        const body = document.getElementById('logBody');
+        let total = 0; body.innerHTML = '';
+        const data = snap.val();
         
+        // ПРОВЕРКА АВТО-ЗАКРЫТИЯ (Если дата сменилась)
         if(data) {
-            const entries = Object.entries(data).sort((a,b) => b[1].ts - a[1].ts);
-            entries.forEach(([id, item]) => {
-                chartData[item.date] = (chartData[item.date] || 0) + Number(item.xp);
+            const entries = Object.entries(data);
+            const lastDate = entries[entries.length-1][1].date;
+            if(lastDate !== today) { 
+                autoArchiveYesterday(data); 
+                return;
+            }
+
+            entries.reverse().forEach(([id, item]) => {
                 if(item.date === today) {
-                    total += Number(item.xp);
-                    html += `<tr>
-                        <td>${item.time}</td>
+                    total += item.xp;
+                    body.innerHTML += `<tr>
+                        <td style="opacity:0.5; width:50px">${item.time}</td>
                         <td>${item.title}</td>
-                        <td style="color:var(--accent); font-weight:800">+${item.xp} XP</td>
-                        <td style="cursor:pointer" onclick="deleteEntry('${id}', ${item.xp})">✕</td>
+                        <td style="color:${item.xp>0?'var(--accent)':'var(--danger)'}; text-align:right"><b>${item.xp>0?'+':''}${item.xp} XP</b></td>
                     </tr>`;
                 }
             });
         }
-        document.getElementById('logBody').innerHTML = html;
         document.getElementById('todayTotal').innerText = total + ' XP';
-        updateChart(chartData);
     });
 
-    async function deleteEntry(id, xp) {
-        if(confirm('Отменить это действие и вернуть XP?')) {
-            logRef.child(id).remove();
-            addGlobalXP(-xp); // Вычитаем XP из общего уровня
+    // --- АВТОМАТИЧЕСКОЕ ЗАКРЫТИЕ ДНЯ ---
+    async function autoArchiveYesterday(allLogs) {
+        const datesInLog = [...new Set(Object.values(allLogs).map(l => l.date))];
+        const yesterday = datesInLog.find(d => d !== getToday());
+        
+        if(!yesterday) return;
+
+        const dayLogs = Object.values(allLogs).filter(l => l.date === yesterday);
+        const presets = (await baseRef.once('value')).val();
+        let dayTotal = dayLogs.reduce((sum, item) => sum + item.xp, 0);
+
+        // Проверка пропущенных звезд
+        const doneTitles = dayLogs.map(l => l.title);
+        for(let id in presets) {
+            if(presets[id].important && !doneTitles.includes(presets[id].title)) {
+                const penalty = -presets[id].xp;
+                dayTotal += penalty;
+                changeXP(penalty); // Вычитаем из общего уровня за пропуск
+            }
         }
-    }
 
-    function finishDay() {
-        alert("Миссии на сегодня завершены! Весь опыт сохранен в твой профиль.");
-    }
-
-    // --- CHART & ARCHIVE ---
-    function updateChart(chartData) {
-        const ctx = document.getElementById('mainChart').getContext('2d');
-        const labels = Object.keys(chartData).sort();
-        if(chart) chart.destroy();
-        chart = new Chart(ctx, {
-            type: 'line',
-            data: { 
-                labels, 
-                datasets: [{ 
-                    label: 'Заработанный XP', 
-                    data: labels.map(l => chartData[l]), 
-                    borderColor: '#a855f7', 
-                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
-                    fill: true,
-                    tension: 0.4 
-                }] 
-            },
-            options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        // Сохраняем в архив
+        await archiveRef.child(yesterday.replace(/\./g, '_')).set({
+            date: yesterday,
+            total: dayTotal,
+            logs: dayLogs
         });
+
+        // Чистим старые логи из оперативной ветки
+        const updates = {};
+        Object.keys(allLogs).forEach(key => {
+            if(allLogs[key].date === yesterday) updates[key] = null;
+        });
+        logRef.update(updates);
     }
 
     archiveRef.on('value', snap => {
-        const data = snap.val();
         const cont = document.getElementById('archiveDays');
         cont.innerHTML = '';
+        const data = snap.val();
         if(data) {
             Object.values(data).reverse().forEach(day => {
-                cont.innerHTML += `
-                    <div class="archive-day" onclick="this.classList.toggle('open')">
-                        <div class="archive-header">
-                            <span>📅 ${day.date}</span>
-                            <b style="color:var(--accent)">${day.total} XP</b>
-                        </div>
-                    </div>`;
+                cont.innerHTML += `<div class="archive-day">
+                    <div style="display:flex; justify-content:space-between">
+                        <b>${day.date}</b>
+                        <span style="color:var(--accent)">${day.total} XP</span>
+                    </div>
+                </div>`;
             });
         }
     });
 </script>
-
 </body>
 </html>
