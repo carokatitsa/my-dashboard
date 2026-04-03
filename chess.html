@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Master Pro - Ultimate Trainer</title>
+    <title>Chess Master Pro - Repetition Mode</title>
     <style>
         :root { 
             --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); 
@@ -62,9 +62,10 @@
         
         #right-pane { width: 380px; display: flex; flex-direction: column; gap: 15px; background: #252525; padding: 20px; border-radius: 10px; }
         .mode-toggle { display: flex; border: 2px solid #444; border-radius: 6px; overflow: hidden; }
-        .mode-toggle button { flex: 1; border: none; padding: 12px; background: #333; color: #888; cursor: pointer; font-weight: bold; }
+        .mode-toggle button { flex: 1; border: none; padding: 10px 5px; background: #333; color: #888; cursor: pointer; font-weight: bold; font-size: 11px; }
         .mode-toggle button.active { background: #27ae60; color: white; }
         .mode-toggle button.active.exam { background: #2980b9; }
+        .mode-toggle button.active.repeat { background: #9b59b6; }
 
         .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 20px;}
         button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
@@ -100,6 +101,7 @@
     <div class="mode-toggle">
         <button id="mode-record" class="active" onclick="setMode('record')">RECORD</button>
         <button id="mode-exam" onclick="setMode('exam')">EXAM</button>
+        <button id="mode-repeat" onclick="setMode('repeat')">REPEAT</button>
     </div>
     <div id="status-bar">-</div>
     <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px; margin: 5px 0;">🎲 <span id="txt-random">RANDOM</span></button>
@@ -121,9 +123,9 @@
 
 <script>
     const i18n = {
-        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", save: "Сохранить", random: "РАНДОМНЫЙ ВАРИАНТ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!" },
-        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", save: "Save Variant", random: "RANDOM DEBUT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!" },
-        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", save: "Speichern", random: "ZUFALL", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!" }
+        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", repeat: "ПОВТОР", save: "Сохранить", random: "РАНДОМНЫЙ ВАРИАНТ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", modeRepeat: "Режим: Повторение", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!", selectRep: "Выберите вариант для повторения" },
+        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", repeat: "REPEAT", save: "Save Variant", random: "RANDOM DEBUT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", modeRepeat: "Mode: Repetition", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!", selectRep: "Select variant for repetition" },
+        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", repeat: "WIEDERH", save: "Speichern", random: "ZUFALL", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", modeRepeat: "Wiederholung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!", selectRep: "Wähle eine Variante" }
     };
 
     const PIECES_SVG = {
@@ -164,6 +166,7 @@
         document.getElementById('txt-reset').innerText = t('reset');
         document.getElementById('mode-record').innerText = t('record');
         document.getElementById('mode-exam').innerText = t('exam');
+        document.getElementById('mode-repeat').innerText = t('repeat');
         document.getElementById('txt-save').innerText = t('save');
         document.getElementById('txt-list-w').innerText = t('listW');
         document.getElementById('txt-list-b').innerText = t('listB');
@@ -171,7 +174,10 @@
         document.getElementById('btn-b').innerText = t('playB');
         document.getElementById('debut-name').placeholder = t('namePh');
         document.getElementById('txt-random').innerText = t('random');
-        statusEl.innerText = mode === 'record' ? t('modeRec') : t('modeExam');
+        
+        if (mode === 'record') statusEl.innerText = t('modeRec');
+        else if (mode === 'exam') statusEl.innerText = t('modeExam');
+        else if (mode === 'repeat') statusEl.innerText = t('modeRepeat');
     }
 
     function render() {
@@ -203,6 +209,7 @@
     }
 
     function startDrag(e) {
+        if (mode === 'repeat') return; // В режиме повторения фигуры нельзя двигать вручную
         const x = e.clientX || e.touches?.[0].clientX;
         const y = e.clientY || e.touches?.[0].clientY;
         const target = document.elementFromPoint(x, y);
@@ -254,7 +261,7 @@
     }
 
     function onSquareClick(r, c) {
-        if (dragData.piece) return;
+        if (mode === 'repeat' || dragData.piece) return;
         const state = history[historyIndex];
         const move = validMoves.find(m => m.r === r && m.c === c);
         if (selected && move) { executeMove(selected.r, selected.c, r, c, move.type); return; }
@@ -272,29 +279,24 @@
         let nextEnPassantTarget = null;
         const piece = newBoard[fR][fC];
 
-        // ЛОГИКА РОКИРОВКИ
         if (type === 'castle') {
             if (tC === 6) { newBoard[tR][5] = newBoard[tR][7]; newBoard[tR][7] = ''; } 
             else if (tC === 2) { newBoard[tR][3] = newBoard[tR][0]; newBoard[tR][0] = ''; }
         }
         
-        // ЛОГИКА ВЗЯТИЯ НА ПРОХОДЕ (Удаление пешки противника)
         if (type === 'enPassant') {
             const pawnRow = piece === 'P' ? tR + 1 : tR - 1;
             newBoard[pawnRow][tC] = '';
         }
 
-        // Детекция возможности взятия на проходе для следующего хода
         if (piece.toLowerCase() === 'p' && Math.abs(fR - tR) === 2) {
             nextEnPassantTarget = { r: (fR + tR) / 2, c: fC };
         }
 
         newBoard[tR][tC] = piece; newBoard[fR][fC] = '';
         
-        // Превращение пешки
         if (piece.toLowerCase() === 'p' && (tR === 0 || tR === 7)) newBoard[tR][tC] = piece === 'P' ? 'Q' : 'q';
         
-        // Обновление прав на рокировку
         if (piece === 'K') newCastling.W = {K:false, Q:false};
         if (piece === 'k') newCastling.B = {K:false, Q:false};
         if (fR === 7 && fC === 7) newCastling.W.K = false;
@@ -341,17 +343,60 @@
 
     function selectDebut(side, name) {
         activeDebut = { side, name, moves: debuts[side][name] };
-        setMode('exam'); resetGame();
-        if (side === 'B') {
-            boardEl.classList.add('flipped');
-            if (activeDebut.moves.length > 0) {
-                setTimeout(() => {
-                    const m = activeDebut.moves[0];
-                    executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
-                }, 500);
-            }
-        } else boardEl.classList.remove('flipped');
-        statusEl.innerText = t('yourTurn');
+        resetGame();
+        
+        if (mode === 'repeat') {
+            // В режиме повторения просто загружаем ходы в историю для стрелочек
+            statusEl.innerText = name;
+            let tempHistory = [history[0]];
+            history = tempHistory;
+            historyIndex = 0;
+            
+            // Генерируем всю ветку ходов
+            activeDebut.moves.forEach(m => {
+                const st = history[history.length-1];
+                const piece = st.board[+m[0]][+m[1]];
+                let type = 'normal';
+                if (piece.toLowerCase() === 'k' && Math.abs(+m[1] - +m[3]) > 1) type = 'castle';
+                if (piece.toLowerCase() === 'p' && +m[1] !== +m[3] && !st.board[+m[2]][+m[3]]) type = 'enPassant';
+                
+                // Вызываем внутреннюю логику без отрисовки каждого шага
+                const current = history[history.length-1];
+                let newBoard = current.board.map(row => [...row]);
+                let newCastling = JSON.parse(JSON.stringify(current.castling));
+                let nextEnPassantTarget = null;
+                const p = newBoard[+m[0]][+m[1]];
+
+                if (type === 'castle') {
+                    if (+m[3] === 6) { newBoard[+m[2]][5] = newBoard[+m[2]][7]; newBoard[+m[2]][7] = ''; } 
+                    else if (+m[3] === 2) { newBoard[+m[2]][3] = newBoard[+m[2]][0]; newBoard[+m[2]][0] = ''; }
+                }
+                if (type === 'enPassant') { newBoard[p === 'P' ? +m[2] + 1 : +m[2] - 1][+m[3]] = ''; }
+                if (p.toLowerCase() === 'p' && Math.abs(+m[0] - +m[2]) === 2) nextEnPassantTarget = { r: (+m[0] + +m[2]) / 2, c: +m[1] };
+                newBoard[+m[2]][+m[3]] = p; newBoard[+m[0]][+m[1]] = '';
+                if (p.toLowerCase() === 'p' && (+m[2] === 0 || +m[2] === 7)) newBoard[+m[2]][+m[3]] = p === 'P' ? 'Q' : 'q';
+                
+                history.push({ 
+                    board: newBoard, turn: current.turn === 'white' ? 'black' : 'white', 
+                    castling: newCastling, enPassantTarget: nextEnPassantTarget, move: m 
+                });
+            });
+            historyIndex = 0; // Начинаем с начальной позиции
+        } else {
+            // Режим ЭКЗАМЕН
+            setMode('exam');
+            if (side === 'B') {
+                boardEl.classList.add('flipped');
+                if (activeDebut.moves.length > 0) {
+                    setTimeout(() => {
+                        const m = activeDebut.moves[0];
+                        executeMove(+m[0], +m[1], +m[2], +m[3], 'normal', true);
+                    }, 500);
+                }
+            } else boardEl.classList.remove('flipped');
+            statusEl.innerText = t('yourTurn');
+        }
+        render();
     }
 
     function getValidMoves(r, c, state) {
@@ -360,16 +405,13 @@
         
         if (p === 'p') {
             const s = isW ? -1 : 1;
-            // Ход вперед
             if (!b[r+s]?.[c]) { 
                 moves.push({r:r+s, c:c}); 
                 if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) moves.push({r:r+2*s, c:c}); 
             }
-            // Обычное взятие
             [1,-1].forEach(dc => { 
                 const tPiece = b[r+s]?.[c+dc]; 
                 if (tPiece && (tPiece === tPiece.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); 
-                // ВЗЯТИЕ НА ПРОХОДЕ
                 if (state.enPassantTarget && state.enPassantTarget.r === r+s && state.enPassantTarget.c === c+dc) {
                     moves.push({r:r+s, c:c+dc, type: 'enPassant'});
                 }
@@ -392,7 +434,21 @@
         return moves;
     }
 
-    function setMode(m) { mode = m; applyLang(); if (m==='record') activeDebut = null; }
+    function setMode(m) { 
+        mode = m; 
+        document.querySelectorAll('.mode-toggle button').forEach(b => b.classList.remove('active', 'exam', 'repeat'));
+        const btn = document.getElementById(`mode-${m}`);
+        btn.classList.add('active');
+        if (m === 'exam') btn.classList.add('exam');
+        if (m === 'repeat') {
+            btn.classList.add('repeat');
+            statusEl.innerText = t('selectRep');
+        }
+        applyLang(); 
+        if (m==='record' || m==='repeat') activeDebut = null; 
+        resetGame();
+    }
+
     function setSaveSide(s) { saveSide = s; document.getElementById('btn-w').className = 'action ' + (s==='W'?'active':''); document.getElementById('btn-b').className = 'action ' + (s==='B'?'active':''); }
     function toggleFlip() { boardEl.classList.toggle('flipped'); }
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
