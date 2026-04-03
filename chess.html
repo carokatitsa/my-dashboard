@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chess Master Pro - Repetition Mode</title>
+    <title>Chess Master Pro - Ultimate Trainer</title>
     <style>
         :root { 
             --bg: #1a1a1a; --sq-l: #ebecd0; --sq-d: #779556; --hl: rgba(255, 255, 0, 0.5); 
@@ -209,7 +209,7 @@
     }
 
     function startDrag(e) {
-        if (mode === 'repeat') return; // В режиме повторения фигуры нельзя двигать вручную
+        if (mode === 'repeat') return;
         const x = e.clientX || e.touches?.[0].clientX;
         const y = e.clientY || e.touches?.[0].clientY;
         const target = document.elementFromPoint(x, y);
@@ -346,13 +346,11 @@
         resetGame();
         
         if (mode === 'repeat') {
-            // В режиме повторения просто загружаем ходы в историю для стрелочек
             statusEl.innerText = name;
             let tempHistory = [history[0]];
             history = tempHistory;
             historyIndex = 0;
             
-            // Генерируем всю ветку ходов
             activeDebut.moves.forEach(m => {
                 const st = history[history.length-1];
                 const piece = st.board[+m[0]][+m[1]];
@@ -360,7 +358,6 @@
                 if (piece.toLowerCase() === 'k' && Math.abs(+m[1] - +m[3]) > 1) type = 'castle';
                 if (piece.toLowerCase() === 'p' && +m[1] !== +m[3] && !st.board[+m[2]][+m[3]]) type = 'enPassant';
                 
-                // Вызываем внутреннюю логику без отрисовки каждого шага
                 const current = history[history.length-1];
                 let newBoard = current.board.map(row => [...row]);
                 let newCastling = JSON.parse(JSON.stringify(current.castling));
@@ -381,9 +378,8 @@
                     castling: newCastling, enPassantTarget: nextEnPassantTarget, move: m 
                 });
             });
-            historyIndex = 0; // Начинаем с начальной позиции
+            historyIndex = 0;
         } else {
-            // Режим ЭКЗАМЕН
             setMode('exam');
             if (side === 'B') {
                 boardEl.classList.add('flipped');
@@ -399,40 +395,133 @@
         render();
     }
 
+    // --- НОВАЯ ЛОГИКА: ПРОВЕРКА НА ШАХ ---
+    function isCheck(board, color) {
+        let kingPos = null;
+        const kingChar = color === 'white' ? 'K' : 'k';
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                if(board[r][c] === kingChar) { kingPos = {r, c}; break; }
+            }
+            if(kingPos) break;
+        }
+        if(!kingPos) return false;
+
+        const isW = color === 'white';
+        // Проверяем все фигуры противника, могут ли они съесть короля
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                const p = board[r][c];
+                if(!p || (isW ? p === p.toLowerCase() : p === p.toUpperCase())) {
+                    if(canAttack(board, r, c, kingPos.r, kingPos.c)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function canAttack(board, fr, fc, tr, tc) {
+        const p = board[fr][fc].toLowerCase();
+        const isW = board[fr][fc] === board[fr][fc].toUpperCase();
+        const dr = tr - fr;
+        const dc = tc - fc;
+
+        if (p === 'p') {
+            const step = isW ? -1 : 1;
+            return fr + step === tr && Math.abs(dc) === 1;
+        }
+        if (p === 'n') return (Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2);
+        if (p === 'k') return Math.abs(dr) <= 1 && Math.abs(dc) <= 1;
+        
+        // Линейные фигуры
+        if (p === 'r' || p === 'q') {
+            if (dr === 0 || dc === 0) {
+                if (!isPathBlocked(board, fr, fc, tr, tc)) return true;
+            }
+        }
+        if (p === 'b' || p === 'q') {
+            if (Math.abs(dr) === Math.abs(dc)) {
+                if (!isPathBlocked(board, fr, fc, tr, tc)) return true;
+            }
+        }
+        return false;
+    }
+
+    function isPathBlocked(board, fr, fc, tr, tc) {
+        const stepR = tr === fr ? 0 : (tr > fr ? 1 : -1);
+        const stepC = tc === fc ? 0 : (tc > fc ? 1 : -1);
+        let currR = fr + stepR;
+        let currC = fc + stepC;
+        while(currR !== tr || currC !== tc) {
+            if(board[currR][currC]) return true;
+            currR += stepR; currC += stepC;
+        }
+        return false;
+    }
+
     function getValidMoves(r, c, state) {
-        const moves = []; const b = state.board; const p = b[r][c].toLowerCase(); const isW = b[r][c] === b[r][c].toUpperCase();
+        const moves = []; 
+        const b = state.board; 
+        const pieceChar = b[r][c];
+        const p = pieceChar.toLowerCase(); 
+        const isW = pieceChar === pieceChar.toUpperCase();
+        const color = isW ? 'white' : 'black';
         const dirs = {'r':[[0,1],[0,-1],[1,0],[-1,0]], 'b':[[1,1],[1,-1],[-1,1],[-1,-1]], 'q':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]], 'n':[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]], 'k':[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]};
         
+        let potential = [];
         if (p === 'p') {
             const s = isW ? -1 : 1;
             if (!b[r+s]?.[c]) { 
-                moves.push({r:r+s, c:c}); 
-                if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) moves.push({r:r+2*s, c:c}); 
+                potential.push({r:r+s, c:c}); 
+                if (((isW && r===6)||(!isW && r===1)) && !b[r+2*s]?.[c]) potential.push({r:r+2*s, c:c}); 
             }
             [1,-1].forEach(dc => { 
                 const tPiece = b[r+s]?.[c+dc]; 
-                if (tPiece && (tPiece === tPiece.toUpperCase()) !== isW) moves.push({r:r+s, c:c+dc}); 
+                if (tPiece && (tPiece === tPiece.toUpperCase()) !== isW) potential.push({r:r+s, c:c+dc}); 
                 if (state.enPassantTarget && state.enPassantTarget.r === r+s && state.enPassantTarget.c === c+dc) {
-                    moves.push({r:r+s, c:c+dc, type: 'enPassant'});
+                    potential.push({r:r+s, c:c+dc, type: 'enPassant'});
                 }
             });
         } else if (dirs[p]) {
             for (let [dr, dc] of dirs[p]) {
                 let nr = r+dr, nc = c+dc;
                 while(nr>=0 && nr<8 && nc>=0 && nc<8) {
-                    if (!b[nr][nc]) { moves.push({r:nr, c:nc}); if("nk".includes(p)) break; }
-                    else { if((b[nr][nc] === b[nr][nc].toUpperCase()) !== isW) moves.push({r:nr, c:nc}); break; }
+                    if (!b[nr][nc]) { potential.push({r:nr, c:nc}); if("nk".includes(p)) break; }
+                    else { if((b[nr][nc] === b[nr][nc].toUpperCase()) !== isW) potential.push({r:nr, c:nc}); break; }
                     nr += dr; nc += dc;
                 }
             }
-            if (p === 'k') {
+            // Рокировка (только если нет шаха)
+            if (p === 'k' && !isCheck(b, color)) {
                 const cs = isW ? state.castling.W : state.castling.B;
-                if (cs.K && !b[r][5] && !b[r][6]) moves.push({r:r, c:6, type:'castle'});
-                if (cs.Q && !b[r][1] && !b[r][2] && !b[r][3]) moves.push({r:r, c:2, type:'castle'});
+                if (cs.K && !b[r][5] && !b[r][6] && !isCheckAfterSim(b, r, c, r, 5, color)) potential.push({r:r, c:6, type:'castle'});
+                if (cs.Q && !b[r][1] && !b[r][2] && !b[r][3] && !isCheckAfterSim(b, r, c, r, 3, color)) potential.push({r:r, c:2, type:'castle'});
             }
         }
+
+        // ФИЛЬТРАЦИЯ: оставляем только ходы, после которых нет шаха
+        potential.forEach(m => {
+            if (!isCheckAfterSim(b, r, c, m.r, m.c, color, m.type)) {
+                moves.push(m);
+            }
+        });
+
         return moves;
     }
+
+    function isCheckAfterSim(board, fr, fc, tr, tc, color, type) {
+        let testBoard = board.map(row => [...row]);
+        const p = testBoard[fr][fc];
+        
+        if (type === 'enPassant') {
+            const pawnRow = p === 'P' ? tr + 1 : tr - 1;
+            testBoard[pawnRow][tc] = '';
+        }
+        testBoard[tr][tc] = p;
+        testBoard[fr][fc] = '';
+        return isCheck(testBoard, color);
+    }
+    // --- КОНЕЦ ЛОГИКИ ШАХА ---
 
     function setMode(m) { 
         mode = m; 
