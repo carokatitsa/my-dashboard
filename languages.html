@@ -85,8 +85,10 @@
     <button class="btn" onclick="setLang('PL')">🇵🇱 PL</button>
     <button class="btn" onclick="setLang('ES')">🇪🇸 ES</button>
     
-    <div style="flex-grow: 1;"></div> <button class="btn" style="background: var(--success);" onclick="goToTheory()">
-        <i class="fas fa-book"></i> Изучить теорию
+    <div style="flex-grow: 1;"></div> 
+    
+    <button class="btn" style="background: var(--success);" onclick="goToTheory()">
+        <i class="fas fa-book-open"></i> Изучить теорию
     </button>
   </div>
 
@@ -159,7 +161,7 @@ let onlyFavoritesTest = false;
 
 window.onload = () => { loadData(); };
 
-// Функция перехода к теории
+// ФУНКЦИЯ ПЕРЕХОДА К ТЕОРИИ
 window.goToTheory = () => {
     window.location.href = `theory.html?lang=${currentLang}`;
 };
