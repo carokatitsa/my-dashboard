@@ -104,7 +104,10 @@
         <button id="mode-repeat" onclick="setMode('repeat')">REPEAT</button>
     </div>
     <div id="status-bar">-</div>
-    <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px; margin: 5px 0;">🎲 <span id="txt-random">RANDOM</span></button>
+    <div style="display:flex; gap:5px">
+        <button class="action" onclick="startRandomExam()" style="background: #f39c12; color: #000; font-size: 16px; margin: 5px 0;">🎲 <span id="txt-random">RANDOM</span></button>
+        <button id="btn-next" class="action" onclick="startRandomExam()" style="display:none; background: #3498db; color: #fff; font-size: 16px; margin: 5px 0;">➡ <span id="txt-next">NEXT</span></button>
+    </div>
     <div id="record-tools" class="save-box">
         <input type="text" id="debut-name" placeholder="Name">
         <div style="display:flex; gap:5px">
@@ -123,9 +126,9 @@
 
 <script>
     const i18n = {
-        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", repeat: "ПОВТОР", save: "Сохранить", random: "РАНДОМНЫЙ ВАРИАНТ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", modeRepeat: "Режим: Повторение", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!", selectRep: "Выберите вариант для повторения" },
-        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", repeat: "REPEAT", save: "Save Variant", random: "RANDOM DEBUT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", modeRepeat: "Mode: Repetition", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!", selectRep: "Select variant for repetition" },
-        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", repeat: "WIEDERH", save: "Speichern", random: "ZUFALL", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", modeRepeat: "Wiederholung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!", selectRep: "Wähle eine Variante" }
+        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", repeat: "ПОВТОР", save: "Сохранить", random: "РАНДОМ", next: "СЛЕДУЮЩИЙ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", modeRepeat: "Режим: Повторение", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!", selectRep: "Выберите вариант для повторения" },
+        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", repeat: "REPEAT", save: "Save Variant", random: "RANDOM", next: "NEXT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", modeRepeat: "Mode: Repetition", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!", selectRep: "Select variant for repetition" },
+        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", repeat: "WIEDERH", save: "Speichern", random: "ZUFALL", next: "NÄCHSTE", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", modeRepeat: "Wiederholung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!", selectRep: "Wähle eine Variante" }
     };
 
     const PIECES_SVG = {
@@ -154,6 +157,9 @@
     let debuts = JSON.parse(localStorage.getItem('chess_v2_data') || '{"W":{}, "B":{}}');
     let activeDebut = null;
     let dragData = { piece: null, fromR: null, fromC: null, element: null };
+    
+    // Переменная для хранения уже показанных вариантов в текущей сессии
+    let usedDebuts = [];
 
     function t(key) { return i18n[curLang][key]; }
 
@@ -174,6 +180,7 @@
         document.getElementById('btn-b').innerText = t('playB');
         document.getElementById('debut-name').placeholder = t('namePh');
         document.getElementById('txt-random').innerText = t('random');
+        document.getElementById('txt-next').innerText = t('next');
         
         if (mode === 'record') statusEl.innerText = t('modeRec');
         else if (mode === 'exam') statusEl.innerText = t('modeExam');
@@ -338,13 +345,21 @@
                 executeMove(+m[0], +m[1], +m[2], +m[3], type, true);
                 statusEl.innerText = t('yourTurn');
             }, 500);
-        } else { statusEl.innerText = t('done'); statusEl.style.color = "#27ae60"; }
+        } else { 
+            statusEl.innerText = t('done'); 
+            statusEl.style.color = "#27ae60";
+            // Показываем кнопку NEXT после успешного прохождения
+            document.getElementById('btn-next').style.display = 'block';
+        }
     }
 
     function selectDebut(side, name) {
         activeDebut = { side, name, moves: debuts[side][name] };
         resetGame();
         
+        // Прячем кнопку NEXT при начале нового варианта
+        document.getElementById('btn-next').style.display = 'none';
+
         if (mode === 'repeat') {
             statusEl.innerText = name;
             let tempHistory = [history[0]];
@@ -395,7 +410,6 @@
         render();
     }
 
-    // --- НОВАЯ ЛОГИКА: ПРОВЕРКА НА ШАХ ---
     function isCheck(board, color) {
         let kingPos = null;
         const kingChar = color === 'white' ? 'K' : 'k';
@@ -408,7 +422,6 @@
         if(!kingPos) return false;
 
         const isW = color === 'white';
-        // Проверяем все фигуры противника, могут ли они съесть короля
         for(let r=0; r<8; r++) {
             for(let c=0; c<8; c++) {
                 const p = board[r][c];
@@ -433,7 +446,6 @@
         if (p === 'n') return (Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2);
         if (p === 'k') return Math.abs(dr) <= 1 && Math.abs(dc) <= 1;
         
-        // Линейные фигуры
         if (p === 'r' || p === 'q') {
             if (dr === 0 || dc === 0) {
                 if (!isPathBlocked(board, fr, fc, tr, tc)) return true;
@@ -491,28 +503,23 @@
                     nr += dr; nc += dc;
                 }
             }
-            // Рокировка (только если нет шаха)
             if (p === 'k' && !isCheck(b, color)) {
                 const cs = isW ? state.castling.W : state.castling.B;
                 if (cs.K && !b[r][5] && !b[r][6] && !isCheckAfterSim(b, r, c, r, 5, color)) potential.push({r:r, c:6, type:'castle'});
                 if (cs.Q && !b[r][1] && !b[r][2] && !b[r][3] && !isCheckAfterSim(b, r, c, r, 3, color)) potential.push({r:r, c:2, type:'castle'});
             }
         }
-
-        // ФИЛЬТРАЦИЯ: оставляем только ходы, после которых нет шаха
         potential.forEach(m => {
             if (!isCheckAfterSim(b, r, c, m.r, m.c, color, m.type)) {
                 moves.push(m);
             }
         });
-
         return moves;
     }
 
     function isCheckAfterSim(board, fr, fc, tr, tc, color, type) {
         let testBoard = board.map(row => [...row]);
         const p = testBoard[fr][fc];
-        
         if (type === 'enPassant') {
             const pawnRow = p === 'P' ? tr + 1 : tr - 1;
             testBoard[pawnRow][tc] = '';
@@ -521,14 +528,19 @@
         testBoard[fr][fc] = '';
         return isCheck(testBoard, color);
     }
-    // --- КОНЕЦ ЛОГИКИ ШАХА ---
 
     function setMode(m) { 
         mode = m; 
         document.querySelectorAll('.mode-toggle button').forEach(b => b.classList.remove('active', 'exam', 'repeat'));
         const btn = document.getElementById(`mode-${m}`);
         btn.classList.add('active');
-        if (m === 'exam') btn.classList.add('exam');
+        if (m === 'exam') {
+            btn.classList.add('exam');
+            // При переходе в режим экзамена показываем кнопку Next если активен вариант
+            if(activeDebut) document.getElementById('btn-next').style.display = 'block';
+        } else {
+            document.getElementById('btn-next').style.display = 'none';
+        }
         if (m === 'repeat') {
             btn.classList.add('repeat');
             statusEl.innerText = t('selectRep');
@@ -550,6 +562,7 @@
         debuts[saveSide][name] = history.slice(1).map(h => h.move);
         localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
         document.getElementById('debut-name').value = ''; updateListsUI();
+        usedDebuts = []; // Сбрасываем очередь рандома при добавлении нового
     }
 
     function updateListsUI() {
@@ -559,7 +572,7 @@
             for (let name in debuts[side]) {
                 const el = document.createElement('div');
                 el.className = `debut-item ${activeDebut?.name === name && activeDebut?.side === side ? 'active-debut' : ''}`;
-                el.innerHTML = `<span>${name}</span><span style="color:#e74c3c" onclick="event.stopPropagation(); delete debuts['${side}']['${name}']; localStorage.setItem('chess_v2_data', JSON.stringify(debuts)); updateListsUI();">✕</span>`;
+                el.innerHTML = `<span>${name}</span><span style="color:#e74c3c" onclick="event.stopPropagation(); delete debuts['${side}']['${name}']; localStorage.setItem('chess_v2_data', JSON.stringify(debuts)); updateListsUI(); usedDebuts=[];">✕</span>`;
                 el.onclick = () => selectDebut(side, name);
                 container.appendChild(el);
             }
@@ -570,9 +583,28 @@
         const all = [];
         for (let n in debuts.W) all.push({side: 'W', name: n});
         for (let n in debuts.B) all.push({side: 'B', name: n});
+        
         if (!all.length) return alert(t('noDebuts'));
-        const r = all[Math.floor(Math.random()*all.length)];
+
+        // Фильтруем те, что еще не использовали
+        let available = all.filter(d => !usedDebuts.some(u => u.name === d.name && u.side === d.side));
+        
+        // Если всё прошли, сбрасываем список использованных
+        if (available.length === 0) {
+            usedDebuts = [];
+            available = all;
+        }
+
+        const r = available[Math.floor(Math.random() * available.length)];
+        usedDebuts.push(r);
+        
+        // Переключаем в режим экзамена если нажали из другого режима
+        if(mode !== 'exam') setMode('exam');
+        
         selectDebut(r.side, r.name);
+        
+        // Показываем кнопку NEXT сразу при старте рандома
+        document.getElementById('btn-next').style.display = 'block';
     }
 
     applyLang(); render();
