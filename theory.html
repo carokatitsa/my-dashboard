@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LingoArchive Pro | Theory Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { 
+            --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc;
+            --accent: #3498db; --gold: #f1c40f; --success: #2ecc71; --error: #ff6b6b;
+        }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .card { background: var(--bg-card); border-radius:14px; padding:20px; border: 1px solid #1e2a44; margin-bottom: 20px; }
+        textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 16px; margin-bottom: 10px; }
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        /* Стили игры */
+        .word-chip { display: inline-block; padding: 8px 12px; background: #1e2a44; border: 1px solid var(--accent); border-radius: 6px; margin: 5px; cursor: pointer; user-select: none; }
+        .word-chip:hover { background: var(--accent); }
+        .drop-zone { min-height: 50px; border: 2px dashed #333; border-radius: 8px; padding: 10px; margin: 20px 0; display: flex; flex-wrap: wrap; gap: 8px; }
+        .result-msg { font-weight: bold; text-align: center; margin-top: 15px; font-size: 18px; }
+        
+        .hidden { display: none; }
+        .progress-bar { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="languages.html" style="color: var(--accent); text-decoration: none;">← Назад к списку</a>
+    <h1 id="headerTitle">📘 Теория: <span id="langName">...</span></h1>
+
+    <div id="inputScreen" class="card">
+        <h3>Что будем учить?</h3>
+        <p class="muted" style="color: #a9b6d3; font-size: 14px;">Впиши правило или предложение на иностранном языке. Мы превратим его в игру.</p>
+        <textarea id="theoryInput" rows="4" placeholder="Например: Ich habe einen Hund (Немецкий: У меня есть собака)"></textarea>
+        <button class="btn" style="width: 100%; background: var(--gold); color: black;" onclick="setupGame()">Создать игру</button>
+    </div>
+
+    <div id="gameScreen" class="card hidden">
+        <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
+        <h3>Собери предложение правильно:</h3>
+        
+        <div id="targetSentence" class="drop-zone">
+            </div>
+
+        <div id="wordBank">
+            </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn" style="background: var(--success);" onclick="checkAnswer()">Проверить</button>
+            <button class="btn" style="background: #333;" onclick="resetGame()">Сброс</button>
+        </div>
+        <div id="feedback" class="result-msg"></div>
+    </div>
+</div>
+
+<script>
+    // Получаем язык из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const lang = urlParams.get('lang') || 'EN';
+    document.getElementById('langName').innerText = lang;
+
+    let originalText = "";
+    let wordsArray = [];
+    let userSequence = [];
+
+    function setupGame() {
+        originalText = document.getElementById('theoryInput').value.trim();
+        if (originalText.length < 3) return alert("Впиши что-нибудь подлиннее!");
+
+        // Разбиваем на слова, убирая лишние знаки препинания
+        wordsArray = originalText.split(/\s+/);
+        
+        document.getElementById('inputScreen').classList.add('hidden');
+        document.getElementById('gameScreen').classList.remove('hidden');
+        
+        renderGame();
+    }
+
+    function renderGame() {
+        const wordBank = document.getElementById('wordBank');
+        const targetZone = document.getElementById('targetSentence');
+        wordBank.innerHTML = "";
+        targetZone.innerHTML = "";
+        userSequence = [];
+        document.getElementById('feedback').innerText = "";
+
+        // Перемешиваем слова
+        const shuffled = [...wordsArray].sort(() => Math.random() - 0.5);
+
+        shuffled.forEach((word, index) => {
+            const span = document.createElement('div');
+            span.className = 'word-chip';
+            span.innerText = word;
+            span.onclick = () => moveToTarget(word, span);
+            wordBank.appendChild(span);
+        });
+    }
+
+    function moveToTarget(word, element) {
+        if (element.style.visibility === 'hidden') return;
+        
+        userSequence.push(word);
+        element.style.visibility = 'hidden';
+
+        const span = document.createElement('div');
+        span.className = 'word-chip';
+        span.style.background = 'var(--accent)';
+        span.innerText = word;
+        document.getElementById('targetSentence').appendChild(span);
+        
+        // Обновляем прогресс
+        const progress = (userSequence.length / wordsArray.length) * 100;
+        document.getElementById('progress').style.width = progress + "%";
+    }
+
+    function checkAnswer() {
+        const feedback = document.getElementById('feedback');
+        const isCorrect = userSequence.join(' ') === wordsArray.join(' ');
+
+        if (isCorrect) {
+            feedback.style.color = "var(--success)";
+            feedback.innerHTML = "🎉 Великолепно! Ты запомнил теорию.";
+            confetti(); // Если захочешь добавить библиотеку эффектов
+        } else {
+            feedback.style.color = "var(--error)";
+            feedback.innerHTML = "❌ Ошибка в порядке слов. Попробуй еще раз.";
+        }
+    }
+
+    function resetGame() {
+        document.getElementById('progress').style.width = "0%";
+        renderGame();
+    }
+</script>
+
+</body>
+</html>
