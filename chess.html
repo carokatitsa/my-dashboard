@@ -126,9 +126,9 @@
 
 <script>
     const i18n = {
-        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", repeat: "ПОВТОР", save: "Сохранить", random: "РАНДОМ", next: "СЛЕДУЮЩИЙ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", modeRepeat: "Режим: Повторение", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!", selectRep: "Выберите вариант для повторения" },
-        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", repeat: "REPEAT", save: "Save Variant", random: "RANDOM", next: "NEXT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", modeRepeat: "Mode: Repetition", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!", selectRep: "Select variant for repetition" },
-        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", repeat: "WIEDERH", save: "Speichern", random: "ZUFALL", next: "NÄCHSTE", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", modeRepeat: "Wiederholung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!", selectRep: "Wähle eine Variante" }
+        ru: { turnW: "Ход БЕЛЫХ", turnB: "Ход ЧЕРНЫХ", flip: "🔃 Переворот", reset: "Сброс", record: "ЗАПИСЬ", exam: "ЭКЗАМЕН", repeat: "ПОВТОР", save: "Сохранить", random: "РАНДОМ", next: "СЛЕДУЮЩИЙ", playW: "Я ЗА БЕЛЫХ", playB: "Я ЗА ЧЕРНЫХ", listW: "БЕЛЫЕ", listB: "ЧЕРНЫЕ", modeRec: "Режим: Запись", modeExam: "Режим: Экзамен", modeRepeat: "Режим: Повторение", namePh: "Название...", errEmpty: "Введите название и ходы!", errWrong: "❌ НЕВЕРНО!", correct: "Верно!", yourTurn: "Ваш ход...", done: "✅ Пройдено!", noDebuts: "Пусто!", selectRep: "Выберите вариант для повторения", allDone: "ВСЕ ВАРИАНТЫ ПРОЙДЕНЫ!" },
+        en: { turnW: "White Turn", turnB: "Black Turn", flip: "🔃 Flip", reset: "Reset", record: "RECORD", exam: "EXAM", repeat: "REPEAT", save: "Save Variant", random: "RANDOM", next: "NEXT", playW: "I PLAY WHITE", playB: "I PLAY BLACK", listW: "WHITE", listB: "BLACK", modeRec: "Mode: Record", modeExam: "Mode: Exam", modeRepeat: "Mode: Repetition", namePh: "Name...", errEmpty: "Add name & moves!", errWrong: "❌ WRONG!", correct: "Correct!", yourTurn: "Your turn...", done: "✅ Completed!", noDebuts: "Empty!", selectRep: "Select variant for repetition", allDone: "ALL VARIANTS COMPLETED!" },
+        de: { turnW: "Weiß am Zug", turnB: "Schwarz am Zug", flip: "🔃 Drehen", reset: "Reset", record: "REC", exam: "EXAM", repeat: "WIEDERH", save: "Speichern", random: "ZUFALL", next: "NÄCHSTE", playW: "ICH SPIELE WEISS", playB: "ICH SPIELE SCHWARZ", listW: "WEISS", listB: "SCHWARZ", modeRec: "Aufnahme", modeExam: "Prüfung", modeRepeat: "Wiederholung", namePh: "Name...", errEmpty: "Fehler!", errWrong: "❌ FALSCH!", correct: "Richtig!", yourTurn: "Du bist dran...", done: "✅ Fertig!", noDebuts: "Leer!", selectRep: "Wähle eine Variante", allDone: "ALLE ШУКЕУКЕ!" }
     };
 
     const PIECES_SVG = {
@@ -158,7 +158,6 @@
     let activeDebut = null;
     let dragData = { piece: null, fromR: null, fromC: null, element: null };
     
-    // Переменная для хранения уже показанных вариантов в текущей сессии
     let usedDebuts = [];
 
     function t(key) { return i18n[curLang][key]; }
@@ -348,7 +347,6 @@
         } else { 
             statusEl.innerText = t('done'); 
             statusEl.style.color = "#27ae60";
-            // Показываем кнопку NEXT после успешного прохождения
             document.getElementById('btn-next').style.display = 'block';
         }
     }
@@ -357,7 +355,6 @@
         activeDebut = { side, name, moves: debuts[side][name] };
         resetGame();
         
-        // Прячем кнопку NEXT при начале нового варианта
         document.getElementById('btn-next').style.display = 'none';
 
         if (mode === 'repeat') {
@@ -536,7 +533,6 @@
         btn.classList.add('active');
         if (m === 'exam') {
             btn.classList.add('exam');
-            // При переходе в режим экзамена показываем кнопку Next если активен вариант
             if(activeDebut) document.getElementById('btn-next').style.display = 'block';
         } else {
             document.getElementById('btn-next').style.display = 'none';
@@ -562,7 +558,7 @@
         debuts[saveSide][name] = history.slice(1).map(h => h.move);
         localStorage.setItem('chess_v2_data', JSON.stringify(debuts));
         document.getElementById('debut-name').value = ''; updateListsUI();
-        usedDebuts = []; // Сбрасываем очередь рандома при добавлении нового
+        usedDebuts = []; 
     }
 
     function updateListsUI() {
@@ -586,24 +582,23 @@
         
         if (!all.length) return alert(t('noDebuts'));
 
-        // Фильтруем те, что еще не использовали
+        // Фильтруем доступные (те, что еще не использовались)
         let available = all.filter(d => !usedDebuts.some(u => u.name === d.name && u.side === d.side));
         
-        // Если всё прошли, сбрасываем список использованных
+        // Если все пройдены
         if (available.length === 0) {
-            usedDebuts = [];
-            available = all;
+            statusEl.innerText = t('allDone');
+            statusEl.style.background = "#2980b9";
+            statusEl.style.color = "#fff";
+            document.getElementById('btn-next').style.display = 'none';
+            return;
         }
 
         const r = available[Math.floor(Math.random() * available.length)];
         usedDebuts.push(r);
         
-        // Переключаем в режим экзамена если нажали из другого режима
         if(mode !== 'exam') setMode('exam');
-        
         selectDebut(r.side, r.name);
-        
-        // Показываем кнопку NEXT сразу при старте рандома
         document.getElementById('btn-next').style.display = 'block';
     }
 
