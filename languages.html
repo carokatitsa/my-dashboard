@@ -32,7 +32,6 @@
     
     input, textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; outline:none; font-size: 16px; }
     
-    /* Стили для экзамена */
     .test-word { font-size: 36px; color: var(--gold); margin: 20px 0; font-weight: bold; text-align: center; word-wrap: break-word; }
     
     .test-header-row { 
@@ -54,7 +53,6 @@
 
     .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     
-    /* Стили для проверки дубликатов */
     .duplicate-warning { font-size: 12px; margin-top: 5px; display: none; align-items: center; gap: 5px; }
     .is-duplicate { color: var(--error); display: flex; }
     .is-unique { color: var(--success); display: flex; }
@@ -81,11 +79,15 @@
 <main>
   <h1>📚 Мои Языки</h1>
 
-  <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap: wrap;">
+  <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap: wrap; align-items: center;">
     <button class="btn" onclick="setLang('EN')">🇬🇧 EN</button>
     <button class="btn" onclick="setLang('DE')">🇩🇪 DE</button>
     <button class="btn" onclick="setLang('PL')">🇵🇱 PL</button>
     <button class="btn" onclick="setLang('ES')">🇪🇸 ES</button>
+    
+    <div style="flex-grow: 1;"></div> <button class="btn" style="background: var(--success);" onclick="goToTheory()">
+        <i class="fas fa-book"></i> Изучить теорию
+    </button>
   </div>
 
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
@@ -157,7 +159,11 @@ let onlyFavoritesTest = false;
 
 window.onload = () => { loadData(); };
 
-// Функция мгновенной проверки на дубликат
+// Функция перехода к теории
+window.goToTheory = () => {
+    window.location.href = `theory.html?lang=${currentLang}`;
+};
+
 window.checkDuplicate = (val) => {
     const msgDiv = document.getElementById("dupMsg");
     const addBtn = document.getElementById("addBtn");
@@ -174,7 +180,6 @@ window.checkDuplicate = (val) => {
     if (exists) {
         msgDiv.className = "duplicate-warning is-duplicate";
         msgDiv.innerHTML = `<i class="fas fa-exclamation-circle"></i> Уже есть в базе (${exists.translation})`;
-        // addBtn.style.opacity = "0.5"; // Можно заблокировать кнопку, если нужно
     } else {
         msgDiv.className = "duplicate-warning is-unique";
         msgDiv.innerHTML = `<i class="fas fa-check-circle"></i> Новое слово`;
