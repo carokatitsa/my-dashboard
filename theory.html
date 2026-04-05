@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LingoArchive Pro | Theory Game</title>
+    <title>LingoArchive Pro | Theory Trainer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
@@ -13,130 +13,169 @@
         body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; }
         .container { max-width: 800px; margin: auto; }
         .card { background: var(--bg-card); border-radius:14px; padding:20px; border: 1px solid #1e2a44; margin-bottom: 20px; }
-        textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 16px; margin-bottom: 10px; }
-        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 16px; }
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; }
         
-        /* Стили игры */
-        .word-chip { display: inline-block; padding: 8px 12px; background: #1e2a44; border: 1px solid var(--accent); border-radius: 6px; margin: 5px; cursor: pointer; user-select: none; }
-        .word-chip:hover { background: var(--accent); }
-        .drop-zone { min-height: 50px; border: 2px dashed #333; border-radius: 8px; padding: 10px; margin: 20px 0; display: flex; flex-wrap: wrap; gap: 8px; }
-        .result-msg { font-weight: bold; text-align: center; margin-top: 15px; font-size: 18px; }
+        /* Стили тренажера */
+        .quiz-item { margin-bottom: 25px; padding: 15px; background: #0c1221; border-radius: 10px; border-left: 4px solid var(--gold); }
+        .quiz-text { font-size: 20px; margin-bottom: 10px; }
+        .quiz-input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: var(--gold); font-size: 20px; width: 120px; text-align: center; outline: none; }
+        .correct { border-bottom-color: var(--success) !important; color: var(--success) !important; }
+        .wrong { border-bottom-color: var(--error) !important; color: var(--error) !important; }
         
+        .history-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #1e2a44; cursor: pointer; }
+        .history-item:hover { background: #1e2a44; }
         .hidden { display: none; }
-        .progress-bar { height: 8px; background: #333; border-radius: 4px; overflow: hidden; margin-bottom: 20px; }
-        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: 0.3s; }
+        .muted { color: #a9b6d3; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="languages.html" style="color: var(--accent); text-decoration: none;">← Назад к списку</a>
-    <h1 id="headerTitle">📘 Теория: <span id="langName">...</span></h1>
+    <a href="languages.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← В базу слов</a>
+    <h1>📘 Тренажер теории: <span id="langName">...</span></h1>
 
-    <div id="inputScreen" class="card">
-        <h3>Что будем учить?</h3>
-        <p class="muted" style="color: #a9b6d3; font-size: 14px;">Впиши правило или предложение на иностранном языке. Мы превратим его в игру.</p>
-        <textarea id="theoryInput" rows="4" placeholder="Например: Ich habe einen Hund (Немецкий: У меня есть собака)"></textarea>
-        <button class="btn" style="width: 100%; background: var(--gold); color: black;" onclick="setupGame()">Создать игру</button>
+    <div id="setupView" class="card">
+        <h3>Добавить новую тему</h3>
+        <p class="muted">Впишите фразы (каждая с новой строки). Например:<br><i>ins Kino<br>nach Deutschland</i></p>
+        <textarea id="theoryInput" rows="6" placeholder="Введите фразы для заучивания..."></textarea>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button class="btn" style="background: var(--gold); color: #000;" onclick="saveAndPlay()">
+                <i class="fas fa-save"></i> Сохранить и Начать
+            </button>
+        </div>
     </div>
 
-    <div id="gameScreen" class="card hidden">
-        <div class="progress-bar"><div id="progress" class="progress-fill"></div></div>
-        <h3>Собери предложение правильно:</h3>
-        
-        <div id="targetSentence" class="drop-zone">
-            </div>
+    <div id="historyView" class="card">
+        <h3>Сохраненные темы</h3>
+        <div id="historyList"></div>
+    </div>
 
-        <div id="wordBank">
-            </div>
-
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button class="btn" style="background: var(--success);" onclick="checkAnswer()">Проверить</button>
-            <button class="btn" style="background: #333;" onclick="resetGame()">Сброс</button>
+    <div id="gameView" class="card hidden">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="gameTitle">Тренировка</h2>
+            <button class="btn" style="background: #333;" onclick="exitGame()">Выход</button>
         </div>
-        <div id="feedback" class="result-msg"></div>
+        <div id="quizContainer"></div>
+        <button class="btn" id="checkBtn" style="width: 100%; margin-top: 20px; background: var(--success);" onclick="checkQuiz()">Проверить ответы</button>
     </div>
 </div>
 
-<script>
-    // Получаем язык из URL
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
+        authDomain: "my-dashboard-dc67a.firebaseapp.com",
+        projectId: "my-dashboard-dc67a",
+        storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+        messagingSenderId: "710702954120",
+        appId: "1:710702954120:web:f06b1038c48d3bd328913d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
     const urlParams = new URLSearchParams(window.location.search);
-    const lang = urlParams.get('lang') || 'EN';
-    document.getElementById('langName').innerText = lang;
+    const currentLang = urlParams.get('lang') || 'EN';
+    document.getElementById('langName').innerText = currentLang;
 
-    let originalText = "";
-    let wordsArray = [];
-    let userSequence = [];
+    let activePhrases = [];
 
-    function setupGame() {
-        originalText = document.getElementById('theoryInput').value.trim();
-        if (originalText.length < 3) return alert("Впиши что-нибудь подлиннее!");
+    window.onload = loadThemes;
 
-        // Разбиваем на слова, убирая лишние знаки препинания
-        wordsArray = originalText.split(/\s+/);
+    // Загрузка тем из базы
+    async function loadThemes() {
+        const q = query(collection(db, "theory"), where("lang", "==", currentLang));
+        const snap = await getDocs(q);
+        const list = document.getElementById('historyList');
+        list.innerHTML = "";
         
-        document.getElementById('inputScreen').classList.add('hidden');
-        document.getElementById('gameScreen').classList.remove('hidden');
-        
-        renderGame();
-    }
-
-    function renderGame() {
-        const wordBank = document.getElementById('wordBank');
-        const targetZone = document.getElementById('targetSentence');
-        wordBank.innerHTML = "";
-        targetZone.innerHTML = "";
-        userSequence = [];
-        document.getElementById('feedback').innerText = "";
-
-        // Перемешиваем слова
-        const shuffled = [...wordsArray].sort(() => Math.random() - 0.5);
-
-        shuffled.forEach((word, index) => {
-            const span = document.createElement('div');
-            span.className = 'word-chip';
-            span.innerText = word;
-            span.onclick = () => moveToTarget(word, span);
-            wordBank.appendChild(span);
+        snap.forEach(docSnap => {
+            const data = docSnap.data();
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <span><b>${data.text.split('\n')[0].substring(0, 30)}...</b> (${data.text.split('\n').length} фраз)</span>
+                <i class="fas fa-play" style="color: var(--success)"></i>
+            `;
+            div.onclick = () => startGame(data.text);
+            list.appendChild(div);
         });
     }
 
-    function moveToTarget(word, element) {
-        if (element.style.visibility === 'hidden') return;
-        
-        userSequence.push(word);
-        element.style.visibility = 'hidden';
+    // Сохранение
+    window.saveAndPlay = async () => {
+        const text = document.getElementById('theoryInput').value.trim();
+        if (!text) return alert("Введите текст!");
 
-        const span = document.createElement('div');
-        span.className = 'word-chip';
-        span.style.background = 'var(--accent)';
-        span.innerText = word;
-        document.getElementById('targetSentence').appendChild(span);
-        
-        // Обновляем прогресс
-        const progress = (userSequence.length / wordsArray.length) * 100;
-        document.getElementById('progress').style.width = progress + "%";
+        await addDoc(collection(db, "theory"), {
+            lang: currentLang,
+            text: text,
+            created: Date.now()
+        });
+
+        document.getElementById('theoryInput').value = "";
+        loadThemes();
+        startGame(text);
+    };
+
+    // Запуск игры
+    function startGame(fullText) {
+        activePhrases = fullText.split('\n').filter(line => line.trim() !== "");
+        document.getElementById('setupView').classList.add('hidden');
+        document.getElementById('historyView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
+
+        const container = document.getElementById('quizContainer');
+        container.innerHTML = "";
+
+        activePhrases.forEach((phrase, index) => {
+            // Логика: разделяем фразу. Первое слово (артикль/предлог) прячем.
+            const parts = phrase.trim().split(' ');
+            const hiddenPart = parts[0]; // Например, "ins" или "nach"
+            const rest = parts.slice(1).join(' '); // Например, "Kino" или "Deutschland"
+
+            container.innerHTML += `
+                <div class="quiz-item">
+                    <div class="quiz-text">
+                        <input type="text" class="quiz-input" data-answer="${hiddenPart}" placeholder="..."> 
+                        <span>${rest}</span>
+                    </div>
+                </div>
+            `;
+        });
     }
 
-    function checkAnswer() {
-        const feedback = document.getElementById('feedback');
-        const isCorrect = userSequence.join(' ') === wordsArray.join(' ');
+    window.checkQuiz = () => {
+        const inputs = document.querySelectorAll('.quiz-input');
+        let correctCount = 0;
 
-        if (isCorrect) {
-            feedback.style.color = "var(--success)";
-            feedback.innerHTML = "🎉 Великолепно! Ты запомнил теорию.";
-            confetti(); // Если захочешь добавить библиотеку эффектов
-        } else {
-            feedback.style.color = "var(--error)";
-            feedback.innerHTML = "❌ Ошибка в порядке слов. Попробуй еще раз.";
+        inputs.forEach(input => {
+            const userVal = input.value.trim().toLowerCase();
+            const correctVal = input.dataset.answer.toLowerCase();
+
+            if (userVal === correctVal) {
+                input.className = "quiz-input correct";
+                correctCount++;
+            } else {
+                input.className = "quiz-input wrong";
+                input.value = `${userVal} (${correctVal})`;
+            }
+        });
+
+        if (correctCount === activePhrases.length) {
+            alert("Идеально! Все артикли и предлоги верны.");
         }
-    }
+    };
 
-    function resetGame() {
-        document.getElementById('progress').style.width = "0%";
-        renderGame();
-    }
+    window.exitGame = () => {
+        document.getElementById('setupView').classList.remove('hidden');
+        document.getElementById('historyView').classList.remove('hidden');
+        document.getElementById('gameView').classList.add('hidden');
+    };
+
 </script>
-
 </body>
 </html>
