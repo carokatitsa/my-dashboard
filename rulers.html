@@ -3,217 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Архив Государств | Bronze Archive</title>
+    <title>Digital Archive | Nations</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
-            --bg: #05070a;
-            --panel: #0f111a;
-            --accent: #b8860b;
-            --gold: #ffd700;
-            --text: #e0e0e0;
-            --border: rgba(184, 134, 11, 0.3);
-            --glass: rgba(255, 255, 255, 0.03);
+            --bg-body: #080a0f;
+            --card-bg: rgba(17, 25, 40, 0.75);
+            --accent-cyan: #00f2ff;
+            --accent-blue: #3b82f6;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.1);
         }
 
         body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: 'Cinzel', serif; /* Если есть возможность, подключи этот шрифт от Google */
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+            background-color: var(--bg-body);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 242, 255, 0.1) 0px, transparent 50%);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            margin: 0; padding: 0; min-height: 100vh;
         }
 
         header {
-            padding: 30px;
-            text-align: center;
-            background: linear-gradient(to bottom, rgba(15,17,26,1), transparent);
-            border-bottom: 1px solid var(--border);
+            padding: 40px; text-align: center;
         }
 
         h1 {
-            color: var(--gold);
-            text-transform: uppercase;
-            letter-spacing: 5px;
+            font-size: 2.5rem; font-weight: 800; letter-spacing: -1px;
+            background: linear-gradient(to right, #fff, var(--accent-cyan));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             margin: 0;
-            font-size: 2.5rem;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
         }
 
         .main-container {
-            max-width: 1400px;
-            margin: 40px auto;
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 40px;
-            padding: 0 20px;
+            max-width: 1400px; margin: 0 auto;
+            display: grid; grid-template-columns: 360px 1fr;
+            gap: 30px; padding: 20px;
         }
 
-        /* Панель создания государства */
-        .creator-panel {
-            background: var(--panel);
-            padding: 30px;
-            border-radius: 20px;
+        /* Боковая панель (Form) */
+        .glass-panel {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
             border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 30px;
             height: fit-content;
-            position: sticky;
-            top: 20px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            position: sticky; top: 30px;
         }
 
-        .creator-panel h2 {
-            color: var(--accent);
-            font-size: 1.2rem;
-            margin-bottom: 25px;
-            border-left: 3px solid var(--gold);
-            padding-left: 15px;
-        }
+        h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-cyan); }
 
         input, textarea {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.2);
             border: 1px solid var(--border);
-            color: #fff;
-            padding: 14px;
-            border-radius: 8px;
-            width: 100%;
-            margin-bottom: 15px;
-            box-sizing: border-box;
+            color: #fff; padding: 14px;
+            border-radius: 12px; width: 100%;
+            margin-bottom: 15px; box-sizing: border-box;
             transition: 0.3s;
         }
 
-        input:focus { border-color: var(--gold); background: rgba(0,0,0,0.6); outline: none; }
+        input:focus { border-color: var(--accent-cyan); outline: none; }
 
-        .btn-prime {
-            background: linear-gradient(135deg, #8b6508, #b8860b);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 8px;
-            width: 100%;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: 0.4s;
+        .btn-submit {
+            background: var(--accent-blue);
+            color: white; border: none;
+            padding: 16px; border-radius: 12px;
+            width: 100%; cursor: pointer;
+            font-weight: 600; transition: 0.3s;
         }
 
-        .btn-prime:hover { filter: brightness(1.2); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(184, 134, 11, 0.4); }
+        .btn-submit:hover { background: #2563eb; transform: translateY(-2px); }
 
-        /* Сетка государств */
-        .countries-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        /* Сетка карточек */
+        .grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
         }
 
-        .country-card {
-            background: var(--panel);
-            border-radius: 20px;
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(8px);
             border: 1px solid var(--border);
-            overflow: hidden;
-            transition: 0.4s;
-            position: relative;
+            border-radius: 24px;
+            overflow: hidden; transition: 0.4s;
         }
 
-        .country-card:hover { transform: scale(1.02); border-color: var(--gold); }
+        .card:hover { border-color: var(--accent-cyan); transform: translateY(-5px); }
 
-        .flag-box {
-            width: 100%;
-            height: 180px;
-            background: #000;
-            position: relative;
+        .card-img { width: 100%; height: 200px; object-fit: cover; }
+
+        .card-body { padding: 25px; }
+
+        .card-title { font-size: 1.5rem; margin: 0; font-weight: 700; }
+
+        .card-meta { color: var(--accent-cyan); font-size: 0.85rem; font-weight: 600; margin-top: 5px; display: block; }
+
+        .card-actions { display: flex; gap: 10px; margin-top: 20px; }
+
+        .btn-secondary {
+            flex: 1; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); color: #fff;
+            padding: 10px; border-radius: 10px; cursor: pointer; transition: 0.2s;
         }
 
-        .flag-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
 
-        .country-info { padding: 20px; }
-        .country-info h3 { color: var(--gold); margin: 0 0 10px 0; font-size: 1.5rem; }
-        .country-date { color: var(--accent); font-size: 0.9rem; font-weight: bold; margin-bottom: 15px; display: block; }
-        
-        .btn-group { display: flex; gap: 10px; }
-        .btn-action {
-            flex: 1;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: var(--glass);
-            color: #fff;
-            font-size: 0.8rem;
-            transition: 0.3s;
-        }
-        .btn-action:hover { background: var(--accent); }
-
-        /* МОДАЛЬНОЕ ОКНО ДЛЯ ПРАВИТЕЛЕЙ */
+        /* Модалка */
         .modal {
-            display: none;
-            position: fixed;
+            display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            backdrop-filter: blur(10px);
-            padding: 40px;
-            box-sizing: border-box;
-            overflow-y: auto;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(20px);
+            z-index: 1000; padding: 40px; box-sizing: border-box;
         }
 
-        .modal-content {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        .modal-content { max-width: 1100px; margin: 0 auto; position: relative; }
 
-        .close-modal {
-            position: absolute;
-            top: 30px; right: 30px;
-            font-size: 30px; color: var(--gold); cursor: pointer;
-        }
+        .close-btn { position: absolute; top: -20px; right: 0; font-size: 2rem; cursor: pointer; color: var(--accent-cyan); }
 
-        .rulers-header {
-            text-align: center;
-            margin-bottom: 40px;
-            border-bottom: 2px solid var(--gold);
-            padding-bottom: 20px;
+        .ruler-entry {
+            display: flex; gap: 20px; background: rgba(255,255,255,0.03);
+            padding: 15px; border-radius: 16px; margin-bottom: 15px;
+            border: 1px solid var(--border); align-items: center;
         }
     </style>
 </head>
 <body>
 
 <header>
-    <h1><i class="fa fa-scroll"></i> Летопись Государств</h1>
+    <h1>NATION_ARCHIVE_v2</h1>
 </header>
 
 <div class="main-container">
-    <div class="creator-panel">
-        <h2>Основать Державу</h2>
-        <input type="text" id="cName" placeholder="Название государства">
-        <input type="text" id="cFlag" placeholder="Ссылка на флаг (URL)">
-        <input type="text" id="cYears" placeholder="Годы (напр. 3100 — 30 до н.э.)">
-        <textarea id="cDesc" rows="4" placeholder="Краткая история становления..."></textarea>
-        <button class="btn-prime" onclick="addCountry()">Записать в архив</button>
-    </div>
+    <aside class="glass-panel">
+        <h2>[+] НОВАЯ ЗАПИСЬ</h2>
+        <input type="text" id="cName" placeholder="Название нации">
+        <input type="text" id="cFlag" placeholder="URL флага">
+        <input type="text" id="cYears" placeholder="Период (2000 BC - 1000 AD)">
+        <textarea id="cDesc" rows="4" placeholder="Краткий лог истории..."></textarea>
+        <button class="btn-submit" onclick="addCountry()">СОХРАНИТЬ В БАЗУ</button>
+    </aside>
 
-    <div class="countries-grid" id="countriesList">
-        </div>
+    <main class="grid" id="countriesList">
+        </main>
 </div>
 
 <div id="rulerModal" class="modal">
-    <span class="close-modal" onclick="closeModal()">&times;</span>
     <div class="modal-content">
-        <div class="rulers-header">
-            <h2 id="modalCountryName" style="color: var(--gold); font-size: 2.5rem;">Название</h2>
-            <p id="modalCountryYears" style="color: var(--accent);"></p>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 300px 1fr; gap: 30px;">
-            <div class="creator-panel" style="position: static; width: 100%;">
-                <h3>Добавить правителя</h3>
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h2 id="modalCountryName" style="font-size: 2rem; margin-bottom: 5px;"></h2>
+        <p id="modalCountryYears" style="color: var(--accent-cyan); margin-bottom: 30px;"></p>
+
+        <div style="display: grid; grid-template-columns: 320px 1fr; gap: 40px;">
+            <div class="glass-panel" style="position: static; background: rgba(0,0,0,0.3);">
+                <h3>НОВЫЙ ЛИДЕР</h3>
                 <input type="text" id="rName" placeholder="Имя">
                 <input type="text" id="rYears" placeholder="Годы правления">
-                <input type="text" id="rPhoto" placeholder="Ссылка на портрет">
-                <textarea id="rDesc" placeholder="Деяния..."></textarea>
-                <button class="btn-prime" onclick="addRuler()">Сохранить</button>
+                <input type="text" id="rPhoto" placeholder="URL портрета">
+                <textarea id="rDesc" placeholder="Достижения..."></textarea>
+                <button class="btn-submit" onclick="addRuler()">ДОБАВИТЬ</button>
             </div>
-            <div id="rulersSubList" class="countries-grid">
+            <div id="rulersSubList">
                 </div>
         </div>
     </div>
@@ -221,7 +173,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -234,37 +186,26 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let activeCountryId = null;
-
-    // --- ЛОГИКА ГОСУДАРСТВ ---
 
     async function loadCountries() {
         const list = document.getElementById('countriesList');
         list.innerHTML = "";
         const snap = await getDocs(collection(db, "archive_nations"));
-        
         snap.forEach(d => {
             const n = d.data();
             list.innerHTML += `
-                <div class="country-card">
-                    <div class="flag-box">
-                        <img src="${n.flag || 'https://via.placeholder.com/400x200?text=No+Flag'}" class="flag-img">
-                    </div>
-                    <div class="country-info">
-                        <h3>${n.name}</h3>
-                        <span class="country-date"><i class="fa fa-hourglass-half"></i> ${n.years}</span>
-                        <div class="btn-group">
-                            <button class="btn-action" onclick="openRulers('${d.id}', '${n.name}', '${n.years}')">
-                                <i class="fa fa-crown"></i> Правители
-                            </button>
-                            <button class="btn-action" style="border-color: #f85149; color: #f85149" onclick="deleteCountry('${d.id}')">
-                                <i class="fa fa-trash"></i>
-                            </button>
+                <div class="card">
+                    <img src="${n.flag || 'https://via.placeholder.com/400x200?text=Flag'}" class="card-img">
+                    <div class="card-body">
+                        <span class="card-meta">${n.years}</span>
+                        <h3 class="card-title">${n.name}</h3>
+                        <div class="card-actions">
+                            <button class="btn-secondary" onclick="openRulers('${d.id}', '${n.name}', '${n.years}')">ЛИДЕРЫ</button>
+                            <button class="btn-secondary" style="color:#ff4b4b" onclick="deleteCountry('${d.id}')">УДАЛИТЬ</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 
@@ -273,20 +214,17 @@
         const flag = document.getElementById('cFlag').value;
         const years = document.getElementById('cYears').value;
         const desc = document.getElementById('cDesc').value;
-
-        if(!name) return alert("Назовите государство!");
+        if(!name) return;
         await addDoc(collection(db, "archive_nations"), { name, flag, years, desc });
-        location.reload();
+        loadCountries();
     }
 
     window.deleteCountry = async function(id) {
-        if(confirm("Удалить государство и всех его правителей?")) {
+        if(confirm("Удалить запись навсегда?")) {
             await deleteDoc(doc(db, "archive_nations", id));
             loadCountries();
         }
     }
-
-    // --- ЛОГИКА ПРАВИТЕЛЕЙ ---
 
     window.openRulers = function(id, name, years) {
         activeCountryId = id;
@@ -303,20 +241,18 @@
         list.innerHTML = "";
         const q = query(collection(db, "rulers"), where("countryId", "==", activeCountryId));
         const snap = await getDocs(q);
-
         snap.forEach(d => {
             const r = d.data();
             list.innerHTML += `
-                <div class="country-card" style="height: fit-content;">
-                    <img src="${r.photo || ''}" style="width:100%; height:200px; object-fit:cover">
-                    <div class="country-info">
-                        <h4 style="color:var(--gold); margin:0">${r.name}</h4>
-                        <small style="color:var(--accent)">${r.years}</small>
-                        <p style="font-size:0.8rem; opacity:0.7">${r.desc}</p>
-                        <button class="btn-action" onclick="deleteRuler('${d.id}')">Удалить</button>
+                <div class="ruler-entry">
+                    <img src="${r.photo || ''}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border: 2px solid var(--accent-cyan)">
+                    <div style="flex:1">
+                        <div style="font-weight:700">${r.name}</div>
+                        <div style="font-size:0.8rem; color:var(--accent-cyan)">${r.years}</div>
+                        <div style="font-size:0.85rem; opacity:0.7">${r.desc}</div>
                     </div>
-                </div>
-            `;
+                    <button onclick="deleteRuler('${d.id}')" style="background:none; border:none; color:#ff4b4b; cursor:pointer">&times;</button>
+                </div>`;
         });
     }
 
@@ -325,11 +261,7 @@
         const years = document.getElementById('rYears').value;
         const photo = document.getElementById('rPhoto').value;
         const desc = document.getElementById('rDesc').value;
-
-        await addDoc(collection(db, "rulers"), {
-            countryId: activeCountryId,
-            name, years, photo, desc
-        });
+        await addDoc(collection(db, "rulers"), { countryId: activeCountryId, name, years, photo, desc });
         loadRulers();
     }
 
