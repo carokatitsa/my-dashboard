@@ -72,7 +72,11 @@
       <button onclick="setLang('de')" id="ln-de">DE</button>
     </div>
   </div>
-  <nav><a href="index.html" id="nav-home">🏠 Главная</a><a href="history.html" style="color:var(--gold)" id="nav-hist">🏛 История</a></nav>
+  <nav>
+    <a href="index.html" id="nav-home">🏠 Главная</a>
+    <a href="history.html" style="color:var(--gold)" id="nav-hist">🏛 История</a>
+    <a href="rulers.html" id="nav-rulers">👤 Правители</a>
+  </nav>
 </header>
 
 <div class="layout">
@@ -122,9 +126,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const i18n = {
-    ru: { home: "🏠 Главная", hist: "🏛 История", save: "Вписать этап", update: "Сохранить изменения", list: "База государств", name: "Название страны", desc: "Описание этапа...", del: "Удалить?", alert: "Заполни поля и нарисуй!" },
-    en: { home: "🏠 Home", hist: "🏛 History", save: "Add Stage", update: "Save Changes", list: "States Database", name: "Country Name", desc: "Stage Description...", del: "Delete?", alert: "Fill fields and draw!" },
-    de: { home: "🏠 Start", hist: "🏛 Geschichte", save: "Phase hinzufügen", update: "Änderungen speichern", list: "Staaten-Datenbank", name: "Ländername", desc: "Beschreibung...", del: "Löschen?", alert: "Felder ausfüllen und zeichnen!" }
+    ru: { home: "🏠 Главная", hist: "🏛 История", rulers: "👤 Правители", save: "Вписать этап", update: "Сохранить изменения", list: "База государств", name: "Название страны", desc: "Описание этапа...", del: "Удалить?", alert: "Заполни поля и нарисуй!" },
+    en: { home: "🏠 Home", hist: "🏛 History", rulers: "👤 Rulers", save: "Add Stage", update: "Save Changes", list: "States Database", name: "Country Name", desc: "Stage Description...", del: "Delete?", alert: "Fill fields and draw!" },
+    de: { home: "🏠 Start", hist: "🏛 Geschichte", rulers: "👤 Herrscher", save: "Phase hinzufügen", update: "Änderungen speichern", list: "Staaten-Datenbank", name: "Ländername", desc: "Beschreibung...", del: "Löschen?", alert: "Felder ausfüllen und zeichnen!" }
 };
 window.currentLang = localStorage.getItem('atlas_lang') || 'ru';
 
@@ -342,6 +346,7 @@ function updateUI() {
     const t = i18n[window.currentLang];
     document.getElementById("nav-home").innerText = t.home;
     document.getElementById("nav-hist").innerText = t.hist;
+    document.getElementById("nav-rulers").innerText = t.rulers;
     document.getElementById("btn-save").innerText = editContext ? t.update : t.save;
     document.getElementById("txt-list-title").innerText = t.list;
     document.getElementById("countryName").placeholder = t.name;
