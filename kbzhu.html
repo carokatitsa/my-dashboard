@@ -69,6 +69,11 @@
         .eat-card { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
         .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; }
 
+        /* Категории приемов пищи */
+        .meal-group { margin-bottom: 15px; border-left: 2px solid var(--blue); padding-left: 10px; }
+        .meal-title { font-size: 12px; font-weight: bold; color: var(--blue); margin-bottom: 8px; display: flex; justify-content: space-between; background: #1c2128; padding: 5px 10px; border-radius: 4px; }
+        .meal-totals { font-weight: normal; color: var(--grey-text); font-size: 10px; }
+
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .goals-header { grid-template-columns: repeat(2, 1fr); } }
     </style>
 </head>
@@ -166,6 +171,9 @@
     let isDayFinished = false;
     let currentTab = 'lib';
 
+    // Порядок категорий для отображения
+    const mealCategories = ["Завтрак", "Обед", "Ужин", "Перекус"];
+
     // --- ПОЛУЧЕНИЕ ДАННЫХ ---
     db.collection("food_library").onSnapshot(snap => { library = snap.docs.map(d => ({id: d.id, ...d.data()})); renderLibrary(); });
     db.collection("daily_summaries").onSnapshot(snap => { summaries = {}; snap.forEach(doc => { summaries[doc.data().date] = doc.data(); }); renderHistory(); });
@@ -176,7 +184,6 @@
         currentTab = tab;
         document.getElementById('tabLib').classList.toggle('active', tab === 'lib');
         document.getElementById('tabMenu').classList.toggle('active', tab === 'menu');
-        // Скрываем форму ввода, если мы в режиме меню для чистоты
         document.getElementById('formContainer').style.display = tab === 'menu' ? 'none' : 'block';
         renderLibrary();
     }
@@ -266,17 +273,44 @@
                 brief = `<div class="day-stats-brief">В процессе...</div>`; 
             }
 
+            // Группировка внутри дня по категориям
+            const mealGroups = {};
+            groups[date].forEach(log => {
+                const cat = log.mealType || "Перекус";
+                if(!mealGroups[cat]) mealGroups[cat] = { items: [], k:0, p:0, f:0, c:0 };
+                mealGroups[cat].items.push(log);
+                mealGroups[cat].k += Number(log.k);
+                mealGroups[cat].p += Number(log.p);
+                mealGroups[cat].f += Number(log.f);
+                mealGroups[cat].c += Number(log.c);
+            });
+
+            let mealHtml = "";
+            mealCategories.forEach(catName => {
+                if(mealGroups[catName]) {
+                    const m = mealGroups[catName];
+                    mealHtml += `
+                        <div class="meal-group">
+                            <div class="meal-title">
+                                ${catName.toUpperCase()}
+                                <span class="meal-totals">К:${Math.round(m.k)} Б:${m.p.toFixed(1)} Ж:${m.f.toFixed(1)}</span>
+                            </div>
+                            ${m.items.map(i => `
+                                <div class="eat-card">
+                                    <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
+                                    <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
+                                </div>`).join('')}
+                        </div>`;
+                }
+            });
+
             html += `<div class="day-block">
                 <div class="day-header" onclick="toggleDay('${date}')">
                     <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?'СЕГОДНЯ':date}</b>${brief}</div>
                     <span style="font-size:10px">${isToday?'▼':'▶'}</span>
                 </div>
                 <div id="list-${date}" class="eat-list ${!isToday?'collapsed':''}">
-                    ${groups[date].map(i => `
-                        <div class="eat-card">
-                            <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
-                            <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
-                        </div>`).join('')}
+                    ${mealHtml}
                 </div>
             </div>`;
         }
@@ -336,9 +370,16 @@
     async function addToDay(id) {
         isDayFinished = false; 
         const p = library.find(x => x.id === id);
+        
+        // ВЫБОР ПРИЕМА ПИЩИ
+        let mealType = prompt("Прием пищи: 1-Завтрак, 2-Обед, 3-Ужин, 4-Перекус", "1");
+        if (!mealType) return;
+        const typeMap = {"1":"Завтрак", "2":"Обед", "3":"Ужин", "4":"Перекус"};
+        const selectedMeal = typeMap[mealType] || "Перекус";
+
         let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
         if (!w) return;
-        let d = { ...p, w: w === "порция" ? w : parseFloat(w) };
+        let d = { ...p, w: w === "порция" ? w : parseFloat(w), mealType: selectedMeal };
         if (!p.isPortion) { 
             const r = parseFloat(w)/100; 
             d.p=+(p.p*r).toFixed(1); d.f=+(p.f*r).toFixed(1); d.c=+(p.c*r).toFixed(1); d.k=+(p.k*r).toFixed(0); 
@@ -360,7 +401,7 @@
     
     function editProduct(id) {
         const i = library.find(x => x.id === id);
-        switchTab('lib'); // Возвращаемся в базу для редактирования
+        switchTab('lib'); 
         document.getElementById('pName').value = i.name; document.getElementById('pP').value = i.p;
         document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
         document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
