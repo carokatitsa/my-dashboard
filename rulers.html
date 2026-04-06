@@ -6,48 +6,236 @@
     <title>Правители | Bronze Archive</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --bg-dark: #0d1117; --bg-sidebar: #161b22; --accent: #cd7f32; --gold: #f1c40f; --text: #c9d1d9; --border: #30363d; }
-        body { background: var(--bg-dark); color: var(--text); font-family: sans-serif; margin: 0; padding: 20px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .back-link { color: var(--accent); text-decoration: none; font-size: 14px; }
-        
-        .container { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
-        
-        /* Форма */
-        .admin-panel { background: var(--bg-sidebar); padding: 20px; border-radius: 8px; border: 1px solid var(--border); height: fit-content; position: sticky; top: 20px; }
-        input, textarea { background: #0d1117; border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; }
+        :root { 
+            --bg-dark: #0a0c10; 
+            --bg-panel: #161b22; 
+            --accent: #cd7f32; 
+            --gold: #f1c40f; 
+            --text: #c9d1d9; 
+            --border: #30363d;
+            --shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
 
-        /* Сетка карточек */
-        .rulers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .ruler-card { background: var(--bg-sidebar); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: 0.3s; position: relative; }
-        .ruler-card:hover { border-color: var(--gold); transform: translateY(-5px); }
-        .ruler-img { width: 100%; height: 250px; object-fit: cover; background: #000; }
-        .ruler-info { padding: 15px; }
-        .ruler-info h3 { margin: 0 0 5px 0; color: var(--gold); font-size: 18px; }
-        .ruler-years { font-size: 12px; color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block; }
-        .ruler-desc { font-size: 13px; line-height: 1.4; color: #8b949e; }
-        
-        .del-btn { position: absolute; top: 5px; right: 5px; background: rgba(248, 81, 73, 0.8); color: white; border: none; border-radius: 4px; cursor: pointer; padding: 5px; z-index: 10; }
+        body { 
+            background: var(--bg-dark); 
+            background-image: radial-gradient(circle at 50% 50%, #1a1f26 0%, #0a0c10 100%);
+            color: var(--text); 
+            font-family: 'Georgia', serif; 
+            margin: 0; 
+            padding: 0; 
+            min-height: 100vh;
+        }
+
+        /* Орнаментальная рамка по краям */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 1px solid rgba(205, 127, 50, 0.2);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        header { 
+            padding: 40px 20px; 
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(22, 27, 34, 0.7);
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .back-link { 
+            position: absolute;
+            left: 20px;
+            top: 45px;
+            color: var(--accent); 
+            text-decoration: none; 
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        .back-link:hover { color: var(--gold); }
+
+        h1 { 
+            margin: 0; 
+            font-size: 32px; 
+            color: var(--gold); 
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .container { 
+            max-width: 1200px; 
+            margin: 40px auto; 
+            display: grid; 
+            grid-template-columns: 350px 1fr; 
+            gap: 40px; 
+            padding: 0 20px;
+        }
+
+        /* Панель добавления (Левая часть) */
+        .admin-panel { 
+            background: var(--bg-panel); 
+            padding: 30px; 
+            border-radius: 12px; 
+            border: 1px solid var(--accent); 
+            box-shadow: var(--shadow);
+            height: fit-content;
+            position: sticky;
+            top: 40px;
+        }
+
+        .admin-panel h3 { 
+            color: var(--accent); 
+            margin-bottom: 25px; 
+            text-align: center; 
+            text-transform: uppercase;
+            font-size: 18px;
+        }
+
+        input, textarea { 
+            background: #0d1117; 
+            border: 1px solid var(--border); 
+            color: #fff; 
+            padding: 12px; 
+            border-radius: 4px; 
+            width: 100%; 
+            box-sizing: border-box; 
+            margin-bottom: 15px;
+            font-family: sans-serif;
+            transition: 0.3s;
+        }
+
+        input:focus, textarea:focus { border-color: var(--gold); outline: none; box-shadow: 0 0 10px rgba(241, 196, 15, 0.1); }
+
+        .btn-add { 
+            background: linear-gradient(135deg, var(--accent), #a66528); 
+            color: white; 
+            border: none; 
+            padding: 15px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            width: 100%; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: 0.3s;
+        }
+        .btn-add:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        /* Сетка карточек (Правая часть) */
+        .rulers-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); 
+            gap: 25px; 
+        }
+
+        .ruler-card { 
+            background: #1c2128; 
+            border: 1px solid var(--border); 
+            border-radius: 15px; 
+            overflow: hidden; 
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            position: relative;
+            box-shadow: var(--shadow);
+        }
+
+        .ruler-card:hover { 
+            border-color: var(--gold); 
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(241, 196, 15, 0.15);
+        }
+
+        .ruler-img-container {
+            width: 100%;
+            height: 300px;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+
+        .ruler-img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            opacity: 0.8;
+            transition: 0.5s;
+        }
+
+        .ruler-card:hover .ruler-img { opacity: 1; transform: scale(1.05); }
+
+        .ruler-info { 
+            padding: 20px; 
+            background: linear-gradient(to bottom, #1c2128, #161b22);
+            border-top: 1px solid rgba(205, 127, 50, 0.3);
+        }
+
+        .ruler-info h3 { margin: 0 0 8px 0; color: var(--gold); font-size: 20px; }
+
+        .ruler-years { 
+            font-size: 13px; 
+            color: var(--accent); 
+            font-weight: bold; 
+            display: block; 
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .ruler-desc { 
+            font-size: 14px; 
+            line-height: 1.5; 
+            color: #8b949e; 
+            height: 80px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+        }
+
+        .del-btn { 
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            background: rgba(20, 20, 20, 0.6); 
+            color: #f85149; 
+            border: 1px solid #f85149; 
+            border-radius: 50%; 
+            width: 35px;
+            height: 35px;
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10; 
+            transition: 0.3s;
+        }
+        .del-btn:hover { background: #f85149; color: white; }
+
+        /* Адаптивность */
+        @media (max-width: 900px) {
+            .container { grid-template-columns: 1fr; }
+            .admin-panel { position: static; }
+            .back-link { position: static; display: block; margin-bottom: 10px; }
+            header { padding: 20px; }
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <div>
-        <a href="history.html" class="back-link">← Вернуться к карте</a>
-        <h1 id="countryTitle" style="margin: 10px 0 0 0;">Правители государства</h1>
-    </div>
+    <a href="history.html" class="back-link"><i class="fa fa-chevron-left"></i> Назад к карте</a>
+    <h1 id="countryTitle">Архив Правителей</h1>
 </header>
 
 <div class="container">
     <div class="admin-panel">
-        <h3 style="margin-top:0">Добавить правителя</h3>
+        <h3><i class="fa fa-crown"></i> Добавить в летопись</h3>
         <input type="text" id="rName" placeholder="Имя правителя">
-        <input type="text" id="rYears" placeholder="Годы правления (напр. 1250 - 1300)">
-        <input type="text" id="rPhoto" placeholder="Ссылка на фото (URL)">
-        <textarea id="rDesc" rows="4" placeholder="Краткое описание достижений..."></textarea>
-        <button class="btn-add" onclick="addRuler()">Сохранить карточку</button>
+        <input type="text" id="rYears" placeholder="Эпоха (напр. 1250 - 1300 гг. н.э.)">
+        <input type="text" id="rPhoto" placeholder="Ссылка на портрет (URL)">
+        <textarea id="rDesc" rows="5" placeholder="Великие деяния и краткая история..."></textarea>
+        <button class="btn-add" onclick="addRuler()">Вписать в историю</button>
     </div>
 
     <div class="rulers-grid" id="rulersList">
@@ -56,7 +244,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -70,75 +258,82 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Получаем параметры из URL (id страны)
     const urlParams = new URLSearchParams(window.location.search);
     const countryId = urlParams.get('id');
-    const collectionRef = urlParams.get('coll');
+    const collectionRef = urlParams.get('coll') || 'historical_countries';
 
-    // Загружаем название страны
     async function loadCountryName() {
         if (!countryId) return;
-        const docRef = doc(db, collectionRef, countryId);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-            document.getElementById('countryTitle').innerText = `Правители: ${snap.data().name}`;
-        }
+        try {
+            const docRef = doc(db, collectionRef, countryId);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                document.getElementById('countryTitle').innerText = `${snap.data().name}`;
+            }
+        } catch (e) { console.error("Ошибка загрузки заголовка", e); }
     }
 
-    // Загружаем правителей
     async function loadRulers() {
         const list = document.getElementById('rulersList');
-        list.innerHTML = "Загрузка...";
+        list.innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: var(--accent);'>Открываем свитки...</div>";
         
-        const q = query(collection(db, "rulers"), where("countryId", "==", countryId));
-        const snap = await getDocs(q);
-        
-        list.innerHTML = "";
-        snap.forEach(d => {
-            const r = d.data();
-            list.innerHTML += `
-                <div class="ruler-card">
-                    <button class="del-btn" onclick="deleteRuler('${d.id}')"><i class="fa fa-trash"></i></button>
-                    <img src="${r.photo || 'https://via.placeholder.com/200x250?text=No+Photo'}" class="ruler-img">
-                    <div class="ruler-info">
-                        <h3>${r.name}</h3>
-                        <span class="ruler-years">${r.years}</span>
-                        <p class="ruler-desc">${r.desc}</p>
+        try {
+            const q = query(collection(db, "rulers"), where("countryId", "==", countryId));
+            const snap = await getDocs(q);
+            
+            list.innerHTML = "";
+            if (snap.empty) {
+                list.innerHTML = "<div style='grid-column: 1/-1; text-align: center; opacity: 0.5;'>В этом государстве еще нет известных правителей.</div>";
+            }
+
+            snap.forEach(d => {
+                const r = d.data();
+                list.innerHTML += `
+                    <div class="ruler-card">
+                        <button class="del-btn" onclick="deleteRuler('${d.id}')"><i class="fa fa-times"></i></button>
+                        <div class="ruler-img-container">
+                            <img src="${r.photo || 'https://images.unsplash.com/photo-1599408162172-74021797e58d?q=80&w=1000'}" class="ruler-img" onerror="this.src='https://via.placeholder.com/300x400?text=Portrait+Lost'">
+                        </div>
+                        <div class="ruler-info">
+                            <h3>${r.name}</h3>
+                            <span class="ruler-years"><i class="fa fa-calendar-alt"></i> ${r.years}</span>
+                            <div class="ruler-desc">${r.desc || 'Описание деяний утеряно в веках...'}</div>
+                        </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        } catch (e) { console.error("Ошибка загрузки списка", e); }
     }
 
-    // Добавляем правителя
     window.addRuler = async function() {
-        const name = document.getElementById('rName').value;
-        const years = document.getElementById('rYears').value;
-        const photo = document.getElementById('rPhoto').value;
-        const desc = document.getElementById('rDesc').value;
+        const name = document.getElementById('rName').value.trim();
+        const years = document.getElementById('rYears').value.trim();
+        const photo = document.getElementById('rPhoto').value.trim();
+        const desc = document.getElementById('rDesc').value.trim();
 
-        if (!name || !years) return alert("Введите имя и годы!");
+        if (!name) return alert("Великий правитель должен иметь имя!");
 
-        await addDoc(collection(db, "rulers"), {
-            countryId,
-            name,
-            years,
-            photo,
-            desc,
-            createdAt: Date.now()
-        });
+        try {
+            await addDoc(collection(db, "rulers"), {
+                countryId,
+                name,
+                years,
+                photo,
+                desc,
+                createdAt: Date.now()
+            });
 
-        // Очистка
-        document.getElementById('rName').value = "";
-        document.getElementById('rYears').value = "";
-        document.getElementById('rPhoto').value = "";
-        document.getElementById('rDesc').value = "";
-        
-        loadRulers();
+            document.getElementById('rName').value = "";
+            document.getElementById('rYears').value = "";
+            document.getElementById('rPhoto').value = "";
+            document.getElementById('rDesc').value = "";
+            
+            loadRulers();
+        } catch (e) { alert("Ошибка при сохранении!"); }
     }
 
     window.deleteRuler = async function(id) {
-        if(confirm("Удалить правителя?")) {
+        if(confirm("Вычеркнуть этого правителя из летописи?")) {
             await deleteDoc(doc(db, "rulers", id));
             loadRulers();
         }
