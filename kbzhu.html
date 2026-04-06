@@ -70,9 +70,18 @@
         .del-btn { color: var(--danger); background: none; border: none; cursor: pointer; font-size: 18px; }
 
         /* Категории приемов пищи */
-        .meal-group { margin-bottom: 15px; border-left: 2px solid var(--blue); padding-left: 10px; }
-        .meal-title { font-size: 12px; font-weight: bold; color: var(--blue); margin-bottom: 8px; display: flex; justify-content: space-between; background: #1c2128; padding: 5px 10px; border-radius: 4px; }
-        .meal-totals { font-weight: normal; color: var(--grey-text); font-size: 10px; }
+        .meal-group { margin-bottom: 15px; border-left: 3px solid var(--blue); padding-left: 10px; }
+        .meal-title { font-size: 13px; font-weight: bold; color: var(--blue); margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; background: #1c2128; padding: 8px 12px; border-radius: 6px; }
+        .meal-totals { 
+            font-weight: bold; 
+            color: #fff; 
+            font-size: 12px; 
+            background: rgba(88, 166, 255, 0.15); 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            border: 1px solid rgba(88, 166, 255, 0.4);
+            letter-spacing: 0.5px;
+        }
 
         @media (max-width: 900px) { .container { grid-template-columns: 1fr; } .goals-header { grid-template-columns: repeat(2, 1fr); } }
     </style>
@@ -171,7 +180,6 @@
     let isDayFinished = false;
     let currentTab = 'lib';
 
-    // Порядок категорий для отображения
     const mealCategories = ["Завтрак", "Обед", "Ужин", "Перекус"];
 
     // --- ПОЛУЧЕНИЕ ДАННЫХ ---
@@ -273,7 +281,6 @@
                 brief = `<div class="day-stats-brief">В процессе...</div>`; 
             }
 
-            // Группировка внутри дня по категориям
             const mealGroups = {};
             groups[date].forEach(log => {
                 const cat = log.mealType || "Перекус";
@@ -292,12 +299,14 @@
                     mealHtml += `
                         <div class="meal-group">
                             <div class="meal-title">
-                                ${catName.toUpperCase()}
-                                <span class="meal-totals">К:${Math.round(m.k)} Б:${m.p.toFixed(1)} Ж:${m.f.toFixed(1)}</span>
+                                <span>${catName.toUpperCase()}</span>
+                                <span class="meal-totals">
+                                    Ккал: ${Math.round(m.k)} | Б: ${m.p.toFixed(1)} | Ж: ${m.f.toFixed(1)} | У: ${m.c.toFixed(1)}
+                                </span>
                             </div>
                             ${m.items.map(i => `
                                 <div class="eat-card">
-                                    <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} К:${i.k}</small></div>
+                                    <div style="flex:1"><b>${i.name}</b><br><small>${i.w}${typeof i.w==='number'?'г':''} | Б:${i.p} Ж:${i.f} У:${i.c} К:${i.k}</small></div>
                                     <button class="del-btn" onclick="deleteLog('${i.id}')">×</button>
                                 </div>`).join('')}
                         </div>`;
@@ -371,7 +380,6 @@
         isDayFinished = false; 
         const p = library.find(x => x.id === id);
         
-        // ВЫБОР ПРИЕМА ПИЩИ
         let mealType = prompt("Прием пищи: 1-Завтрак, 2-Обед, 3-Ужин, 4-Перекус", "1");
         if (!mealType) return;
         const typeMap = {"1":"Завтрак", "2":"Обед", "3":"Ужин", "4":"Перекус"};
