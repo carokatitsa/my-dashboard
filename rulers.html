@@ -11,7 +11,7 @@
         :root {
             --bg: #0c0e12;
             --surface: #161a20;
-            --accent: #d4af37; /* Золото */
+            --accent: #d4af37;
             --accent-hover: #f1c40f;
             --text: #e2e8f0;
             --text-dim: #94a3b8;
@@ -64,13 +64,14 @@
             gap: 40px; padding: 0 20px;
         }
 
-        /* Карточка создания/редактирования */
+        /* Форма (Боковая панель) */
         .editor-card {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 16px;
             padding: 30px;
             height: fit-content;
+            position: sticky; top: 100px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
@@ -97,14 +98,14 @@
             padding: 16px; border-radius: 8px;
             width: 100%; cursor: pointer;
             font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1px; transition: 0.3s;
+            transition: 0.3s;
         }
 
         .btn-main:hover { background: var(--accent-hover); transform: translateY(-2px); }
 
         /* Сетка государств */
         .nations-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 30px;
         }
 
@@ -113,88 +114,107 @@
             border-radius: 20px;
             border: 1px solid var(--border);
             overflow: hidden;
-            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: 0.4s;
         }
 
-        .nation-card:hover {
-            transform: translateY(-10px);
-            border-color: var(--accent);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
-        }
+        .nation-card:hover { transform: translateY(-10px); border-color: var(--accent); }
 
-        .nation-flag {
-            width: 100%; height: 200px;
-            object-fit: cover;
-            border-bottom: 1px solid var(--border);
-        }
+        .nation-flag { width: 100%; height: 180px; object-fit: cover; border-bottom: 1px solid var(--border); }
 
-        .nation-content { padding: 25px; }
+        .nation-content { padding: 20px; }
 
-        .nation-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 24px; margin: 0; color: #fff;
-        }
+        .nation-title { font-family: 'Playfair Display', serif; font-size: 22px; margin: 0; color: #fff; }
 
-        .nation-years {
-            color: var(--accent);
-            font-size: 13px; font-weight: 600;
-            display: block; margin-top: 5px;
-        }
+        .nation-years { color: var(--accent); font-size: 13px; font-weight: 600; margin-top: 5px; display: block; }
 
-        .nation-actions {
-            display: flex; gap: 10px; margin-top: 25px;
-        }
+        .nation-actions { display: flex; gap: 8px; margin-top: 20px; }
 
         .btn-icon {
-            flex: 1; padding: 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            color: var(--text); border-radius: 8px;
-            cursor: pointer; transition: 0.2s;
-            font-size: 12px; font-weight: 600;
+            flex: 1; padding: 10px; background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border); color: var(--text);
+            border-radius: 8px; cursor: pointer; transition: 0.2s; font-size: 12px;
         }
 
         .btn-icon:hover { background: var(--accent); color: #000; }
 
-        /* Модальное окно */
+        /* МОДАЛЬНОЕ ОКНО */
         .modal {
             display: none; position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 1000;
-            padding: 40px; box-sizing: border-box;
-            overflow-y: auto;
+            padding: 40px; box-sizing: border-box; overflow-y: auto;
         }
 
         .modal-container { max-width: 1200px; margin: 0 auto; position: relative; }
 
-        .close-modal {
-            position: absolute; top: -10px; right: 0;
-            font-size: 30px; color: var(--accent); cursor: pointer;
+        .close-modal { position: absolute; top: -10px; right: 0; font-size: 30px; color: var(--accent); cursor: pointer; }
+
+        /* ВЕРТИКАЛЬНЫЕ КАРТОЧКИ ПРАВИТЕЛЕЙ */
+        .rulers-display-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
         }
 
-        .ruler-row {
-            display: grid; grid-template-columns: 100px 1fr 120px;
-            gap: 20px; background: #1c2128;
-            padding: 15px; border-radius: 12px;
-            margin-bottom: 10px; align-items: center;
-            border: 1px solid var(--border);
+        .ruler-v-card {
+            background: #1c2128; border: 1px solid var(--border);
+            border-radius: 20px; padding: 30px 20px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; position: relative; transition: 0.3s;
         }
+
+        .ruler-v-card:hover { border-color: var(--accent); }
+
+        .ruler-avatar {
+            width: 160px; height: 160px;
+            border-radius: 50%; object-fit: cover;
+            border: 4px solid var(--accent);
+            margin-bottom: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .ruler-name { font-family: 'Playfair Display', serif; font-size: 22px; color: #fff; margin: 0; }
+
+        .ruler-years-alt { color: var(--accent); font-weight: 600; font-size: 14px; margin: 10px 0; display: block; }
+
+        /* Раскрывающееся описание */
+        .ruler-full-desc {
+            max-height: 0; overflow: hidden;
+            transition: max-height 0.4s ease-out;
+            font-size: 14px; color: var(--text-dim);
+            line-height: 1.6; margin-top: 0;
+        }
+
+        .ruler-full-desc.show { max-height: 1000px; margin-top: 15px; padding-bottom: 10px; }
+
+        .expand-btn {
+            background: none; border: 1px solid var(--border);
+            color: var(--accent); cursor: pointer;
+            border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s; margin-top: 10px;
+        }
+
+        .expand-btn.active { transform: rotate(180deg); background: var(--accent); color: #000; }
+
+        .ruler-controls { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+
+        .ruler-mini-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 16px; }
+        .ruler-mini-btn:hover { color: var(--accent); }
     </style>
 </head>
 <body>
 
 <header>
     <a href="#" class="logo">BRONZE ARCHIVE</a>
-    <a href="history.html" class="btn-back"><i class="fa fa-map"></i> Вернуться к карте</a>
+    <a href="history.html" class="btn-back"><i class="fa fa-chevron-left"></i> Назад к карте</a>
 </header>
 
 <div class="container">
     <aside class="editor-card">
         <h2 id="formTitle">Основать Державу</h2>
-        <input type="text" id="cName" placeholder="Название">
-        <input type="text" id="cFlag" placeholder="Ссылка на флаг (URL)">
-        <input type="text" id="cYears" placeholder="Эпоха (напр. 1500 - 1000 BC)">
-        <textarea id="cDesc" rows="4" placeholder="Краткое описание..."></textarea>
+        <input type="text" id="cName" placeholder="Название нации">
+        <input type="text" id="cFlag" placeholder="URL флага">
+        <input type="text" id="cYears" placeholder="Годы (напр. 1500 - 1000 BC)">
+        <textarea id="cDesc" rows="4" placeholder="Краткое описание нации..."></textarea>
         <button class="btn-main" id="saveNationBtn" onclick="saveNation()">Записать в историю</button>
         <button id="cancelEditBtn" onclick="resetNationForm()" style="display:none; background:none; border:none; color:var(--text-dim); width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
     </aside>
@@ -205,19 +225,19 @@
 <div id="rulerModal" class="modal">
     <div class="modal-container">
         <span class="close-modal" onclick="closeModal()">&times;</span>
-        <h1 id="modalTitle" style="font-family: 'Playfair Display'; color: var(--accent);"></h1>
+        <h1 id="modalTitle" style="font-family: 'Playfair Display'; color: var(--accent); margin-bottom: 30px;"></h1>
         
-        <div style="display: grid; grid-template-columns: 350px 1fr; gap: 40px; margin-top: 30px;">
-            <div class="editor-card">
+        <div style="display: grid; grid-template-columns: 350px 1fr; gap: 40px;">
+            <div class="editor-card" style="position: static; width: 100%; box-sizing: border-box;">
                 <h2 id="rulerFormTitle">Добавить правителя</h2>
                 <input type="text" id="rName" placeholder="Имя">
                 <input type="text" id="rYears" placeholder="Годы правления">
-                <input type="text" id="rPhoto" placeholder="URL фото">
-                <textarea id="rDesc" placeholder="Деяния..."></textarea>
+                <input type="text" id="rPhoto" placeholder="URL портрета">
+                <textarea id="rDesc" rows="5" placeholder="Великие деяния и история..."></textarea>
                 <button class="btn-main" id="saveRulerBtn" onclick="saveRuler()">Вписать в летопись</button>
                 <button id="cancelRulerEditBtn" onclick="resetRulerForm()" style="display:none; background:none; border:none; color:var(--text-dim); width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
             </div>
-            <div id="rulersDisplay"></div>
+            <div id="rulersDisplay" class="rulers-display-grid"></div>
         </div>
     </div>
 </div>
@@ -242,7 +262,7 @@
     let editRulerId = null;
     let activeCountryId = null;
 
-    // --- ГОСУДАРСТВА ---
+    // --- ЛОГИКА СТРАН ---
 
     async function loadNations() {
         const list = document.getElementById('nationsList');
@@ -252,7 +272,7 @@
             const n = d.data();
             list.innerHTML += `
                 <div class="nation-card">
-                    <img src="${n.flag || 'https://via.placeholder.com/400x200?text=Historical+Nation'}" class="nation-flag">
+                    <img src="${n.flag || 'https://via.placeholder.com/400x200?text=Flag'}" class="nation-flag">
                     <div class="nation-content">
                         <span class="nation-years">${n.years}</span>
                         <h3 class="nation-title">${n.name}</h3>
@@ -273,6 +293,7 @@
             years: document.getElementById('cYears').value,
             desc: document.getElementById('cDesc').value
         };
+        if(!data.name) return alert("Введите название!");
 
         if (editNationId) {
             await updateDoc(doc(db, "archive_nations", editNationId), data);
@@ -290,7 +311,7 @@
         document.getElementById('cYears').value = years;
         document.getElementById('cDesc').value = desc;
         document.getElementById('formTitle').innerText = "Править Державу";
-        document.getElementById('saveNationBtn').innerText = "Обновить данные";
+        document.getElementById('saveNationBtn').innerText = "Обновить";
         document.getElementById('cancelEditBtn').style.display = "block";
     }
 
@@ -306,13 +327,13 @@
     }
 
     window.deleteNation = async (id) => {
-        if(confirm("Удалить страну и все записи о ней?")) {
+        if(confirm("Удалить страну?")) {
             await deleteDoc(doc(db, "archive_nations", id));
             loadNations();
         }
     }
 
-    // --- ПРАВИТЕЛИ ---
+    // --- ЛОГИКА ПРАВИТЕЛЕЙ ---
 
     window.openRulers = (id, name) => {
         activeCountryId = id;
@@ -334,19 +355,27 @@
             const r = d.data();
             if (r.countryId === activeCountryId) {
                 list.innerHTML += `
-                    <div class="ruler-row">
-                        <img src="${r.photo}" style="width:60px; height:60px; border-radius:8px; object-fit:cover">
-                        <div>
-                            <div style="font-weight:700">${r.name}</div>
-                            <div style="color:var(--accent); font-size:12px">${r.years}</div>
+                    <div class="ruler-v-card">
+                        <div class="ruler-controls">
+                            <button class="ruler-mini-btn" onclick="editRuler('${d.id}', \`${r.name}\`, \`${r.years}\`, \`${r.photo}\`, \`${r.desc}\`)"><i class="fa fa-edit"></i></button>
+                            <button class="ruler-mini-btn" style="color:var(--danger)" onclick="deleteRuler('${d.id}')"><i class="fa fa-trash"></i></button>
                         </div>
-                        <div style="display:flex; gap:5px">
-                            <button class="btn-icon" onclick="editRuler('${d.id}', \`${r.name}\`, \`${r.years}\`, \`${r.photo}\`, \`${r.desc}\`)"><i class="fa fa-edit"></i></button>
-                            <button class="btn-icon" style="color:var(--danger)" onclick="deleteRuler('${d.id}')"><i class="fa fa-trash"></i></button>
-                        </div>
+                        <img src="${r.photo || 'https://via.placeholder.com/150'}" class="ruler-avatar">
+                        <h3 class="ruler-name">${r.name}</h3>
+                        <span class="ruler-years-alt">${r.years}</span>
+                        <div id="desc-${d.id}" class="ruler-full-desc">${r.desc || 'История умалчивает о подробностях...'}</div>
+                        <button class="expand-btn" onclick="toggleDesc('${d.id}', this)">
+                            <i class="fa fa-chevron-down"></i>
+                        </button>
                     </div>`;
             }
         });
+    }
+
+    window.toggleDesc = function(id, btn) {
+        const div = document.getElementById(`desc-${id}`);
+        div.classList.toggle('show');
+        btn.classList.toggle('active');
     }
 
     window.saveRuler = async function() {
@@ -357,6 +386,7 @@
             photo: document.getElementById('rPhoto').value,
             desc: document.getElementById('rDesc').value
         };
+        if(!data.name) return alert("Введите имя правителя!");
 
         if (editRulerId) {
             await updateDoc(doc(db, "rulers", editRulerId), data);
@@ -373,7 +403,7 @@
         document.getElementById('rYears').value = years;
         document.getElementById('rPhoto').value = photo;
         document.getElementById('rDesc').value = desc;
-        document.getElementById('rulerFormTitle').innerText = "Исправить запись";
+        document.getElementById('rulerFormTitle').innerText = "Править запись";
         document.getElementById('saveRulerBtn').innerText = "Сохранить";
         document.getElementById('cancelRulerEditBtn').style.display = "block";
     }
@@ -390,8 +420,10 @@
     }
 
     window.deleteRuler = async (id) => {
-        await deleteDoc(doc(db, "rulers", id));
-        loadRulers();
+        if(confirm("Удалить правителя?")) {
+            await deleteDoc(doc(db, "rulers", id));
+            loadRulers();
+        }
     }
 
     loadNations();
