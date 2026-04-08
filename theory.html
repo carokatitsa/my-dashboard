@@ -3,67 +3,83 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LingoArchive Pro | Theory Trainer</title>
+    <title>LingoArchive Pro | Grammar Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
             --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc;
             --accent: #3498db; --gold: #f1c40f; --success: #2ecc71; --error: #ff6b6b;
+            --row-ich: #d35400; --row-er: #27ae60; --row-wir: #2ecc71; --row-sie: #7f8c8d;
         }
         body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; }
-        .container { max-width: 800px; margin: auto; }
-        .card { background: var(--bg-card); border-radius:14px; padding:20px; border: 1px solid #1e2a44; margin-bottom: 20px; }
-        textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 16px; }
-        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; }
+        .container { max-width: 900px; margin: auto; }
+        .card { background: var(--bg-card); border-radius:14px; padding:20px; border: 1px solid #1e2a44; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 14px; font-family: monospace; }
+        .btn { background: var(--accent); color: white; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
         
-        /* Стили тренажера */
-        .quiz-item { margin-bottom: 25px; padding: 15px; background: #0c1221; border-radius: 10px; border-left: 4px solid var(--gold); }
-        .quiz-text { font-size: 20px; margin-bottom: 10px; }
-        .quiz-input { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: var(--gold); font-size: 20px; width: 120px; text-align: center; outline: none; }
-        .correct { border-bottom-color: var(--success) !important; color: var(--success) !important; }
-        .wrong { border-bottom-color: var(--error) !important; color: var(--error) !important; }
+        /* Стили таблицы тренажера */
+        .theory-table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #0c1221; border-radius: 10px; overflow: hidden; }
+        .theory-table th { background: #1a2642; padding: 12px; color: var(--gold); text-align: center; border: 1px solid #1e2a44; }
+        .theory-table td { padding: 8px; border: 1px solid #1e2a44; text-align: center; }
         
-        .history-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #1e2a44; cursor: pointer; }
+        /* Цвета строк как на скрине */
+        .r-ich { background: rgba(211, 84, 0, 0.2); }
+        .r-er { background: rgba(39, 174, 96, 0.2); }
+        .r-wir { background: rgba(46, 204, 113, 0.2); }
+        .r-sie { background: rgba(127, 140, 141, 0.2); }
+
+        .quiz-input { background: rgba(0,0,0,0.3); border: 1px solid var(--accent); color: var(--gold); font-size: 16px; width: 90%; padding: 5px; text-align: center; outline: none; border-radius: 4px; }
+        .correct { border-color: var(--success) !important; color: var(--success) !important; background: rgba(46, 204, 113, 0.1); }
+        .wrong { border-color: var(--error) !important; color: var(--error) !important; background: rgba(255, 107, 107, 0.1); }
+        
+        .history-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #1e2a44; cursor: pointer; }
         .history-item:hover { background: #1e2a44; }
         .hidden { display: none; }
-        .muted { color: #a9b6d3; font-size: 14px; }
+        .muted { color: #a9b6d3; font-size: 14px; line-height: 1.5; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <a href="languages.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← В базу слов</a>
-    <h1>📘 Тренажер теории: <span id="langName">...</span></h1>
+    <h1>📘 Grammar Trainer: <span id="langName">...</span></h1>
 
     <div id="setupView" class="card">
         <h3>Добавить новую тему</h3>
-        <p class="muted">Впишите фразы (каждая с новой строки). Например:<br><i>ins Kino<br>nach Deutschland</i></p>
-        <textarea id="theoryInput" rows="6" placeholder="Введите фразы для заучивания..."></textarea>
+        <p class="muted">
+            <b>Для фраз:</b> Просто пишите фразы с новой строки.<br>
+            <b>Для ТАБЛИЦЫ (как местоимения):</b> Используйте формат разделения палочкой | <br>
+            <i>ich | mein | mir | mich | mich</i>
+        </p>
+        <textarea id="theoryInput" rows="6" placeholder="Например: ich|mein|mir|mich|mich"></textarea>
         <div style="margin-top: 15px; display: flex; gap: 10px;">
             <button class="btn" style="background: var(--gold); color: #000;" onclick="saveAndPlay()">
-                <i class="fas fa-save"></i> Сохранить и Начать
+                <i class="fas fa-magic"></i> Создать упражнение
             </button>
         </div>
     </div>
 
     <div id="historyView" class="card">
-        <h3>Сохраненные темы</h3>
+        <h3>Архив упражнений</h3>
         <div id="historyList"></div>
     </div>
 
     <div id="gameView" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 id="gameTitle">Тренировка</h2>
-            <button class="btn" style="background: #333;" onclick="exitGame()">Выход</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 id="gameTitle" style="margin:0;">Заполни таблицу</h2>
+            <button class="btn" style="background: #333;" onclick="exitGame()">Закончить</button>
         </div>
         <div id="quizContainer"></div>
-        <button class="btn" id="checkBtn" style="width: 100%; margin-top: 20px; background: var(--success);" onclick="checkQuiz()">Проверить ответы</button>
+        <button class="btn" id="checkBtn" style="width: 100%; margin-top: 25px; background: var(--success); height: 50px; font-size: 18px;" onclick="checkQuiz()">
+            Проверить знания
+        </button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -78,14 +94,11 @@
     const db = getFirestore(app);
 
     const urlParams = new URLSearchParams(window.location.search);
-    const currentLang = urlParams.get('lang') || 'EN';
+    const currentLang = urlParams.get('lang') || 'DE';
     document.getElementById('langName').innerText = currentLang;
-
-    let activePhrases = [];
 
     window.onload = loadThemes;
 
-    // Загрузка тем из базы
     async function loadThemes() {
         const q = query(collection(db, "theory"), where("lang", "==", currentLang));
         const snap = await getDocs(q);
@@ -97,59 +110,81 @@
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerHTML = `
-                <span><b>${data.text.split('\n')[0].substring(0, 30)}...</b> (${data.text.split('\n').length} фраз)</span>
-                <i class="fas fa-play" style="color: var(--success)"></i>
+                <span><b>${data.text.split('\n')[0].substring(0, 40)}...</b></span>
+                <i class="fas fa-play-circle" style="color: var(--accent); font-size: 20px;"></i>
             `;
             div.onclick = () => startGame(data.text);
             list.appendChild(div);
         });
     }
 
-    // Сохранение
     window.saveAndPlay = async () => {
         const text = document.getElementById('theoryInput').value.trim();
-        if (!text) return alert("Введите текст!");
-
-        await addDoc(collection(db, "theory"), {
-            lang: currentLang,
-            text: text,
-            created: Date.now()
-        });
-
+        if (!text) return alert("Введите данные!");
+        await addDoc(collection(db, "theory"), { lang: currentLang, text: text, created: Date.now() });
         document.getElementById('theoryInput').value = "";
         loadThemes();
         startGame(text);
     };
 
-    // Запуск игры
     function startGame(fullText) {
-        activePhrases = fullText.split('\n').filter(line => line.trim() !== "");
         document.getElementById('setupView').classList.add('hidden');
         document.getElementById('historyView').classList.add('hidden');
         document.getElementById('gameView').classList.remove('hidden');
 
         const container = document.getElementById('quizContainer');
-        container.innerHTML = "";
-
-        activePhrases.forEach((phrase, index) => {
-            // Логика: разделяем фразу. Первое слово (артикль/предлог) прячем.
-            const parts = phrase.trim().split(' ');
-            const hiddenPart = parts[0]; // Например, "ins" или "nach"
-            const rest = parts.slice(1).join(' '); // Например, "Kino" или "Deutschland"
-
-            container.innerHTML += `
-                <div class="quiz-item">
-                    <div class="quiz-text">
-                        <input type="text" class="quiz-input" data-answer="${hiddenPart}" placeholder="..."> 
-                        <span>${rest}</span>
-                    </div>
-                </div>
+        const lines = fullText.split('\n').filter(l => l.trim() !== "");
+        
+        // Если в первой строке есть |, рисуем таблицу
+        if (lines[0].includes('|')) {
+            let tableHtml = `
+                <table class="theory-table">
+                    <thead>
+                        <tr>
+                            <th>N (кто?)</th><th>G (чей?)</th><th>D (кому?)</th><th>A (кого?)</th><th>R (возвр.)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
-        });
+
+            lines.forEach((line, i) => {
+                const parts = line.split('|').map(p => p.trim());
+                // Определяем цвет строки по индексу (как на картинке)
+                let colorClass = "";
+                if (i < 2) colorClass = "r-ich";
+                else if (i < 5) colorClass = "r-er";
+                else if (i < 7) colorClass = "r-wir";
+                else colorClass = "r-sie";
+
+                tableHtml += `<tr class="${colorClass}">`;
+                parts.forEach((word, wordIndex) => {
+                    // Первое слово (N) оставляем как подсказку, остальные — инпуты
+                    if (wordIndex === 0) {
+                        tableHtml += `<td style="font-weight:bold; color:white">${word}</td>`;
+                    } else {
+                        tableHtml += `<td><input type="text" class="quiz-input" data-answer="${word}" placeholder="?"></td>`;
+                    }
+                });
+                tableHtml += `</tr>`;
+            });
+
+            tableHtml += `</tbody></table>`;
+            container.innerHTML = tableHtml;
+        } else {
+            // Обычный режим фраз (как был раньше)
+            container.innerHTML = lines.map(phrase => {
+                const parts = phrase.trim().split(' ');
+                return `
+                    <div class="card" style="margin-bottom:10px; background:#0c1221">
+                        <input type="text" class="quiz-input" style="width:100px" data-answer="${parts[0]}"> ${parts.slice(1).join(' ')}
+                    </div>`;
+            }).join('');
+        }
     }
 
     window.checkQuiz = () => {
         const inputs = document.querySelectorAll('.quiz-input');
+        let total = inputs.length;
         let correctCount = 0;
 
         inputs.forEach(input => {
@@ -161,12 +196,14 @@
                 correctCount++;
             } else {
                 input.className = "quiz-input wrong";
-                input.value = `${userVal} (${correctVal})`;
+                input.value = `${userVal} → ${correctVal}`;
             }
         });
 
-        if (correctCount === activePhrases.length) {
-            alert("Идеально! Все артикли и предлоги верны.");
+        if (correctCount === total) {
+            alert("🔥 Блестяще! Таблица освоена полностью.");
+        } else {
+            alert(`Результат: ${correctCount} из ${total}. Попробуй еще раз!`);
         }
     };
 
@@ -175,7 +212,6 @@
         document.getElementById('historyView').classList.remove('hidden');
         document.getElementById('gameView').classList.add('hidden');
     };
-
 </script>
 </body>
 </html>
