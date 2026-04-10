@@ -3,151 +3,181 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LingoArchive Pro | Mastery</title>
+    <title>LingoArchive Pro | Ultimate German Prepositions</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
             --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc;
             --accent: #3498db; --gold: #f1c40f; --success: #2ecc71; --error: #ff6b6b;
         }
-        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; line-height: 1.6; }
+        .container { max-width: 1000px; margin: auto; }
         .card { background: var(--bg-card); border-radius:14px; padding:25px; border: 1px solid #1e2a44; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        textarea { background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 14px; font-family: 'Courier New', monospace; }
-        .btn { background: var(--accent); color: white; border: none; padding: 14px 22px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
         
-        .quiz-row { display: flex; align-items: center; gap: 15px; background: #0c1221; padding: 18px; border-radius: 12px; margin-bottom: 12px; border-left: 5px solid var(--accent); animation: slideIn 0.3s ease-out; }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #1e2a44; padding-bottom: 20px; }
+        
+        .quiz-section-title { color: var(--gold); font-size: 20px; margin: 30px 0 15px 0; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--gold); padding-left: 15px; }
+        
+        .quiz-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .quiz-row { background: #0c1221; padding: 15px; border-radius: 10px; border: 1px solid #1e2a44; display: flex; flex-direction: column; gap: 8px; transition: 0.3s; }
+        .quiz-row:hover { border-color: var(--accent); }
 
-        .quiz-input { background: rgba(0,0,0,0.4); border: none; border-bottom: 2px solid var(--accent); color: var(--gold); font-size: 18px; padding: 5px; text-align: center; outline: none; width: 160px; font-weight: bold; }
-        .correct { border-bottom-color: var(--success) !important; color: var(--success) !important; text-shadow: 0 0 8px rgba(46, 204, 113, 0.4); }
-        .wrong { border-bottom-color: var(--error) !important; color: var(--error) !important; }
+        .input-wrap { display: flex; align-items: center; gap: 10px; }
+        .quiz-input { background: rgba(0,0,0,0.4); border: none; border-bottom: 2px solid var(--accent); color: #fff; font-size: 17px; padding: 5px; width: 140px; outline: none; font-weight: bold; }
+        .quiz-input.correct { border-bottom-color: var(--success); color: var(--success); }
+        .quiz-input.wrong { border-bottom-color: var(--error); color: var(--error); }
         
-        .hint { color: #a9b6d3; font-size: 14px; font-style: italic; margin-left: auto; }
-        .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #1e2a44; cursor: pointer; border-radius: 8px; transition: 0.2s; }
-        .history-item:hover { background: rgba(52, 152, 219, 0.1); }
-        .hidden { display: none; }
+        .hint { color: #a9b6d3; font-size: 13px; font-style: italic; }
+        
+        .btn { background: var(--accent); color: white; border: none; padding: 15px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; width: 100%; margin-top: 40px; }
+        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
+
+        .progress-bar { position: fixed; top: 0; left: 0; height: 5px; background: var(--gold); transition: width 0.3s; z-index: 1000; }
+        .stats { background: var(--gold); color: #000; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 14px; }
     </style>
 </head>
 <body>
 
+<div class="progress-bar" id="progressBar" style="width: 0%"></div>
+
 <div class="container">
-    <a href="languages.html" style="color: var(--accent); text-decoration: none; font-weight: bold; font-size: 14px;">← ВЕРНУТЬСЯ В АРХИВ</a>
-    <h1 style="font-size: 28px; margin: 20px 0;">🇩🇪 Практика предлогов: <span id="langName" style="color: var(--gold);">...</span></h1>
-
-    <div id="setupView" class="card">
-        <h3>Новое упражнение</h3>
-        <p style="color: #94a3b8; font-size: 14px; margin-bottom: 15px;">Создавай фразы в формате: <b>Предлог_Артикль - Фраза (Подсказка)</b></p>
-        <textarea id="theoryInput" rows="8" placeholder="an_der - Haltestelle (На остановке)"></textarea>
-        <div style="margin-top: 20px;">
-            <button class="btn" style="background: var(--gold); color: #000;" onclick="saveAndPlay()">
-                <i class="fas fa-play"></i> Начать тренировку
-            </button>
+    <div class="header-flex">
+        <div>
+            <a href="languages.html" style="color: var(--accent); text-decoration: none; font-size: 14px;">← НАЗАД В МЕНЮ</a>
+            <h1 style="margin: 10px 0 0 0;">🇩🇪 Mega Prepositions Trainer</h1>
         </div>
+        <div class="stats" id="scoreDisplay">Выполнено: 0%</div>
     </div>
 
-    <div id="historyView" class="card">
-        <h3>Твои сохраненные темы</h3>
-        <div id="historyList"></div>
-    </div>
-
-    <div id="gameView" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 id="gameTitle" style="margin:0;">Заполни пропуски</h2>
-            <button class="btn" style="background: #2c3e50;" onclick="exitGame()">Завершить</button>
+    <div id="gameContent">
         </div>
-        <div id="quizContainer"></div>
-        <button class="btn" id="checkBtn" style="width: 100%; margin-top: 30px; background: var(--success); font-size: 18px; height: 55px;" onclick="checkQuiz()">Проверить ответы</button>
-    </div>
+
+    <button class="btn" onclick="checkAll()">ПРОВЕРИТЬ ВСЕ УПРАЖНЕНИЯ</button>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
-        authDomain: "my-dashboard-dc67a.firebaseapp.com",
-        projectId: "my-dashboard-dc67a",
-        storageBucket: "my-dashboard-dc67a.firebasestorage.app",
-        messagingSenderId: "710702954120",
-        appId: "1:710702954120:web:f06b1038c48d3bd328913d"
+<script>
+    const database = {
+        "Wechselpräpositionen (Где? Dativ)": [
+            { a: "auf dem", q: "Tisch", h: "На столе (поверхность)" },
+            { a: "in der", q: "Küche", h: "В кухне (внутри)" },
+            { a: "an der", q: "Wand", h: "На стене (вертикаль)" },
+            { a: "vor dem", q: "Haus", h: "Перед домом" },
+            { a: "hinter dem", q: "Haus", h: "За домом" },
+            { a: "unter dem", q: "Bett", h: "Под кроватью" },
+            { a: "neben dem", q: "Stuhl", h: "Рядом со стулом" },
+            { a: "zwischen den", q: "Stühlen", h: "Между стульями (Plural)" },
+            { a: "über dem", q: "Bild", h: "Над картиной" }
+        ],
+        "Wechselpräpositionen (Куда? Akkusativ)": [
+            { a: "auf den", q: "Tisch", h: "На стол (поверхность)" },
+            { a: "in die", q: "Küche", h: "В кухню (внутрь)" },
+            { a: "an die", q: "Wand", h: "На стену (вертикаль)" },
+            { a: "vor das", q: "Auto", h: "Перед машиной" },
+            { a: "hinter die", q: "Tür", h: "За дверь" },
+            { a: "unter das", q: "Bett", h: "Под кровать" },
+            { a: "neben den", q: "Schrank", h: "Рядом со шкафом" },
+            { a: "zwischen die", q: "Stühle", h: "Между стульями (Plural)" }
+        ],
+        "Путешествия (Nach / In / Zu)": [
+            { a: "nach", q: "Berlin", h: "В Берлин (Город)" },
+            { a: "nach", q: "Spanien", h: "В Испанию (Страна ср.р.)" },
+            { a: "in die", q: "Schweiz", h: "В Швейцарию (Страна жен.р.)" },
+            { a: "in die", q: "USA", h: "В США (Plural)" },
+            { a: "in die", q: "Türkei", h: "В Турцию (Страна жен.р.)" },
+            { a: "in die", q: "Berge", h: "В горы" },
+            { a: "an das", q: "Meer", h: "На море (к воде)" },
+            { a: "auf die", q: "Insel", h: "На остров" },
+            { a: "zu", q: "mir", h: "Ко мне (человек)" },
+            { a: "zu", q: "Oma", h: "К бабушке (человек)" },
+            { a: "nach", q: "Hause", h: "Домой (Исключение)" },
+            { a: "zu", q: "Hause", h: "Дома (Исключение)" }
+        ],
+        "Люди и Работа (Bei / Mit / Von)": [
+            { a: "bei", q: "BMW", h: "В компании BMW (Где работаешь)" },
+            { a: "beim", q: "Arzt", h: "У врача (Dativ)" },
+            { a: "zum", q: "Arzt", h: "К врачу (Направление)" },
+            { a: "mit dem", q: "Bruder", h: "С братом" },
+            { a: "von", q: "meinem Vater", h: "От моего отца" },
+            { a: "bei", q: "uns", h: "У нас (дома)" },
+            { a: "mit der", q: "Mutter", h: "С матерью" }
+        ],
+        "Время и Транспорт": [
+            { a: "um", q: "9 Uhr", h: "В 9 часов (время)" },
+            { a: "am", q: "Montag", h: "В понедельник (день)" },
+            { a: "im", q: "Januar", h: "В январе (месяц)" },
+            { a: "im", q: "Sommer", h: "Летом (сезон)" },
+            { a: "seit", q: "einem Jahr", h: "Уже год (с прошлого)" },
+            { a: "vor", q: "zwei Tagen", h: "Два дня назад" },
+            { a: "mit dem", q: "Bus", h: "На автобусе" },
+            { a: "mit der", q: "Bahn", h: "На поезде/трамвае" }
+        ],
+        "Управление глаголов (Verben mit Präp)": [
+            { a: "auf", q: "dich warten", h: "Ждать ТЕБЯ (Auf + Akk)" },
+            { a: "an", q: "den Urlaub denken", h: "Думать об отпуске (An + Akk)" },
+            { a: "von", q: "einem Auto träumen", h: "Мечтать о машине (Von + Dat)" },
+            { a: "für", q: "Musik interessieren", h: "Интересоваться музыкой" },
+            { a: "über", q: "das Geschenk freuen", h: "Радоваться подарку" },
+            { a: "mit", q: "dir sprechen", h: "Говорить с тобой" }
+        ]
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const urlParams = new URLSearchParams(window.location.search);
-    const currentLang = urlParams.get('lang') || 'DE';
-    document.getElementById('langName').innerText = currentLang;
+    function initGame() {
+        const container = document.getElementById('gameContent');
+        let html = '';
 
-    window.onload = loadThemes;
-
-    async function loadThemes() {
-        const q = query(collection(db, "theory"), where("lang", "==", currentLang));
-        const snap = await getDocs(q);
-        const list = document.getElementById('historyList');
-        list.innerHTML = "";
-        snap.forEach(docSnap => {
-            const data = docSnap.data();
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `<span><i class="fas fa-book" style="margin-right:10px; color:var(--accent)"></i> ${data.text.split('\n')[0].substring(0, 50)}...</span><i class="fas fa-arrow-right"></i>`;
-            div.onclick = () => startGame(data.text);
-            list.appendChild(div);
-        });
+        for (const [section, exercises] of Object.entries(database)) {
+            html += `<div class="quiz-section-title"><i class="fas fa-layer-group"></i> ${section}</div>`;
+            html += `<div class="quiz-grid">`;
+            
+            exercises.forEach(ex => {
+                html += `
+                    <div class="quiz-row">
+                        <div class="input-wrap">
+                            <input type="text" class="quiz-input" data-answer="${ex.a}" placeholder="...">
+                            <span style="font-weight:600">${ex.q}</span>
+                        </div>
+                        <div class="hint">${ex.h}</div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+        container.innerHTML = html;
     }
 
-    window.saveAndPlay = async () => {
-        const text = document.getElementById('theoryInput').value.trim();
-        if (!text) return alert("Впиши фразы!");
-        await addDoc(collection(db, "theory"), { lang: currentLang, text: text, created: Date.now() });
-        document.getElementById('theoryInput').value = "";
-        loadThemes();
-        startGame(text);
-    };
-
-    function startGame(fullText) {
-        document.getElementById('setupView').classList.add('hidden');
-        document.getElementById('historyView').classList.add('hidden');
-        document.getElementById('gameView').classList.remove('hidden');
-
-        const container = document.getElementById('quizContainer');
-        const lines = fullText.split('\n').filter(l => l.trim() !== "");
-        
-        container.innerHTML = lines.map(line => {
-            let [ansPart, rest] = line.split('-').map(x => x.trim());
-            const realAnswer = ansPart.replace(/_/g, ' ');
-            return `
-                <div class="quiz-row">
-                    <input type="text" class="quiz-input" data-answer="${realAnswer}" placeholder="...">
-                    <span style="font-size: 18px;">${rest}</span>
-                </div>`;
-        }).join('');
-    }
-
-    window.checkQuiz = () => {
+    window.checkAll = function() {
         const inputs = document.querySelectorAll('.quiz-input');
-        let allCorrect = true;
+        let correctCount = 0;
+
         inputs.forEach(input => {
             const user = input.value.trim().toLowerCase();
             const correct = input.dataset.answer.toLowerCase();
+
             if (user === correct) {
-                input.className = "quiz-input correct";
+                input.classList.add('correct');
+                input.classList.remove('wrong');
+                correctCount++;
             } else {
-                input.className = "quiz-input wrong";
-                input.value = correct; // Показываем правильный ответ
-                allCorrect = false;
+                input.classList.add('wrong');
+                input.classList.remove('correct');
+                // Подсказка при ошибке
+                input.title = `Правильно: ${correct}`;
             }
         });
-        if(allCorrect) alert("🎉 Великолепно! Ты мастер предлогов!");
+
+        const percent = Math.round((correctCount / inputs.length) * 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('scoreDisplay').innerText = `Выполнено: ${percent}%`;
+
+        if (percent === 100) {
+            alert("🔥 ПЕРФЕКТНО! Ты выучил все предлоги!");
+        } else {
+            alert(`Твой результат: ${percent}%. Ошибки подсвечены красным. Наведи на поле, чтобы увидеть ответ.`);
+        }
     };
 
-    window.exitGame = () => {
-        document.getElementById('setupView').classList.remove('hidden');
-        document.getElementById('historyView').classList.remove('hidden');
-        document.getElementById('gameView').classList.add('hidden');
-    };
+    initGame();
 </script>
+
 </body>
 </html>
