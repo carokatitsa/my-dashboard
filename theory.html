@@ -3,68 +3,67 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>LingoArchive Pro | Grammar Master</title>
+    <title>LingoArchive Pro | Card Master</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { 
             --bg-main: #06090f; --bg-card: #111a2e; --text-main: #e8eefc;
             --accent: #3498db; --gold: #f1c40f; --success: #2ecc71; --error: #ff6b6b;
         }
-        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .card { background: var(--bg-card); border-radius:14px; padding:25px; border: 1px solid #1e2a44; margin-bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        textarea { background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:8px; width:100%; box-sizing:border-box; font-size: 14px; }
+        body { margin:0; font-family: 'Segoe UI', sans-serif; background: var(--bg-main); color: var(--text-main); padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 500px; width: 100%; }
+        .card { background: var(--bg-card); border-radius:20px; padding:30px; border: 1px solid #1e2a44; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
         
-        .btn { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn:hover { filter: brightness(1.2); }
+        /* Стили карточки */
+        .card-box { min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
+        .prep-display { font-size: 48px; color: var(--gold); font-weight: bold; text-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
+        
+        .quiz-input { background: rgba(0,0,0,0.3); border: 2px solid #1e2a44; color: #fff; padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 18px; text-align: center; outline: none; transition: 0.3s; }
+        .quiz-input:focus { border-color: var(--accent); }
 
-        /* Стили новой игры */
-        .quiz-item { background: #0c1221; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #1e2a44; }
-        .prep-title { font-size: 24px; color: var(--gold); font-weight: bold; margin-bottom: 15px; }
-        
-        .quiz-input { background: rgba(0,0,0,0.3); border: 1px solid var(--accent); color: #fff; padding: 10px; border-radius: 6px; width: 100%; box-sizing: border-box; margin-bottom: 15px; outline: none; }
-        
-        .cat-group { display: flex; gap: 10px; }
-        .cat-btn { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid #333; background: #1a2642; color: #fff; cursor: pointer; font-size: 13px; font-weight: bold; transition: 0.2s; }
-        .cat-btn.selected { background: var(--accent); border-color: #fff; }
-        
-        /* Статусы проверки */
-        .item-correct { border-color: var(--success); box-shadow: 0 0 10px rgba(46,204,113,0.2); }
-        .item-wrong { border-color: var(--error); box-shadow: 0 0 10px rgba(255,107,107,0.2); }
+        .cat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+        .cat-btn { padding: 12px; border-radius: 10px; border: 1px solid #1e2a44; background: #1a2642; color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 12px; }
+        .cat-btn.active { background: var(--accent); border-color: #fff; transform: scale(1.05); }
 
-        .history-item { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #1e2a44; cursor: pointer; border-radius: 8px; }
+        .btn-main { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        
+        /* Индикаторы */
+        .progress-text { font-size: 14px; color: #a9b6d3; margin-bottom: 10px; }
+        .history-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid #1e2a44; display: flex; justify-content: space-between; }
         .hidden { display: none; }
+        
+        textarea { background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:8px; width:100%; box-sizing:border-box; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <a href="languages.html" style="color: var(--accent); text-decoration: none; font-weight: bold;">← В базу слов</a>
-    <h1>📘 Предлоги: Перевод + Категория</h1>
-
-    <div id="setupView" class="card">
-        <h3>Новая база предлогов</h3>
-        <p style="color: #94a3b8; font-size: 14px;">Формат: <b>Предлог | Перевод | Категория (D/A/W)</b></p>
-        <textarea id="theoryInput" rows="6" placeholder="mit | с | D"></textarea>
-        <div style="margin-top: 15px;">
-            <button class="btn" style="background: var(--gold); color: #000;" onclick="saveAndPlay()">
-                <i class="fas fa-save"></i> Сохранить
-            </button>
+    <div id="setupView">
+        <h1 style="text-align:center">📘 Grammar Flashcards</h1>
+        <div class="card">
+            <h3>Добавить предлоги</h3>
+            <textarea id="theoryInput" rows="5" placeholder="mit | с | D"></textarea>
+            <button class="btn-main" style="background: var(--accent)" onclick="saveAndPlay()">Сохранить и начать</button>
         </div>
+        <div id="historyList" style="margin-top:20px"></div>
     </div>
 
-    <div id="historyView" class="card">
-        <h3>Мои темы</h3>
-        <div id="historyList"></div>
-    </div>
+    <div id="gameView" class="hidden">
+        <div class="progress-text" id="progressInfo">Карточка 1 из X</div>
+        <div class="card card-box">
+            <div id="prepDisplay" class="prep-display">---</div>
+            
+            <input type="text" id="userTrans" class="quiz-input" placeholder="Перевод...">
+            
+            <div class="cat-grid">
+                <button class="cat-btn" onclick="setCategory('D')">DATIV</button>
+                <button class="cat-btn" onclick="setCategory('A')">AKKUSATIV</button>
+                <button class="cat-btn" onclick="setCategory('W')">WECHSEL</button>
+            </div>
 
-    <div id="gameView" class="card hidden">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
-            <h2 id="gameTitle">Экзамен по предлогам</h2>
-            <button class="btn" style="background: #333;" onclick="exitGame()">Выход</button>
+            <button class="btn-main" onclick="nextCard()">ОТВЕТИТЬ</button>
         </div>
-        <div id="quizContainer"></div>
-        <button class="btn" style="width: 100%; margin-top: 30px; background: var(--success); height: 50px;" onclick="checkFinal()">Проверить всё</button>
+        <button onclick="exitGame()" style="background:none; border:none; color:#a9b6d3; cursor:pointer; margin-top:20px; width:100%">Выйти из тренировки</button>
     </div>
 </div>
 
@@ -85,86 +84,97 @@
     const db = getFirestore(app);
     const currentLang = new URLSearchParams(window.location.search).get('lang') || 'DE';
 
+    let cards = [];
+    let currentIndex = 0;
+    let selectedCategory = "";
+
     window.onload = loadThemes;
 
     async function loadThemes() {
         const q = query(collection(db, "theory"), where("lang", "==", currentLang));
         const snap = await getDocs(q);
         const list = document.getElementById('historyList');
-        list.innerHTML = "";
+        list.innerHTML = "<h3>Мои наборы:</h3>";
         snap.forEach(docSnap => {
             const data = docSnap.data();
             const div = document.createElement('div');
             div.className = 'history-item';
-            div.innerHTML = `<span><b>${data.text.split('\n')[0].substring(0, 30)}...</b></span><button class="btn">Старт</button>`;
-            div.onclick = () => startGame(data.text);
+            div.innerHTML = `<span>${data.text.split('\n')[0].substring(0,20)}...</span> <i class="fas fa-play"></i>`;
+            div.onclick = () => prepareGame(data.text);
             list.appendChild(div);
         });
     }
 
     window.saveAndPlay = async () => {
         const text = document.getElementById('theoryInput').value.trim();
-        if (!text) return;
+        if(!text) return;
         await addDoc(collection(db, "theory"), { lang: currentLang, text: text, created: Date.now() });
-        document.getElementById('theoryInput').value = "";
-        loadThemes();
+        prepareGame(text);
     };
 
-    function startGame(fullText) {
-        document.getElementById('setupView').classList.add('hidden');
-        document.getElementById('historyView').classList.add('hidden');
-        document.getElementById('gameView').classList.remove('hidden');
-
-        const container = document.getElementById('quizContainer');
-        const lines = fullText.split('\n').filter(l => l.trim() !== "");
-        
-        container.innerHTML = lines.map((line, idx) => {
+    function prepareGame(fullText) {
+        // Парсим и перемешиваем
+        const lines = fullText.split('\n').filter(l => l.includes('|'));
+        cards = lines.map(line => {
             const [prep, trans, cat] = line.split('|').map(x => x.trim());
-            return `
-                <div class="quiz-item" data-correct-trans="${trans}" data-correct-cat="${cat}">
-                    <div class="prep-title">${prep}</div>
-                    <input type="text" class="quiz-input user-trans" placeholder="Перевод на русский...">
-                    <div class="cat-group">
-                        <button class="cat-btn" onclick="selectCat(this, 'D')">DATIV</button>
-                        <button class="cat-btn" onclick="selectCat(this, 'A')">AKKUSATIV</button>
-                        <button class="cat-btn" onclick="selectCat(this, 'W')">WECHSEL</button>
-                    </div>
-                </div>`;
-        }).join('');
+            return { prep, trans, cat };
+        }).sort(() => Math.random() - 0.5); // Рандом здесь!
+
+        currentIndex = 0;
+        showCard();
+        
+        document.getElementById('setupView').classList.add('hidden');
+        document.getElementById('gameView').classList.remove('hidden');
     }
 
-    window.selectCat = (btn, val) => {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        parent.dataset.selected = val;
+    function showCard() {
+        if (currentIndex >= cards.length) {
+            alert("🎉 Поздравляю! Набор пройден!");
+            exitGame();
+            return;
+        }
+        
+        selectedCategory = "";
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('userTrans').value = "";
+        document.getElementById('userTrans').style.borderColor = "#1e2a44";
+        
+        const card = cards[currentIndex];
+        document.getElementById('prepDisplay').innerText = card.prep;
+        document.getElementById('progressInfo').innerText = `Карточка ${currentIndex + 1} из ${cards.length}`;
+    }
+
+    window.setCategory = (cat) => {
+        selectedCategory = cat;
+        document.querySelectorAll('.cat-btn').forEach(b => {
+            b.classList.toggle('active', b.innerText.startsWith(cat === 'D' ? 'DATIV' : cat === 'A' ? 'AKKUSATIV' : 'WECHSEL'));
+        });
     };
 
-    window.checkFinal = () => {
-        const items = document.querySelectorAll('.quiz-item');
-        let score = 0;
+    window.nextCard = () => {
+        const userT = document.getElementById('userTrans').value.trim().toLowerCase();
+        const current = cards[currentIndex];
+        
+        const isCorrectTrans = current.trans.toLowerCase().split(',').some(t => t.trim() === userT);
+        const isCorrectCat = selectedCategory === current.cat;
 
-        items.forEach(item => {
-            const uTrans = item.querySelector('.user-trans').value.trim().toLowerCase();
-            const uCat = item.querySelector('.cat-group').dataset.selected;
-            const rTrans = item.dataset.correctTrans.toLowerCase();
-            const rCat = item.dataset.correctCat;
-
-            if (uTrans === rTrans && uCat === rCat) {
-                item.className = "quiz-item item-correct";
-                score++;
-            } else {
-                item.className = "quiz-item item-wrong";
-                item.innerHTML += `<div style="color:var(--error); margin-top:10px">Правильно: ${rTrans} [${rCat}]</div>`;
-            }
-        });
-        alert(`Твой результат: ${score} из ${items.length}`);
+        if (isCorrectTrans && isCorrectCat) {
+            currentIndex++;
+            showCard();
+        } else {
+            document.getElementById('userTrans').style.borderColor = "var(--error)";
+            alert(`Ошибка!\nПравильный перевод: ${current.trans}\nКатегория: ${current.cat}`);
+            // Перемешиваем текущую карту в конец, чтобы повторить
+            const failedCard = cards.splice(currentIndex, 1)[0];
+            cards.push(failedCard);
+            showCard();
+        }
     };
 
     window.exitGame = () => {
         document.getElementById('setupView').classList.remove('hidden');
-        document.getElementById('historyView').classList.remove('hidden');
         document.getElementById('gameView').classList.add('hidden');
+        loadThemes();
     };
 </script>
 </body>
