@@ -14,7 +14,6 @@
         .container { max-width: 550px; width: 100%; }
         .card { background: var(--bg-card); border-radius:20px; padding:30px; border: 1px solid #1e2a44; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
         
-        /* Карточки */
         .card-box { min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; }
         .prep-display { font-size: 42px; color: var(--gold); font-weight: bold; text-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
         
@@ -27,14 +26,18 @@
 
         .btn-main { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
         
-        /* Старый режим списка */
         .list-item { text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1e2a44; }
         .list-quest { font-size: 14px; color: #a9b6d3; margin-bottom: 8px; }
 
         .progress-text { font-size: 14px; color: #a9b6d3; margin-bottom: 10px; text-align: center; }
-        .history-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; border: 1px solid #1e2a44; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
+        .history-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1e2a44; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
         .history-item:hover { border-color: var(--accent); background: #16223d; }
         
+        .item-actions { display: flex; gap: 10px; align-items: center; }
+        .delete-btn { color: #5c6b89; cursor: pointer; transition: 0.2s; padding: 5px; }
+        .delete-btn:hover { color: var(--error); }
+        .play-btn { color: var(--gold); cursor: pointer; font-size: 18px; }
+
         .hidden { display: none; }
         textarea { background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:8px; width:100%; box-sizing:border-box; margin-bottom: 10px; font-family: monospace; }
         h1, h3 { text-align: center; }
@@ -47,7 +50,6 @@
         <h1>📘 Trainer Pro</h1>
         <div class="card">
             <h3>Создать тренировку</h3>
-            <p style="font-size: 12px; color: #a9b6d3;">Карточки: mit | с | D <br> Список: an_dem - Fenster</p>
             <textarea id="theoryInput" rows="5" placeholder="Вставь сюда данные..."></textarea>
             <button class="btn-main" style="background: var(--accent)" onclick="saveAndPlay()">💾 Сохранить и открыть</button>
         </div>
@@ -58,16 +60,14 @@
         <div id="gameHeader">
             <div class="progress-text" id="progressInfo">Упражнение</div>
         </div>
-        
         <div id="dynamicContent"></div>
-
         <button onclick="exitGame()" style="background:none; border:none; color:#a9b6d3; cursor:pointer; margin-top:20px; width:100%; font-size: 14px;">← Вернуться в меню</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -95,13 +95,32 @@
         list.innerHTML = "<h3>Мои тренировки:</h3>";
         snap.forEach(docSnap => {
             const data = docSnap.data();
+            const docId = docSnap.id;
             const div = document.createElement('div');
             div.className = 'history-item';
-            div.innerHTML = `<span>${data.text.split('\n')[0].substring(0,25)}...</span> <i class="fas fa-play" style="color:var(--gold)"></i>`;
-            div.onclick = () => prepareGame(data.text);
+            div.innerHTML = `
+                <span onclick="window.launchGame('${data.text.replace(/'/g, "\\'")}')" style="flex-grow:1; cursor:pointer;">
+                    ${data.text.split('\n')[0].substring(0,25)}...
+                </span>
+                <div class="item-actions">
+                    <i class="fas fa-trash-alt delete-btn" onclick="window.deleteItem('${docId}')"></i>
+                    <i class="fas fa-play play-btn" onclick="window.launchGame('${data.text.replace(/'/g, "\\'")}')"></i>
+                </div>
+            `;
             list.appendChild(div);
         });
     }
+
+    window.deleteItem = async (id) => {
+        if(confirm("Удалить это задание навсегда?")) {
+            await deleteDoc(doc(db, "theory", id));
+            loadThemes();
+        }
+    };
+
+    window.launchGame = (text) => {
+        prepareGame(text);
+    };
 
     window.saveAndPlay = async () => {
         const text = document.getElementById('theoryInput').value.trim();
@@ -115,9 +134,7 @@
         document.getElementById('setupView').classList.add('hidden');
         document.getElementById('gameView').classList.remove('hidden');
         
-        // ПРОВЕРКА ФОРМАТА
         if (lines[0].includes('|')) {
-            // Режим КАРТОЧЕК
             cards = lines.map(line => {
                 const parts = line.split('|').map(x => x.trim());
                 return { prep: parts[0], trans: parts[1], cat: parts[2] };
@@ -126,12 +143,10 @@
             renderCardUI();
             showCard();
         } else {
-            // Режим СПИСКА
             renderListUI(lines);
         }
     }
 
-    // --- ЛОГИКА КАРТОЧЕК ---
     function renderCardUI() {
         document.getElementById('dynamicContent').innerHTML = `
             <div class="card card-box">
@@ -155,9 +170,10 @@
         selectedCategory = "";
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         const input = document.getElementById('userTrans');
-        input.value = "";
-        input.style.borderColor = "#1e2a44";
-        
+        if(input) {
+            input.value = "";
+            input.style.borderColor = "#1e2a44";
+        }
         const current = cards[currentIndex];
         document.getElementById('prepDisplay').innerText = current.prep;
         document.getElementById('progressInfo').innerText = `Карточка ${currentIndex + 1} из ${cards.length}`;
@@ -189,7 +205,6 @@
         }
     };
 
-    // --- ЛОГИКА СПИСКА ---
     function renderListUI(lines) {
         document.getElementById('progressInfo').innerText = "Режим списка";
         let html = '<div class="card" style="text-align:left">';
@@ -197,7 +212,6 @@
             let parts = line.split('-');
             let quest = parts[1] ? parts[1].trim() : 'Напиши перевод';
             let ans = parts[0].replace(/_/g, ' ').trim();
-            
             html += `
                 <div class="list-item">
                     <div class="list-quest">${quest}</div>
