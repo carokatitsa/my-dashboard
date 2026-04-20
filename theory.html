@@ -33,41 +33,38 @@
         .history-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1e2a44; display: flex; justify-content: space-between; align-items: center; transition: 0.3s; }
         .history-item:hover { border-color: var(--accent); background: #16223d; }
         
-        .item-actions { display: flex; gap: 10px; align-items: center; }
-        .delete-btn { color: #5c6b89; cursor: pointer; transition: 0.2s; padding: 5px; }
+        .item-actions { display: flex; gap: 15px; align-items: center; padding-right: 10px; }
+        .delete-btn { color: #5c6b89; cursor: pointer; transition: 0.2s; font-size: 16px; }
         .delete-btn:hover { color: var(--error); }
-        .play-btn { color: var(--gold); cursor: pointer; font-size: 18px; }
+        .play-btn { color: var(--gold); cursor: pointer; font-size: 20px; }
 
         .hidden { display: none; }
         textarea { background:#000; border:1px solid #333; color:#fff; padding:15px; border-radius:8px; width:100%; box-sizing:border-box; margin-bottom: 10px; font-family: monospace; }
-        h1, h3 { text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="setupView">
-        <h1>📘 Trainer Pro</h1>
+        <h1 style="text-align:center">📘 Trainer Pro</h1>
         <div class="card">
             <h3>Создать тренировку</h3>
-            <textarea id="theoryInput" rows="5" placeholder="Вставь сюда данные..."></textarea>
+            <textarea id="theoryInput" rows="5" placeholder="Вставь данные..."></textarea>
             <button class="btn-main" style="background: var(--accent)" onclick="saveAndPlay()">💾 Сохранить и открыть</button>
         </div>
         <div id="historyList" style="margin-top:20px"></div>
     </div>
 
     <div id="gameView" class="hidden">
-        <div id="gameHeader">
-            <div class="progress-text" id="progressInfo">Упражнение</div>
-        </div>
+        <div class="progress-text" id="progressInfo">Загрузка...</div>
         <div id="dynamicContent"></div>
-        <button onclick="exitGame()" style="background:none; border:none; color:#a9b6d3; cursor:pointer; margin-top:20px; width:100%; font-size: 14px;">← Вернуться в меню</button>
+        <button onclick="exitGame()" style="background:none; border:none; color:#a9b6d3; cursor:pointer; margin-top:20px; width:100%">← Меню</button>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -93,18 +90,19 @@
         const snap = await getDocs(q);
         const list = document.getElementById('historyList');
         list.innerHTML = "<h3>Мои тренировки:</h3>";
+        
         snap.forEach(docSnap => {
             const data = docSnap.data();
-            const docId = docSnap.id;
+            const id = docSnap.id;
+            const title = data.text.split('\n')[0].substring(0, 30);
+            
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerHTML = `
-                <span onclick="window.launchGame('${data.text.replace(/'/g, "\\'")}')" style="flex-grow:1; cursor:pointer;">
-                    ${data.text.split('\n')[0].substring(0,25)}...
-                </span>
+                <span style="flex:1; padding: 10px; cursor:pointer" onclick="window.launchGame('${id}')">${title}...</span>
                 <div class="item-actions">
-                    <i class="fas fa-trash-alt delete-btn" onclick="window.deleteItem('${docId}')"></i>
-                    <i class="fas fa-play play-btn" onclick="window.launchGame('${data.text.replace(/'/g, "\\'")}')"></i>
+                    <i class="fas fa-trash-alt delete-btn" onclick="window.deleteItem('${id}')"></i>
+                    <i class="fas fa-play play-btn" onclick="window.launchGame('${id}')"></i>
                 </div>
             `;
             list.appendChild(div);
@@ -112,20 +110,24 @@
     }
 
     window.deleteItem = async (id) => {
-        if(confirm("Удалить это задание навсегда?")) {
+        if(confirm("Удалить это задание?")) {
             await deleteDoc(doc(db, "theory", id));
             loadThemes();
         }
     };
 
-    window.launchGame = (text) => {
-        prepareGame(text);
+    window.launchGame = async (id) => {
+        const docRef = doc(db, "theory", id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            prepareGame(docSnap.data().text);
+        }
     };
 
     window.saveAndPlay = async () => {
         const text = document.getElementById('theoryInput').value.trim();
         if(!text) return;
-        await addDoc(collection(db, "theory"), { lang: currentLang, text: text, created: Date.now() });
+        const newDoc = await addDoc(collection(db, "theory"), { lang: currentLang, text: text, created: Date.now() });
         prepareGame(text);
     };
 
@@ -163,17 +165,15 @@
 
     function showCard() {
         if (currentIndex >= cards.length) {
-            alert("🎉 Набор пройден!");
+            alert("🎉 Готово!");
             exitGame();
             return;
         }
         selectedCategory = "";
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         const input = document.getElementById('userTrans');
-        if(input) {
-            input.value = "";
-            input.style.borderColor = "#1e2a44";
-        }
+        if(input) { input.value = ""; input.style.borderColor = "#1e2a44"; }
+        
         const current = cards[currentIndex];
         document.getElementById('prepDisplay').innerText = current.prep;
         document.getElementById('progressInfo').innerText = `Карточка ${currentIndex + 1} из ${cards.length}`;
@@ -198,7 +198,7 @@
             showCard();
         } else {
             document.getElementById('userTrans').style.borderColor = "var(--error)";
-            alert(`Ошибка!\nОжидалось: ${current.trans} (${current.cat})`);
+            alert(`Ошибка!\nВерно: ${current.trans} (${current.cat})`);
             const failed = cards.splice(currentIndex, 1)[0];
             cards.push(failed);
             showCard();
@@ -208,7 +208,7 @@
     function renderListUI(lines) {
         document.getElementById('progressInfo').innerText = "Режим списка";
         let html = '<div class="card" style="text-align:left">';
-        lines.forEach((line, idx) => {
+        lines.forEach(line => {
             let parts = line.split('-');
             let quest = parts[1] ? parts[1].trim() : 'Напиши перевод';
             let ans = parts[0].replace(/_/g, ' ').trim();
@@ -218,7 +218,7 @@
                     <input type="text" class="list-input quiz-input" data-answer="${ans}" placeholder="...">
                 </div>`;
         });
-        html += `<button class="btn-main" onclick="checkList()">Проверить ответы</button></div>`;
+        html += `<button class="btn-main" onclick="checkList()">Проверить</button></div>`;
         document.getElementById('dynamicContent').innerHTML = html;
     }
 
@@ -230,9 +230,7 @@
         });
     };
 
-    window.exitGame = () => {
-        location.reload(); 
-    };
+    window.exitGame = () => { location.reload(); };
 </script>
 </body>
 </html>
