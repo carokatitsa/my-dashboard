@@ -15,26 +15,25 @@
         .container { max-width: 650px; width: 100%; }
         .card { background: var(--bg-card); border-radius:20px; padding:30px; border: 1px solid #1e2a44; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
         
-        /* Стили для КАРТОЧЕК */
-        .card-box { min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; text-align: center; }
-        .prep-display { font-size: 42px; color: var(--gold); font-weight: bold; text-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
-        .cat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
-        .cat-btn { padding: 12px; border-radius: 10px; border: 1px solid #1e2a44; background: #1a2642; color: #fff; cursor: pointer; font-weight: bold; transition: 0.2s; font-size: 11px; }
-        .cat-btn.active { background: var(--accent); border-color: #fff; transform: scale(1.05); }
-
-        /* Стили для ЦВЕТНОЙ ТАБЛИЦЫ */
+        /* ЦВЕТНАЯ ТАБЛИЦА (Personalpronomen) */
         .table-header { display: flex; gap: 5px; margin-bottom: 10px; font-weight: bold; }
         .header-cell { flex: 1; text-align: center; color: var(--gold); font-size: 18px; }
         .table-row { display: flex; gap: 5px; padding: 8px; border-radius: 5px; margin-bottom: 5px; }
-        .table-row input { color: #000 !important; font-weight: bold; background: white; border: none; }
+        .table-row input { color: #000 !important; font-weight: bold; background: white; border: none; border-radius: 4px; }
 
-        /* Общие инпуты и кнопки */
-        .quiz-input { background: rgba(0,0,0,0.3); border: 2px solid #1e2a44; color: #fff; padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 18px; text-align: center; outline: none; transition: 0.3s; }
-        .quiz-input:focus { border-color: var(--accent); }
-        .btn-main { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
+        /* КАРТОЧКИ (Dativ/Akkusativ) */
+        .card-box { min-height: 300px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; text-align: center; }
+        .prep-display { font-size: 42px; color: var(--gold); font-weight: bold; text-shadow: 0 0 15px rgba(241, 196, 15, 0.3); }
+        .cat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; width: 100%; }
+        .cat-btn { padding: 12px; border-radius: 10px; border: 1px solid #1e2a44; background: #1a2642; color: #fff; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .cat-btn.active { background: var(--accent); border-color: #fff; }
 
+        /* ОБЫЧНОЕ УПРАЖНЕНИЕ */
         .list-item { text-align: left; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid #1e2a44; }
         .list-quest { font-size: 14px; color: #a9b6d3; margin-bottom: 8px; }
+
+        .quiz-input { background: rgba(0,0,0,0.3); border: 2px solid #1e2a44; color: #fff; padding: 15px; border-radius: 12px; width: 100%; box-sizing: border-box; font-size: 18px; text-align: center; outline: none; }
+        .btn-main { background: var(--success); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 20px; font-size: 16px; }
         .history-item { background: var(--bg-card); padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #1e2a44; display: flex; justify-content: space-between; align-items: center; }
         
         .hidden { display: none; }
@@ -48,8 +47,8 @@
     <div id="setupView">
         <h1 style="text-align:center">📘 LingoArchive Pro</h1>
         <div class="card">
-            <textarea id="theoryInput" rows="5" placeholder="Вставь данные..."></textarea>
-            <button class="btn-main" style="background: var(--accent)" onclick="saveAndPlay()">💾 Сохранить и открыть</button>
+            <textarea id="theoryInput" rows="5" placeholder="ich | mein | mir | mich..."></textarea>
+            <button class="btn-main" style="background: var(--accent)" onclick="saveAndPlay()">💾 Сохранить и запустить</button>
         </div>
         <div id="historyList" style="margin-top:20px"></div>
     </div>
@@ -122,8 +121,26 @@
         document.getElementById('gameView').classList.remove('hidden');
         const container = document.getElementById('dynamicContent');
 
-        // 1. КАРТОЧКИ (3 колонки)
-        if (cols === 3) {
+        // РЕЖИМ 1: ТВОЯ ЦВЕТНАЯ ТАБЛИЦА (Если 4 и более колонок)
+        if (cols >= 4) {
+            document.getElementById('progressInfo').innerText = "Personalpronomen";
+            let html = '<div class="card"><div class="table-header"><div class="header-cell">N</div><div class="header-cell">G</div><div class="header-cell">D</div><div class="header-cell">A</div></div>';
+            lines.forEach((line, i) => {
+                const parts = line.split('|').map(p => p.trim());
+                const colors = ['row-orange', 'row-orange', 'row-bright-green', 'row-bright-green', 'row-bright-green', 'row-dark-green', 'row-dark-green', 'row-grey', 'row-grey'];
+                html += `<div class="table-row" style="background:var(--${colors[i] || 'row-grey'})">`;
+                // Оставляем N как подсказку, остальные — пустые поля
+                html += `<div style="flex:1; text-align:center; color:#000; font-weight:bold; padding:8px">${parts[0]}</div>`;
+                for(let j=1; j<4; j++) {
+                    html += `<div style="flex:1"><input type="text" class="quiz-input table-input" data-ans="${parts[j] || ''}" placeholder="..."></div>`;
+                }
+                html += `</div>`;
+            });
+            html += '<button class="btn-main" onclick="window.checkTable()">Проверить всё</button></div>';
+            container.innerHTML = html;
+        } 
+        // РЕЖИМ 2: КАРТОЧКИ (Ровно 3 колонки: Предлог | Перевод | Категория)
+        else if (cols === 3) {
             cards = lines.map(line => {
                 const p = line.split('|').map(x => x.trim());
                 return { prep: p[0], trans: p[1], cat: p[2] };
@@ -132,17 +149,20 @@
             renderCardUI();
             showCard();
         } 
-        // 2. ЦВЕТНАЯ ТАБЛИЦА (4 колонки)
-        else if (cols === 4) {
-            renderTableUI(lines);
-        }
-        // 3. ОБЫЧНЫЙ СПИСОК (2 колонки)
+        // РЕЖИМ 3: ОБЫЧНЫЙ СПИСОК (2 колонки или другое)
         else {
-            renderListUI(lines);
+            document.getElementById('progressInfo').innerText = "Упражнение";
+            let html = '<div class="card">';
+            lines.forEach(line => {
+                const p = line.split('|').map(x => x.trim());
+                html += `<div class="list-item"><div class="list-quest">${p[1] || '...'}</div><input type="text" class="quiz-input list-input" data-ans="${p[0]}" placeholder="Ответ..."></div>`;
+            });
+            html += '<button class="btn-main" onclick="window.checkList()">Проверить</button></div>';
+            container.innerHTML = html;
         }
     }
 
-    // --- ЛОГИКА КАРТОЧЕК ---
+    // Вспомогательные функции для карточек
     function renderCardUI() {
         document.getElementById('dynamicContent').innerHTML = `
             <div class="card card-box">
@@ -161,58 +181,31 @@
         if (currentIndex >= cards.length) { alert("Готово!"); location.reload(); return; }
         selectedCategory = "";
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        const input = document.getElementById('userTrans');
-        input.value = ""; input.style.borderColor = "#1e2a44";
+        document.getElementById('userTrans').value = "";
         document.getElementById('prepDisplay').innerText = cards[currentIndex].prep;
         document.getElementById('progressInfo').innerText = `Карточка ${currentIndex + 1} из ${cards.length}`;
     }
 
     window.setCat = (c) => { 
         selectedCategory = c; 
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.innerText.startsWith(c === 'D' ? 'DATIV' : c === 'A' ? 'AKKUSATIV' : 'WECHSEL')));
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.innerText.startsWith(c)));
     };
 
     window.checkCard = () => {
         const cur = cards[currentIndex];
-        const isOk = cur.trans.toLowerCase().split(',').some(t => t.trim() === document.getElementById('userTrans').value.trim().toLowerCase());
-        if (isOk && selectedCategory === cur.cat) { currentIndex++; showCard(); }
-        else { alert(`Ошибка! Правильно: ${cur.trans} (${cur.cat})`); cards.push(cards.splice(currentIndex, 1)[0]); showCard(); }
+        const ok = cur.trans.toLowerCase().split(',').some(t => t.trim() === document.getElementById('userTrans').value.trim().toLowerCase());
+        if (ok && selectedCategory === cur.cat) { currentIndex++; showCard(); }
+        else { alert(`Ошибка! Верно: ${cur.trans} (${cur.cat})`); cards.push(cards.splice(currentIndex, 1)[0]); showCard(); }
     };
 
-    // --- ЛОГИКА ЦВЕТНОЙ ТАБЛИЦЫ ---
-    function renderTableUI(lines) {
-        document.getElementById('progressInfo').innerText = "Personalpronomen";
-        let html = '<div class="card"><div class="table-header"><div class="header-cell">N</div><div class="header-cell">G</div><div class="header-cell">D</div><div class="header-cell">A</div></div>';
-        lines.forEach((line, i) => {
-            const parts = line.split('|').map(p => p.trim());
-            const colors = ['row-orange', 'row-orange', 'row-bright-green', 'row-bright-green', 'row-bright-green', 'row-dark-green', 'row-dark-green', 'row-grey', 'row-grey'];
-            html += `<div class="table-row" style="background:var(--${colors[i] || 'row-grey'})">`;
-            parts.forEach(p => html += `<div style="flex:1"><input type="text" class="quiz-input table-input" data-ans="${p}" placeholder="..."></div>`);
-            html += `</div>`;
-        });
-        html += '<button class="btn-main" onclick="window.checkAllTable()">Проверить всё</button></div>';
-        document.getElementById('dynamicContent').innerHTML = html;
-    }
-
-    window.checkAllTable = () => {
+    // Проверки для таблицы и списка
+    window.checkTable = () => {
         document.querySelectorAll('.table-input').forEach(i => {
             const ok = i.value.trim().toLowerCase() === i.dataset.ans.toLowerCase();
-            i.style.background = ok ? "#2ecc71" : "#ff6b6b";
+            i.style.background = ok ? "var(--success)" : "var(--error)";
             if(!ok) i.value = i.dataset.ans;
         });
     };
-
-    // --- ЛОГИКА СПИСКА ---
-    function renderListUI(lines) {
-        document.getElementById('progressInfo').innerText = "Упражнение";
-        let html = '<div class="card">';
-        lines.forEach(line => {
-            const p = line.split('|').map(x => x.trim());
-            html += `<div class="list-item"><div class="list-quest">${p[1] || '...'}</div><input type="text" class="quiz-input list-input" data-ans="${p[0]}" placeholder="Ответ..."></div>`;
-        });
-        html += '<button class="btn-main" onclick="window.checkList()">Проверить</button></div>';
-        document.getElementById('dynamicContent').innerHTML = html;
-    }
 
     window.checkList = () => {
         document.querySelectorAll('.list-input').forEach(i => {
