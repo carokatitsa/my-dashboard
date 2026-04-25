@@ -136,7 +136,11 @@
         document.getElementById('setupView').classList.add('hidden');
         document.getElementById('gameView').classList.remove('hidden');
         
-        if (lines[0].includes('|')) {
+        // СТРОГАЯ ПРОВЕРКА ФОРМАТА:
+        // Проверяем ПЕРВУЮ строчку. Если в ней 2 палки "|", значит это КАРТОЧКИ.
+        const isCardFormat = lines[0].split('|').length === 3;
+
+        if (isCardFormat) {
             cards = lines.map(line => {
                 const parts = line.split('|').map(x => x.trim());
                 return { prep: parts[0], trans: parts[1], cat: parts[2] };
@@ -145,6 +149,7 @@
             renderCardUI();
             showCard();
         } else {
+            // Во всех остальных случаях включаем режим ТАБЛИЦЫ (списка)
             renderListUI(lines);
         }
     }
@@ -206,27 +211,34 @@
     };
 
     function renderListUI(lines) {
-        document.getElementById('progressInfo').innerText = "Режим списка";
-        let html = '<div class="card" style="text-align:left">';
+        document.getElementById('progressInfo').innerText = "Режим упражнения";
+        let html = '<div class="card" style="text-align:left; max-height: 70vh; overflow-y: auto;">';
         lines.forEach(line => {
-            let parts = line.split('-');
-            let quest = parts[1] ? parts[1].trim() : 'Напиши перевод';
-            let ans = parts[0].replace(/_/g, ' ').trim();
+            // Поддержка тире или пробела для разделения
+            let parts = line.includes('-') ? line.split('-') : [line.split(' ')[0], line.split(' ').slice(1).join(' ')];
+            let quest = parts[1] ? parts[1].trim() : '...';
+            let ans = parts[0] ? parts[0].replace(/_/g, ' ').trim() : '';
+            
             html += `
                 <div class="list-item">
                     <div class="list-quest">${quest}</div>
-                    <input type="text" class="list-input quiz-input" data-answer="${ans}" placeholder="...">
+                    <input type="text" class="list-input quiz-input" data-answer="${ans}" placeholder="Введите ответ">
                 </div>`;
         });
-        html += `<button class="btn-main" onclick="checkList()">Проверить</button></div>`;
+        html += `<button class="btn-main" onclick="checkList()">Проверить ответы</button></div>`;
         document.getElementById('dynamicContent').innerHTML = html;
     }
 
     window.checkList = () => {
         document.querySelectorAll('.list-input').forEach(input => {
-            const isCorrect = input.value.trim().toLowerCase() === input.dataset.answer.toLowerCase();
+            const user = input.value.trim().toLowerCase();
+            const correct = input.dataset.answer.toLowerCase();
+            const isCorrect = user === correct;
+            
             input.style.borderColor = isCorrect ? "var(--success)" : "var(--error)";
-            if(!isCorrect) input.value += ` (${input.dataset.answer})`;
+            if(!isCorrect) {
+                input.value = `${user} -> [${input.dataset.answer}]`;
+            }
         });
     };
 
