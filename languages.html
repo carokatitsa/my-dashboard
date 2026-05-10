@@ -51,6 +51,11 @@
     .fav-btn.active { color: var(--heart); }
     .fav-btn.inactive { color: #333; }
 
+    /* НОВЫЙ СТИЛЬ ДЛЯ ЗЕЛЕНОЙ КАТЕГОРИИ */
+    .learn-btn { cursor: pointer; font-size: 20px; transition: 0.2s; background: none; border: none; padding: 0; line-height: 1; }
+    .learn-btn.active { color: var(--success); }
+    .learn-btn.inactive { color: #333; }
+
     .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     
     .duplicate-warning { font-size: 12px; margin-top: 5px; display: none; align-items: center; gap: 5px; }
@@ -93,11 +98,14 @@
   </div>
 
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
-    <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode(false)">
+    <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode('all')">
       <i class="fas fa-graduation-cap"></i> Экзамен (Все)
     </button>
-    <button class="btn" style="background:var(--heart); color:#fff;" onclick="startTestMode(true)">
+    <button class="btn" style="background:var(--heart); color:#fff;" onclick="startTestMode('fav')">
       <i class="fas fa-heart"></i> Экзамен (Избранное)
+    </button>
+    <button class="btn" style="background:var(--success); color:#fff;" onclick="startTestMode('learned')">
+      <i class="fas fa-check-double"></i> Экзамен (Изученное)
     </button>
   </div>
 
@@ -157,7 +165,7 @@ const db = getFirestore(app);
 let currentLang = "EN";
 let currentType = "words";
 let fullSnapshotData = [];
-let onlyFavoritesTest = false;
+let testFilterMode = 'all'; // Изменил с булева на строку
 
 window.onload = () => { loadData(); };
 
@@ -217,11 +225,15 @@ function renderList(items) {
 
   items.forEach((e, index) => {
     const isFav = e.favorite === true;
+    const isLearned = e.learned === true; // Новое состояние
     list.innerHTML += `
       <div class="card">
         <div style="display:flex; justify-content:space-between; align-items: center;">
             <h3 style="margin:0">${index + 1}. ${e.text}</h3>
-            <div style="display:flex; gap:12px; align-items:center;">
+            <div style="display:flex; gap:15px; align-items:center;">
+                <button class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearned('${e.id}', ${isLearned})">
+                    <i class="fas fa-check-circle"></i>
+                </button>
                 <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFav('${e.id}', ${isFav})">
                     <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
                 </button>
@@ -242,6 +254,13 @@ async function toggleFav(id, currentState) {
     loadData();
 }
 
+// НОВАЯ ФУНКЦИЯ ДЛЯ ЗЕЛЕНОЙ КАТЕГОРИИ
+async function toggleLearned(id, currentState) {
+    const wordDoc = doc(db, "languages", id);
+    await updateDoc(wordDoc, { learned: !currentState });
+    loadData();
+}
+
 async function add() {
   const valText = document.getElementById("text").value.trim();
   const valTrans = document.getElementById("translation").value.trim();
@@ -250,7 +269,7 @@ async function add() {
   if (!valText || !valTrans) return alert("Заполни поля!");
 
   await addDoc(collection(db, "languages"), {
-    lang: currentLang, type: currentType, text: valText, translation: valTrans, note: valNote, favorite: false, created: Date.now()
+    lang: currentLang, type: currentType, text: valText, translation: valTrans, note: valNote, favorite: false, learned: false, created: Date.now()
   });
 
   document.getElementById("text").value = "";
@@ -269,18 +288,30 @@ window.applySearch = () => {
 let testWords = [];
 let testIndex = 0;
 
-function startTestMode(favOnly) {
-  onlyFavoritesTest = favOnly;
-  const pool = favOnly ? fullSnapshotData.filter(i => i.favorite === true) : fullSnapshotData;
+function startTestMode(mode) {
+  testFilterMode = mode;
+  let pool = [];
+  
+  if(mode === 'fav') pool = fullSnapshotData.filter(i => i.favorite === true);
+  else if(mode === 'learned') pool = fullSnapshotData.filter(i => i.learned === true);
+  else pool = fullSnapshotData;
   
   if (pool.length === 0) {
-      alert(favOnly ? "У вас нет избранных слов в этом разделе!" : "Список пуст!");
+      let m = "Список пуст!";
+      if(mode === 'fav') m = "У вас нет избранных слов!";
+      if(mode === 'learned') m = "У вас нет изученных слов!";
+      alert(m);
       return;
   }
 
   document.getElementById("testBox").style.display = "block";
   document.getElementById("setupTest").style.display = "block";
-  document.getElementById("testStatusMsg").innerText = favOnly ? "Режим: Избранное ❤" : "Режим: Все слова";
+  
+  let msg = "Режим: Все слова";
+  if(mode === 'fav') msg = "Режим: Избранное ❤";
+  if(mode === 'learned') msg = "Режим: Изученное ✅";
+  
+  document.getElementById("testStatusMsg").innerText = msg;
   document.getElementById("testArea").innerHTML = "";
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -288,7 +319,11 @@ function startTestMode(favOnly) {
 async function beginTest() {
   const countInput = document.getElementById("testCount");
   const count = Number(countInput.value);
-  let pool = onlyFavoritesTest ? fullSnapshotData.filter(i => i.favorite === true) : fullSnapshotData;
+  
+  let pool = [];
+  if(testFilterMode === 'fav') pool = fullSnapshotData.filter(i => i.favorite === true);
+  else if(testFilterMode === 'learned') pool = fullSnapshotData.filter(i => i.learned === true);
+  else pool = fullSnapshotData;
 
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
   testIndex = 0;
@@ -305,13 +340,19 @@ function showQuestion() {
 
   const word = testWords[testIndex];
   const isFav = word.favorite === true;
+  const isLearned = word.learned === true;
 
   area.innerHTML = `
     <div class="test-header-row">
         <p class="test-q-count">Вопрос ${testIndex + 1} из ${testWords.length}</p>
-        <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFavInTest('${word.id}', ${isFav})">
-            <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
-        </button>
+        <div style="display:flex; gap:15px;">
+            <button class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearnedInTest('${word.id}', ${isLearned})">
+                <i class="fas fa-check-circle"></i>
+            </button>
+            <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFavInTest('${word.id}', ${isFav})">
+                <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
+            </button>
+        </div>
     </div>
     <div class="test-word">${word.text}</div>
     <button class="btn" style="width:100%; padding: 15px; justify-content: center;" onclick="revealAnswer()">Показать ответ</button>
@@ -338,6 +379,21 @@ window.toggleFavInTest = async (id, currentState) => {
     if(wordInMain) wordInMain.favorite = newState;
 };
 
+// НОВАЯ ФУНКЦИЯ ДЛЯ ТЕСТА
+window.toggleLearnedInTest = async (id, currentState) => {
+    const wordDoc = doc(db, "languages", id);
+    const newState = !currentState;
+    const btn = document.querySelector("#testArea .learn-btn");
+    btn.className = `learn-btn ${newState ? 'active' : 'inactive'}`;
+    btn.onclick = () => toggleLearnedInTest(id, newState);
+
+    await updateDoc(wordDoc, { learned: newState });
+    const wordInTest = testWords.find(w => w.id === id);
+    if(wordInTest) wordInTest.learned = newState;
+    const wordInMain = fullSnapshotData.find(w => w.id === id);
+    if(wordInMain) wordInMain.learned = newState;
+};
+
 async function removeItem(id) {
   if(confirm("Удалить это слово навсегда?")) {
     await deleteDoc(doc(db, "languages", id));
@@ -358,6 +414,7 @@ window.add = add; window.removeItem = removeItem; window.setLang = setLang;
 window.setType = setType; window.startTestMode = startTestMode; 
 window.beginTest = beginTest; window.revealAnswer = revealAnswer; 
 window.nextQuestion = nextQuestion; window.toggleFav = toggleFav;
+window.toggleLearned = toggleLearned; // Экспортируем новую функцию
 </script>
 
 </body>
