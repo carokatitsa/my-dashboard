@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LingoDaily | 10 Words</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #05080f;
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent: #3d8bff;
+      --gold: #f4c042;
+      --green: #2ecc71;
+      --text: #ffffff;
+      --text-dim: #8b949e;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      background-image: radial-gradient(circle at top right, #1a2236 0%, #05080f 40%);
+      min-height: 100vh;
+      padding-bottom: 50px;
+    }
+
+    header {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-pill {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 8px 16px;
+      border-radius: 20px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+
+    .nav-pill:hover { background: var(--glass-border); }
+
+    main { max-width: 500px; margin: 0 auto; padding: 20px; }
+
+    h1 { font-weight: 800; font-size: 28px; margin-bottom: 5px; }
+    .subtitle { color: var(--text-dim); margin-bottom: 30px; font-size: 14px; }
+
+    /* Lang Selector */
+    .lang-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px; }
+    .lang-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 15px 5px;
+      border-radius: 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .lang-card.active {
+      border-color: var(--accent);
+      background: rgba(61, 139, 255, 0.1);
+      transform: translateY(-3px);
+    }
+
+    /* Progress Tracker */
+    .tracker-box {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 30px;
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .circle-wrap {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 20px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(var(--bg) 50%, transparent 51%);
+      border-radius: 50%;
+    }
+
+    .circle-val { font-size: 32px; font-weight: 800; color: var(--accent); }
+    .circle-val.maxed { color: var(--green); }
+
+    /* Inputs */
+    .input-card {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 20px;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    input {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--glass-border);
+      padding: 16px;
+      border-radius: 12px;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    .btn-main {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 16px;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .btn-main:disabled { filter: grayscale(1); opacity: 0.5; }
+
+    /* History */
+    .day-pill {
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      padding: 18px;
+      border-radius: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+    }
+    .day-pill:hover { border-color: var(--gold); }
+    .day-date { font-weight: 600; }
+    .day-count { color: var(--gold); font-size: 14px; background: rgba(244,192,66,0.1); padding: 4px 10px; border-radius: 10px; }
+
+    /* Test Overlay */
+    #testUI {
+      position: fixed; inset: 0; background: var(--bg); z-index: 1000;
+      display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;
+    }
+    .test-q { font-size: 42px; font-weight: 800; margin-bottom: 20px; }
+    .test-a { font-size: 24px; color: var(--green); font-weight: 600; margin-bottom: 40px; min-height: 36px; }
+
+    #particles { position: fixed; inset: 0; pointer-events: none; z-index: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="font-weight: 800; color: var(--accent);">LINGO DAILY</div>
+  <div style="display: flex; gap: 10px;">
+    <a href="#" class="nav-pill" onclick="setView('home')">🏠</a>
+    <a href="#" class="nav-pill" onclick="setView('history')">📅 Архив</a>
+  </div>
+</header>
+
+<main>
+  <div id="view-home">
+    <h1 id="langTitle">English 🇬🇧</h1>
+    <p class="subtitle">Твой план: 10 новых слов сегодня</p>
+
+    <div class="lang-grid">
+      <div class="lang-card active" onclick="setLang('EN', 'English 🇬🇧', this)">🇬🇧</div>
+      <div class="lang-card" onclick="setLang('DE', 'Deutsch 🇩🇪', this)">🇩🇪</div>
+      <div class="lang-card" onclick="setLang('ES', 'Español 🇪🇸', this)">🇪🇸</div>
+      <div class="lang-card" onclick="setLang('PL', 'Polski 🇵🇱', this)">🇵🇱</div>
+    </div>
+
+    <div class="tracker-box">
+      <div class="circle-wrap" id="progressRing">
+        <span class="circle-val" id="wordCount">0/10</span>
+      </div>
+      <button id="todayExamBtn" class="btn-main" style="background: var(--gold); color: black; display: none; width: 100%;" onclick="startTest('today')">
+        <i class="fas fa-graduation-cap"></i> Экзамен за сегодня
+      </button>
+    </div>
+
+    <div class="input-card" id="inputSection">
+      <input type="text" id="wIn" placeholder="Слово на иностранном">
+      <input type="text" id="tIn" placeholder="Перевод">
+      <button class="btn-main" id="saveBtn" onclick="saveWord()">Добавить слово</button>
+    </div>
+  </div>
+
+  <div id="view-history" style="display: none;">
+    <h1>История побед</h1>
+    <p class="subtitle">Выбери день для повторения</p>
+    <div id="historyContainer"></div>
+  </div>
+</main>
+
+<div id="testUI">
+  <div style="color: var(--text-dim); margin-bottom: 10px;" id="testStep">Вопрос 1 из 10</div>
+  <div class="test-q" id="testQ">Word</div>
+  <div class="test-a" id="testA"></div>
+  <button class="btn-main" id="revealBtn" style="width: 200px; background: var(--gold); color: black;" onclick="revealAnswer()">Ответ</button>
+  <button class="btn-main" id="nextBtn" style="width: 200px; display: none;" onclick="nextQuestion()">Дальше</button>
+  <button class="nav-pill" style="margin-top: 40px; border: none;" onclick="closeTest()">Закончить</button>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
+    authDomain: "my-dashboard-dc67a.firebaseapp.com",
+    projectId: "my-dashboard-dc67a",
+    storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+    messagingSenderId: "710702954120",
+    appId: "1:710702954120:web:f06b1038c48d3bd328913d"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let currentLang = 'EN';
+  let todayList = [];
+  let historyData = {};
+  const todayKey = new Date().toLocaleDateString('ru-RU');
+
+  window.setView = (view) => {
+    document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
+    document.getElementById('view-history').style.display = view === 'history' ? 'block' : 'none';
+    if(view === 'history') fetchHistory();
+  };
+
+  window.setLang = (l, title, el) => {
+    currentLang = l;
+    document.getElementById('langTitle').innerText = title;
+    document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    fetchToday();
+  };
+
+  async function fetchToday() {
+    const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang), where("date", "==", todayKey));
+    const snap = await getDocs(q);
+    todayList = snap.docs.map(d => d.data());
+    renderProgress();
+  }
+
+  function renderProgress() {
+    const count = todayList.length;
+    const counterEl = document.getElementById('wordCount');
+    counterEl.innerText = `${count}/10`;
+    
+    if(count >= 10) {
+      counterEl.classList.add('maxed');
+      document.getElementById('inputSection').style.opacity = '0.3';
+      document.getElementById('saveBtn').disabled = true;
+    } else {
+      counterEl.classList.remove('maxed');
+      document.getElementById('inputSection').style.opacity = '1';
+      document.getElementById('saveBtn').disabled = false;
+    }
+    document.getElementById('todayExamBtn').style.display = count > 0 ? 'block' : 'none';
+  }
+
+  window.saveWord = async () => {
+    const w = document.getElementById('wIn').value.trim();
+    const t = document.getElementById('tIn').value.trim();
+    if(!w || !t) return;
+
+    const entry = { lang: currentLang, word: w, trans: t, date: todayKey, ts: Date.now() };
+    await addDoc(collection(db, "daily_tracks"), entry);
+    
+    todayList.push(entry);
+    document.getElementById('wIn').value = '';
+    document.getElementById('tIn').value = '';
+    renderProgress();
+  };
+
+  async function fetchHistory() {
+    const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang), orderBy("ts", "desc"));
+    const snap = await getDocs(q);
+    const groups = {};
+    snap.forEach(d => {
+      const data = d.data();
+      if(!groups[data.date]) groups[data.date] = [];
+      groups[data.date].push(data);
+    });
+
+    const container = document.getElementById('historyContainer');
+    container.innerHTML = '';
+    Object.keys(groups).forEach(date => {
+      const div = document.createElement('div');
+      div.className = 'day-pill';
+      div.innerHTML = `<span class="day-date">${date}</span><span class="day-count">${groups[date].length} слов</span>`;
+      div.onclick = () => initTest(groups[date]);
+      container.appendChild(div);
+    });
+    historyData = groups;
+  }
+
+  // TEST SYSTEM
+  let activeTest = [];
+  let testIdx = 0;
+
+  window.startTest = (mode) => {
+    initTest(todayList);
+  };
+
+  function initTest(data) {
+    activeTest = [...data].sort(() => Math.random() - 0.5);
+    testIdx = 0;
+    document.getElementById('testUI').style.display = 'flex';
+    showQuestion();
+  }
+
+  function showQuestion() {
+    const q = activeTest[testIdx];
+    document.getElementById('testStep').innerText = `Вопрос ${testIdx + 1} из ${activeTest.length}`;
+    document.getElementById('testQ').innerText = q.word;
+    document.getElementById('testA').innerText = '';
+    document.getElementById('revealBtn').style.display = 'block';
+    document.getElementById('nextBtn').style.display = 'none';
+  }
+
+  window.revealAnswer = () => {
+    document.getElementById('testA').innerText = activeTest[testIdx].trans;
+    document.getElementById('revealBtn').style.display = 'none';
+    document.getElementById('nextBtn').style.display = 'block';
+  };
+
+  window.nextQuestion = () => {
+    testIdx++;
+    if(testIdx < activeTest.length) showQuestion();
+    else { alert("Блестяще! День повторен."); closeTest(); }
+  };
+
+  window.closeTest = () => { document.getElementById('testUI').style.display = 'none'; };
+
+  fetchToday();
+</script>
+
+</body>
+</html>
