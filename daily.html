@@ -21,162 +21,91 @@
     }
 
     body {
-      margin: 0;
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      background: var(--bg);
-      color: var(--text);
+      margin: 0; font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg); color: var(--text);
       background-image: radial-gradient(circle at top right, #1a2236 0%, #05080f 40%);
-      min-height: 100vh;
-      padding-bottom: 50px;
+      min-height: 100vh; padding-bottom: 50px;
     }
 
     header {
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      backdrop-filter: blur(10px);
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      padding: 20px; display: flex; justify-content: space-between; align-items: center;
+      backdrop-filter: blur(10px); position: sticky; top: 0; z-index: 100;
       border-bottom: 1px solid var(--glass-border);
     }
 
     .nav-pill {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      padding: 10px 18px;
-      border-radius: 20px;
-      color: var(--text);
-      text-decoration: none;
-      font-size: 14px;
-      transition: 0.3s;
-      cursor: pointer;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      padding: 10px 18px; border-radius: 20px; color: var(--text);
+      text-decoration: none; font-size: 14px; cursor: pointer; transition: 0.3s;
     }
     .nav-pill:hover { background: var(--glass-border); color: var(--gold); }
 
     main { max-width: 500px; margin: 0 auto; padding: 20px; }
 
-    h1 { font-weight: 800; font-size: 28px; margin-bottom: 5px; }
-    .subtitle { color: var(--text-dim); margin-bottom: 30px; font-size: 14px; }
-
-    /* Lang Selector */
     .lang-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px; }
     .lang-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      padding: 15px 5px;
-      border-radius: 16px;
-      text-align: center;
-      cursor: pointer;
-      transition: 0.3s;
-      font-size: 20px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      padding: 15px 5px; border-radius: 16px; text-align: center;
+      cursor: pointer; transition: 0.3s; font-size: 20px;
     }
     .lang-card.active {
-      border-color: var(--accent);
-      background: rgba(61, 139, 255, 0.1);
+      border-color: var(--accent); background: rgba(61, 139, 255, 0.1);
       transform: translateY(-3px);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
     }
 
-    /* Progress Tracker */
     .tracker-box {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 24px;
-      padding: 30px;
-      text-align: center;
-      margin-bottom: 25px;
-      backdrop-filter: blur(5px);
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 24px; padding: 30px; text-align: center; margin-bottom: 25px;
     }
 
     .circle-wrap {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 20px;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 4px solid var(--glass-border);
-      border-radius: 50%;
+      width: 120px; height: 120px; margin: 0 auto 20px;
+      display: flex; align-items: center; justify-content: center;
+      border: 4px solid var(--glass-border); border-radius: 50%;
     }
 
     .circle-val { font-size: 32px; font-weight: 800; color: var(--accent); }
     .circle-val.maxed { color: var(--green); }
 
-    /* Inputs */
     .input-card {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      padding: 20px;
-      border-radius: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      padding: 20px; border-radius: 24px; display: flex; flex-direction: column; gap: 12px;
     }
 
     input {
-      background: rgba(0,0,0,0.3);
-      border: 1px solid var(--glass-border);
-      padding: 16px;
-      border-radius: 12px;
-      color: white;
-      font-size: 16px;
-      outline: none;
-      transition: 0.3s;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+      padding: 16px; border-radius: 12px; color: white; font-size: 16px; outline: none;
     }
-    input:focus { border-color: var(--accent); background: rgba(0,0,0,0.5); }
 
     .btn-main {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 16px;
-      border-radius: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
+      background: var(--accent); color: white; border: none;
+      padding: 16px; border-radius: 12px; font-weight: 700;
+      cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px;
     }
-    .btn-main:hover:not(:disabled) { transform: scale(1.02); opacity: 0.9; }
-    .btn-main:disabled { filter: grayscale(1); opacity: 0.3; cursor: not-allowed; }
+    .btn-main:disabled { filter: grayscale(1); opacity: 0.3; }
 
-    /* History */
     .day-pill {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      padding: 18px;
-      border-radius: 18px;
-      margin-bottom: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      cursor: pointer;
-      transition: 0.3s;
+      background: var(--glass); border: 1px solid var(--glass-border);
+      padding: 18px; border-radius: 18px; margin-bottom: 12px;
+      display: flex; justify-content: space-between; align-items: center;
+      cursor: pointer; transition: 0.3s;
     }
-    .day-pill:hover { border-color: var(--gold); transform: translateX(5px); background: rgba(255,255,255,0.05); }
-    .day-date { font-weight: 600; font-size: 16px; }
-    .day-count { color: var(--gold); font-size: 13px; background: rgba(244,192,66,0.1); padding: 5px 12px; border-radius: 12px; font-weight: bold; }
+    .day-pill:hover { border-color: var(--gold); background: rgba(255,255,255,0.05); }
 
-    /* Test Overlay */
+    .day-count { color: var(--gold); font-size: 13px; background: rgba(244,192,66,0.1); padding: 5px 12px; border-radius: 12px; }
+
     #testUI {
       position: fixed; inset: 0; background: var(--bg); z-index: 1000;
       display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; text-align: center;
     }
     .test-q { font-size: 42px; font-weight: 800; margin-bottom: 10px; color: var(--gold); }
     .test-a { font-size: 26px; color: var(--green); font-weight: 600; margin-bottom: 40px; min-height: 40px; }
-
-    .loading-text { text-align: center; color: var(--text-dim); padding: 40px; font-style: italic; }
   </style>
 </head>
 <body>
 
 <header>
-  <div style="font-weight: 800; color: var(--accent); letter-spacing: 1px;">LINGO DAILY</div>
+  <div style="font-weight: 800; color: var(--accent);">LINGO DAILY</div>
   <div style="display: flex; gap: 8px;">
     <div class="nav-pill" onclick="setView('home')"><i class="fas fa-home"></i></div>
     <div class="nav-pill" onclick="setView('history')"><i class="fas fa-calendar-alt"></i> Архив</div>
@@ -186,7 +115,7 @@
 <main>
   <div id="view-home">
     <h1 id="langTitle">English 🇬🇧</h1>
-    <p class="subtitle">Цель: 10 слов в день. Дисциплина — это ключ.</p>
+    <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 30px;">Твоя норма на сегодня — 10 новых слов.</p>
 
     <div class="lang-grid">
       <div class="lang-card active" onclick="setLang('EN', 'English 🇬🇧', this)">🇬🇧</div>
@@ -196,45 +125,40 @@
     </div>
 
     <div class="tracker-box">
-      <div class="circle-wrap" id="progressRing">
-        <span class="circle-val" id="wordCount">0/10</span>
-      </div>
+      <div class="circle-wrap"><span class="circle-val" id="wordCount">0/10</span></div>
       <button id="todayExamBtn" class="btn-main" style="background: var(--gold); color: black; display: none; width: 100%;" onclick="startTest('today')">
-        <i class="fas fa-play"></i> Начать экзамен за сегодня
+        <i class="fas fa-play"></i> Повторить слова за сегодня
       </button>
     </div>
 
     <div class="input-card" id="inputSection">
-      <input type="text" id="wIn" placeholder="Слово (напр. Apple)">
-      <input type="text" id="tIn" placeholder="Перевод (напр. Яблоко)">
-      <button class="btn-main" id="saveBtn" onclick="saveWord()">
-        <i class="fas fa-plus-circle"></i> Добавить в список
-      </button>
+      <input type="text" id="wIn" placeholder="Слово">
+      <input type="text" id="tIn" placeholder="Перевод">
+      <button class="btn-main" id="saveBtn" onclick="saveWord()"><i class="fas fa-plus"></i> Добавить</button>
     </div>
   </div>
 
   <div id="view-history" style="display: none;">
-    <h1>История побед</h1>
-    <p class="subtitle" id="historySub">Архив твоих слов для повторения</p>
+    <h1>Архив побед</h1>
+    <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 30px;" id="histLang">Загрузка...</p>
     <div id="historyContainer"></div>
   </div>
 </main>
 
 <div id="testUI">
-  <div style="color: var(--text-dim); margin-bottom: 20px; font-weight: 600;" id="testStep">Вопрос 1 из 10</div>
-  <div class="test-q" id="testQ">Word</div>
+  <div id="testStep" style="color: var(--text-dim); margin-bottom: 20px;"></div>
+  <div class="test-q" id="testQ"></div>
   <div class="test-a" id="testA"></div>
-  
   <div style="display: flex; flex-direction: column; gap: 15px; width: 250px;">
-    <button class="btn-main" id="revealBtn" style="background: var(--gold); color: black;" onclick="revealAnswer()">Показать ответ</button>
-    <button class="btn-main" id="nextBtn" style="display: none;" onclick="nextQuestion()">Дальше <i class="fas fa-arrow-right"></i></button>
-    <button class="nav-pill" style="border: none; background: rgba(255,107,107,0.1); color: var(--red);" onclick="closeTest()">Прервать тест</button>
+    <button class="btn-main" id="revealBtn" style="background: var(--gold); color: black;" onclick="revealAnswer()">Ответ</button>
+    <button class="btn-main" id="nextBtn" style="display: none;" onclick="nextQuestion()">Дальше</button>
+    <button class="nav-pill" style="border: none;" onclick="closeTest()">Выйти</button>
   </div>
 </div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
@@ -252,98 +176,67 @@
   let todayList = [];
   const todayKey = new Date().toLocaleDateString('ru-RU');
 
-  // Навигация
   window.setView = (view) => {
     document.getElementById('view-home').style.display = view === 'home' ? 'block' : 'none';
     document.getElementById('view-history').style.display = view === 'history' ? 'block' : 'none';
     if(view === 'history') fetchHistory();
   };
 
-  // Смена языка
   window.setLang = (l, title, el) => {
     currentLang = l;
     document.getElementById('langTitle').innerText = title;
     document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('active'));
     el.classList.add('active');
-    
-    // Если мы в истории — обновляем её под новый язык
-    if(document.getElementById('view-history').style.display === 'block') {
-      fetchHistory();
-    }
     fetchToday();
+    if(document.getElementById('view-history').style.display === 'block') fetchHistory();
   };
 
-  // Загрузка слов за сегодня
   async function fetchToday() {
-    try {
-      const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang), where("date", "==", todayKey));
-      const snap = await getDocs(q);
-      todayList = snap.docs.map(d => d.data());
-      renderProgress();
-    } catch(e) { console.error(e); }
+    const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang), where("date", "==", todayKey));
+    const snap = await getDocs(q);
+    todayList = snap.docs.map(d => d.data());
+    renderProgress();
   }
 
   function renderProgress() {
     const count = todayList.length;
-    const counterEl = document.getElementById('wordCount');
-    counterEl.innerText = `${count}/10`;
-    
-    if(count >= 10) {
-      counterEl.classList.add('maxed');
-      document.getElementById('inputSection').style.opacity = '0.3';
-      document.getElementById('saveBtn').disabled = true;
-    } else {
-      counterEl.classList.remove('maxed');
-      document.getElementById('inputSection').style.opacity = '1';
-      document.getElementById('saveBtn').disabled = false;
-    }
+    document.getElementById('wordCount').innerText = `${count}/10`;
+    document.getElementById('saveBtn').disabled = count >= 10;
     document.getElementById('todayExamBtn').style.display = count > 0 ? 'block' : 'none';
   }
 
-  // Сохранение
   window.saveWord = async () => {
     const w = document.getElementById('wIn').value.trim();
     const t = document.getElementById('tIn').value.trim();
     if(!w || !t) return;
-
     const entry = { lang: currentLang, word: w, trans: t, date: todayKey, ts: Date.now() };
-    try {
-      await addDoc(collection(db, "daily_tracks"), entry);
-      todayList.push(entry);
-      document.getElementById('wIn').value = '';
-      document.getElementById('tIn').value = '';
-      renderProgress();
-    } catch(e) { alert("Ошибка сохранения"); }
+    await addDoc(collection(db, "daily_tracks"), entry);
+    todayList.push(entry);
+    document.getElementById('wIn').value = '';
+    document.getElementById('tIn').value = '';
+    renderProgress();
   };
 
-  // ИСТОРИЯ (АРХИВ)
   async function fetchHistory() {
     const container = document.getElementById('historyContainer');
-    const sub = document.getElementById('historySub');
-    sub.innerText = `Архив слов для языка: ${currentLang}`;
-    container.innerHTML = '<div class="loading-text">Ищем записи в базе...</div>';
+    document.getElementById('histLang').innerText = `Язык: ${currentLang}`;
+    container.innerHTML = '<p style="text-align:center;">Загрузка...</p>';
 
     try {
-      const q = query(
-        collection(db, "daily_tracks"), 
-        where("lang", "==", currentLang), 
-        orderBy("ts", "desc")
-      );
-      
+      // Убрали orderBy, чтобы не было ошибки индекса
+      const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang));
       const snap = await getDocs(q);
       const groups = {};
-      
-      if (snap.empty) {
-        container.innerHTML = `
-          <div style="text-align:center; padding:40px; color:var(--text-dim);">
-            <i class="fas fa-ghost" style="font-size:40px; margin-bottom:15px;"></i>
-            <p>В языке ${currentLang} пока нет истории.<br>Добавь сегодня первые 10 слов!</p>
-          </div>`;
+
+      if(snap.empty) {
+        container.innerHTML = '<p style="text-align:center; color:var(--text-dim);">Тут пока пусто.</p>';
         return;
       }
 
-      snap.forEach(d => {
-        const data = d.data();
+      // Сортируем вручную по времени (ts)
+      const docs = snap.docs.map(d => d.data()).sort((a, b) => b.ts - a.ts);
+
+      docs.forEach(data => {
         if(!groups[data.date]) groups[data.date] = [];
         groups[data.date].push(data);
       });
@@ -352,24 +245,19 @@
       Object.keys(groups).forEach(date => {
         const div = document.createElement('div');
         div.className = 'day-pill';
-        div.innerHTML = `
-          <span class="day-date"><i class="far fa-calendar-check" style="color:var(--accent); margin-right:8px;"></i> ${date}</span>
-          <span class="day-count">${groups[date].length} слов</span>
-        `;
+        div.innerHTML = `<span><i class="far fa-calendar"></i> ${date}</span><span class="day-count">${groups[date].length} слов</span>`;
         div.onclick = () => initTest(groups[date]);
         container.appendChild(div);
       });
-    } catch (e) {
-      container.innerHTML = '<p style="color:var(--red); text-align:center;">Ошибка Firebase. Проверь консоль.</p>';
-      console.error(e);
+    } catch(e) {
+      container.innerHTML = '<p style="color:var(--red);">Ошибка загрузки. Попробуй обновить страницу.</p>';
     }
   }
 
-  // ТЕСТОВАЯ СИСТЕМА
   let activeTest = [];
   let testIdx = 0;
 
-  window.startTest = () => { initTest(todayList); };
+  window.startTest = () => initTest(todayList);
 
   function initTest(data) {
     activeTest = [...data].sort(() => Math.random() - 0.5);
@@ -379,9 +267,8 @@
   }
 
   function showQuestion() {
-    const q = activeTest[testIdx];
     document.getElementById('testStep').innerText = `Слово ${testIdx + 1} из ${activeTest.length}`;
-    document.getElementById('testQ').innerText = q.word;
+    document.getElementById('testQ').innerText = activeTest[testIdx].word;
     document.getElementById('testA').innerText = '';
     document.getElementById('revealBtn').style.display = 'block';
     document.getElementById('nextBtn').style.display = 'none';
@@ -396,19 +283,12 @@
   window.nextQuestion = () => {
     testIdx++;
     if(testIdx < activeTest.length) showQuestion();
-    else { 
-      alert("Красава! Все слова повторил."); 
-      closeTest(); 
-    }
+    else { alert("Блестяще! Повторение окончено."); closeTest(); }
   };
 
-  window.closeTest = () => { 
-    document.getElementById('testUI').style.display = 'none'; 
-  };
+  window.closeTest = () => document.getElementById('testUI').style.display = 'none';
 
-  // Старт приложения
   fetchToday();
 </script>
-
 </body>
 </html>
