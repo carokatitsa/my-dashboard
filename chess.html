@@ -68,7 +68,7 @@
         .mode-toggle button.active.repeat { background: #9b59b6; }
 
         .controls { display: flex; flex-wrap: wrap; gap: 10px; width: 100%; margin-top: 20px;}
-        button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        button.action { flex: 1; min-width: 80px; padding: 10px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; touch-action: manipulation; }
         
         .save-box { display: flex; flex-direction: column; gap: 8px; background: #1a1a1a; padding: 10px; border-radius: 5px; }
         input { padding: 10px; border-radius: 4px; border: 1px solid #444; background: #111; color: white; }
@@ -90,8 +90,8 @@
     <div id="turn-display" style="margin-bottom: 15px; font-size: 22px; font-weight: bold;">-</div>
     <div id="board"></div>
     <div class="controls">
-        <button class="action" onclick="undo()">⬅</button>
-        <button class="action" onclick="redo()">➡</button>
+        <button class="action" id="btn-undo">⬅</button>
+        <button class="action" id="btn-redo">➡</button>
         <button class="action" onclick="toggleFlip()" id="txt-flip">🔃</button>
         <button class="action" onclick="resetGame()" id="txt-reset" style="background: #c0392b;">Reset</button>
     </div>
@@ -548,8 +548,21 @@
 
     function setSaveSide(s) { saveSide = s; document.getElementById('btn-w').className = 'action ' + (s==='W'?'active':''); document.getElementById('btn-b').className = 'action ' + (s==='B'?'active':''); }
     function toggleFlip() { boardEl.classList.toggle('flipped'); }
+    
+    // ИСПРАВЛЕННЫЕ ФУНКЦИИ ДЛЯ СТРЕЛОК (ДЛЯ МОБИЛОК)
     function undo() { if (historyIndex > 0) { historyIndex--; render(); } }
     function redo() { if (historyIndex < history.length - 1) { historyIndex++; render(); } }
+
+    const uBtn = document.getElementById('btn-undo');
+    const rBtn = document.getElementById('btn-redo');
+    
+    // Вешаем слушатели на оба типа событий
+    uBtn.addEventListener('click', e => { e.preventDefault(); undo(); });
+    uBtn.addEventListener('touchstart', e => { e.preventDefault(); undo(); }, {passive: false});
+    
+    rBtn.addEventListener('click', e => { e.preventDefault(); redo(); });
+    rBtn.addEventListener('touchstart', e => { e.preventDefault(); redo(); }, {passive: false});
+
     function resetGame() { history = [history[0]]; historyIndex = 0; selected = null; validMoves = []; render(); }
     
     function saveDebut() {
@@ -582,10 +595,8 @@
         
         if (!all.length) return alert(t('noDebuts'));
 
-        // Фильтруем доступные (те, что еще не использовались)
         let available = all.filter(d => !usedDebuts.some(u => u.name === d.name && u.side === d.side));
         
-        // Если все пройдены
         if (available.length === 0) {
             statusEl.innerText = t('allDone');
             statusEl.style.background = "#2980b9";
