@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LingoDaily | 10 Words</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2=family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
   
   <style>
     :root {
@@ -223,7 +223,6 @@
     container.innerHTML = '<p style="text-align:center;">Загрузка...</p>';
 
     try {
-      // Убрали orderBy, чтобы не было ошибки индекса
       const q = query(collection(db, "daily_tracks"), where("lang", "==", currentLang));
       const snap = await getDocs(q);
       const groups = {};
@@ -233,7 +232,6 @@
         return;
       }
 
-      // Сортируем вручную по времени (ts)
       const docs = snap.docs.map(d => d.data()).sort((a, b) => b.ts - a.ts);
 
       docs.forEach(data => {
