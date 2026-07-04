@@ -1,10 +1,242 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Запоминалка Pro</title>
+    
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg: #080b11;
+            --panel: #111622;
+            --panel-light: #1a2035;
+            --accent: #2a4cff;
+            --accent-glow: rgba(42, 76, 255, 0.4);
+            --text: #e8eefc;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background: var(--bg); 
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header { 
+            background: rgba(17, 22, 34, 0.8); 
+            backdrop-filter: blur(12px);
+            padding: 16px 24px; 
+            position: sticky; 
+            top: 0; 
+            border-bottom: 1px solid rgba(42, 76, 255, 0.2); 
+            z-index: 100; 
+        }
+        nav { display: flex; gap: 20px; max-width: 1400px; margin: auto; width: 100%; }
+        nav a { color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.9em; transition: 0.3s; }
+        nav a:hover { color: var(--accent); }
+        
+        .workspace {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            gap: 24px;
+            padding: 24px;
+            box-sizing: border-box;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 900px) {
+            .workspace { grid-template-columns: 1fr; }
+        }
+
+        .panel { 
+            background: var(--panel); 
+            border-radius: 16px; 
+            padding: 24px; 
+            border: 1px solid rgba(255,255,255,0.05);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            height: fit-content;
+        }
+        
+        h3 { margin-top: 0; font-size: 1.2em; color: #fff; margin-bottom: 20px;}
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            background: var(--panel-light);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            color: var(--text);
+            box-sizing: border-box;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+        
+        .btn {
+            width: 100%;
+            background: var(--accent);
+            color: white;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px var(--accent-glow);
+        }
+        .btn:hover { background: #1a36d9; transform: translateY(-1px); }
+
+        .cat-item {
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: var(--panel-light);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.2s;
+            border-left: 3px solid transparent;
+        }
+        .cat-item:hover, .cat-item.active {
+            background: rgba(42, 76, 255, 0.15);
+            border-left-color: var(--accent);
+        }
+        .cat-item .del-btn { color: var(--text-muted); display:none; }
+        .cat-item:hover .del-btn { display: block; }
+        .cat-item .del-btn:hover { color: var(--danger); }
+
+        .notes-feed { display: flex; flex-direction: column; gap: 16px; }
+        .note-card {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 16px;
+            position: relative;
+        }
+        .note-card .meta { font-size: 0.8em; color: var(--text-muted); margin-bottom: 10px; }
+        .note-card .content-text { font-size: 1.05em; line-height: 1.6; white-space: pre-wrap; }
+        .note-card .delete-note-btn { position: absolute; top: 20px; right: 20px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 1.1em;}
+        .note-card .delete-note-btn:hover { color: var(--danger); }
+
+        .attachment-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 15px;
+            padding: 8px 14px;
+            background: var(--panel-light);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            cursor: pointer;
+            color: #38bdf8;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .attachment-badge:hover { background: rgba(56, 189, 248, 0.1); }
+
+        /* Модалка для просмотра файлов */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 7, 11, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: var(--panel);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 24px;
+            border-radius: 20px;
+            max-width: 90%;
+            max-height: 85%;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .modal-preview { max-width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; }
+        .modal-actions { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
+        .close-modal { background: var(--panel-light); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; }
+        .download-btn { background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="index.html">← На главную</a>
+        <a href="#" style="color: var(--accent);">Запоминалка Pro</a>
+    </nav>
+</header>
+
+<div class="workspace">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+        <div class="panel">
+            <h3>Добавить инфу</h3>
+            <select id="note-cat-select"><option value="">Загрузка категорий...</option></select>
+            <textarea id="note-text" rows="5" placeholder="Текст. Для формул пиши, например: $\sqrt{x}$ или $\frac{a}{b}$"></textarea>
+            <input type="file" id="note-file">
+            <button class="btn" onclick="saveNote()">Сохранить в облако</button>
+        </div>
+
+        <div class="panel">
+            <h3>Категории</h3>
+            <div style="display:flex; gap: 8px; margin-bottom: 15px;">
+                <input type="text" id="new-cat-name" placeholder="Новая категория" style="margin:0;">
+                <button class="btn" onclick="addCategory()" style="width: auto; padding: 0 15px;">+</button>
+            </div>
+            <div id="categories-container"></div>
+        </div>
+    </div>
+
+    <div>
+        <h2 style="margin: 0 0 20px 0; font-weight: 400;">Категория: <span id="current-cat-title" style="color: var(--accent); font-weight:600;">Все записи</span></h2>
+        <div id="notes-container" class="notes-feed"></div>
+    </div>
+</div>
+
+<div id="file-modal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <h3 id="modal-filename">Просмотр файла</h3>
+        <div id="modal-body"></div>
+        <div class="modal-actions">
+            <button class="close-modal" onclick="closeModal()">Закрыть</button>
+            <a id="modal-download" class="download-btn" href="#" target="_blank" download>Скачать</a>
+        </div>
+    </div>
+</div>
+
 <script type="module">
-    // Инициализация Firebase модулей (v10+)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
     import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-    // Твоя личная конфигурация Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
         authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -14,23 +246,14 @@
         appId: "1:710702954120:web:f06b1038c48d3bd328913d"
     };
 
-    // Запуск сервисов
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
 
     let currentCategoryId = "all";
+    let unsubscribeNotes = null;
 
-    // Делаем функции доступными для HTML-кнопок (так как внутри type="module" у функций своя область видимости)
-    window.addCategory = addCategory;
-    window.deleteCategory = deleteCategory;
-    window.saveNote = saveNote;
-    window.deleteNote = deleteNote;
-    window.viewFile = viewFile;
-    window.closeModal = closeModal;
-    window.switchCategory = switchCategory;
-
-    // СЛУШАТЕЛЬ КАТЕГОРИЙ (В реальном времени)
+    // СЛУШАТЕЛЬ КАТЕГОРИЙ
     const catQuery = query(collection(db, "categories"), orderBy("name"));
     onSnapshot(catQuery, (snapshot) => {
         const container = document.getElementById('categories-container');
@@ -56,10 +279,9 @@
         });
     });
 
-    // СЛУШАТЕЛЬ ЗАМЕТОК (В реальном времени)
-    let unsubscribeNotes = null;
+    // СЛУШАТЕЛЬ ЗАМЕТОК
     function loadNotes() {
-        if (unsubscribeNotes) unsubscribeNotes(); // отписываемся от старой категории, если была
+        if (unsubscribeNotes) unsubscribeNotes();
 
         let notesRef = collection(db, "notes");
         let q;
@@ -117,7 +339,6 @@
         loadNotes();
     }
 
-    // ДОБАВЛЕНИЕ КАТЕГОРИИ
     async function addCategory() {
         const input = document.getElementById('new-cat-name');
         const name = input.value.trim();
@@ -125,21 +346,19 @@
         try {
             await addDoc(collection(db, "categories"), { name: name });
             input.value = '';
-        } catch(e) { console.error("Ошибка добавления категории:", e); }
+        } catch(e) { console.error(e); }
     }
 
-    // УДАЛЕНИЕ КАТЕГОРИИ
     async function deleteCategory(id, e) {
         e.stopPropagation();
         if(confirm("Удалить эту категорию?")) {
             try {
                 await deleteDoc(doc(db, "categories", id));
                 if(currentCategoryId === id) switchCategory('all', 'Все записи');
-            } catch(e) { console.error("Ошибка удаления категории:", e); }
+            } catch(e) { console.error(e); }
         }
     }
 
-    // СОХРАНЕНИЕ ЗАМЕТКИ + ЗАГРУЗКА В СТОРАДЖ
     async function saveNote() {
         const catId = document.getElementById('note-cat-select').value;
         const text = document.getElementById('note-text').value.trim();
@@ -161,7 +380,7 @@
                 fileUrl = await getDownloadURL(snapshot.ref);
             } catch (error) {
                 console.error(error);
-                alert("Ошибка при сохранении файла в Storage. Проверь правила (Rules) в Firebase!");
+                alert("Ошибка загрузки файла! Проверь правила Storage.");
                 return;
             }
         }
@@ -178,25 +397,21 @@
             });
             document.getElementById('note-text').value = '';
             fileInput.value = '';
-        } catch (e) {
-            console.error("Ошибка добавления записи:", e);
-        }
+        } catch (e) { console.error(e); }
     }
 
-    // УДАЛЕНИЕ ЗАМЕТКИ
     async function deleteNote(id, storagePath) {
         if(confirm("Удалить эту запись?")) {
             try {
                 await deleteDoc(doc(db, "notes", id));
                 if (storagePath) {
                     const fileRef = ref(storage, storagePath);
-                    await deleteObject(fileRef).catch(e => console.log("Файл в хранилище не найден"));
+                    await deleteObject(fileRef).catch(e => console.log("Файл не найден"));
                 }
-            } catch(e) { console.error("Ошибка удаления:", e); }
+            } catch(e) { console.error(e); }
         }
     }
 
-    // МОДАЛКА (ПОП-АП)
     function viewFile(url, name, type) {
         document.getElementById('modal-filename').innerText = name;
         const body = document.getElementById('modal-body');
@@ -207,12 +422,10 @@
 
         if (type.startsWith('image/')) {
             body.innerHTML = `<img src="${url}" class="modal-preview" alt="Превью">`;
-        } else if (type === 'application/pdf') {
+        } else if (type === 'application/pdf' || type.startsWith('text/')) {
             body.innerHTML = `<iframe src="${url}" style="width:600px; height:450px; border:none; max-width:100%;"></iframe>`;
-        } else if (type.startsWith('text/')) {
-            body.innerHTML = `<iframe src="${url}" style="width:600px; height:300px; background: white; border-radius: 8px;"></iframe>`;
         } else {
-            body.innerHTML = `<p style="color:var(--text-muted)">Предпросмотр недоступен для этого формата файлов.<br>Скачайте его по кнопке ниже.</p>`;
+            body.innerHTML = `<p style="color:var(--text-muted)">Предпросмотр недоступен для этого формата файлов.<br>Используйте зеленую кнопку ниже.</p>`;
         }
 
         document.getElementById('file-modal').style.display = 'flex';
@@ -222,6 +435,18 @@
         document.getElementById('file-modal').style.display = 'none';
     }
 
-    // Первичный запуск загрузки данных
+    // Привязываем функции к window, чтобы HTML-кнопки их видели
+    window.addCategory = addCategory;
+    window.deleteCategory = deleteCategory;
+    window.saveNote = saveNote;
+    window.deleteNote = deleteNote;
+    window.viewFile = viewFile;
+    window.closeModal = closeModal;
+    window.switchCategory = switchCategory;
+
+    // Запускаем первичный вывод
     loadNotes();
 </script>
+
+</body>
+</html>
