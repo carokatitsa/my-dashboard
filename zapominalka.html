@@ -5,16 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Запоминалка Pro</title>
     <style>
-        /* Радикально новый светлый дизайн в стиле MS Excel / Office */
         body { 
             margin:0; 
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif; 
-            background: #f3f2f1; /* Фирменный светло-серый фон Office */
-            color: #323131; /* Удобочитаемый темно-серый текст */
+            background: #f3f2f1; 
+            color: #323130; 
         }
         
         header { 
-            background: #107c41; /* Тот самый классический зеленый Excel */
+            background: #107c41; 
             padding: 12px 20px; 
             position: sticky; 
             top: 0; 
@@ -53,17 +52,15 @@
             font-weight: 500;
         }
 
-        /* Экселевские карточки-таблицы */
         .card { 
             background: white; 
-            border-radius: 4px; /* Строгие углы в стиле интерфейсов MS */
+            border-radius: 4px; 
             padding: 20px; 
             margin-bottom: 20px; 
             border: 1px solid #d2d0ce; 
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         
-        /* Кнопка «Сохранить» в стиле Главной кнопки Excel */
         .btn {
             display: inline-block;
             width: 100%;
@@ -114,11 +111,10 @@
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
-            border-color: #107c41; /* Подсветка зеленым при фокусе, как ячейка Excel */
+            border-color: #107c41; 
             box-shadow: 0 0 0 1px #107c41;
         }
 
-        /* Список категорий как листы книги Excel */
         .category-item {
             display: flex;
             justify-content: space-between;
@@ -137,10 +133,9 @@
             background: #e1dfdd; 
             color: #107c41; 
             font-weight: 600;
-            border-left: 4px solid #107c41; /* Зеленый маркер активного листа */
+            border-left: 4px solid #107c41; 
         }
 
-        /* Карточки записей в виде чистых аккуратных строк документов */
         .note-card {
             background: white;
             border: 1px solid #d2d0ce;
@@ -169,7 +164,6 @@
             color: #201f1e;
         }
         
-        /* Ссылка на файл */
         .note-file-link { 
             display: inline-flex; 
             align-items: center;
@@ -209,9 +203,18 @@
         .btn-add-cat:hover { background: #edebe9; }
     </style>
 
-    <!-- Подключение Firebase -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 
@@ -223,7 +226,6 @@
     </header>
 
     <main>
-        <!-- Левая колонка -->
         <div>
             <div class="card">
                 <h2>Добавить информацию</h2>
@@ -233,7 +235,7 @@
                 </select>
 
                 <label for="note-text">Текст заметки / Формула</label>
-                <textarea id="note-text" rows="5" placeholder="Введите текст или формулы..."></textarea>
+                <textarea id="note-text" rows="5" placeholder="Вводите текст. Формулы оборачивайте в $ (например: $\frac{a}{b}$)"></textarea>
 
                 <label for="note-file-url">Ссылка на документ / картинку</label>
                 <input type="url" id="note-file-url" placeholder="Вставьте URL-ссылку на файл">
@@ -255,10 +257,9 @@
             </div>
         </div>
 
-        <!-- Правая колонка -->
         <div>
             <h1 id="view-title">Выбрано: Все записи</h1>
-            <div class="total-counter" id="total-counter">Записей: 0</div>
+            <div class="total-counter" id="total-counter">Записей в этой вкладке: 0</div>
             <div id="notes-container">
                 <div style="color: #605e5c;">Загрузка данных таблицы...</div>
             </div>
@@ -266,14 +267,14 @@
     </main>
 
     <script>
-        // Оригинальный рабочий конфиг из вашего проекта
+        // Твои точные, реальные ключи от проекта my-dashboard-dc67a
         const firebaseConfig = {
-            apiKey: "AIzaSyAs...", // Ваш реальный рабочий ключ остался нетронутым
+            apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
             authDomain: "my-dashboard-dc67a.firebaseapp.com",
             projectId: "my-dashboard-dc67a",
-            storageBucket: "my-dashboard-dc67a.appspot.com",
-            messagingSenderId: "105...",
-            appId: "1:105..."
+            storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+            messagingSenderId: "710702954120",
+            appId: "1:710702954120:web:f06b1038c48d3bd328913d"
         };
 
         if (!firebase.apps.length) {
@@ -366,7 +367,6 @@
                 const counterEl = document.getElementById('total-counter');
                 container.innerHTML = '';
 
-                // Фишка: выводим динамический счетчик количества элементов
                 counterEl.innerText = `Записей в этой вкладке: ${snapshot.size}`;
 
                 if(snapshot.empty) {
@@ -399,6 +399,11 @@
                     `;
                     container.appendChild(card);
                 });
+
+                // Принудительно просим MathJax перерисовать новые формулы на экране
+                if (window.MathJax && window.MathJax.typeset) {
+                    window.MathJax.typeset();
+                }
             });
         }
 
