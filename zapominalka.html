@@ -480,7 +480,7 @@
         }
     }
 
-    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ГАРАНТИРОВАННОЙ ЗАГРУЗКИ ФАЙЛОВ
+    // БЕЗОПАСНЫЙ ДВУХЭТАПНЫЙ МЕТОД СОХРАНЕНИЯ
     function saveNote() {
         const catId = document.getElementById('note-cat-select').value;
         const text = document.getElementById('note-text').value.trim();
@@ -492,62 +492,70 @@
         if(!text && !file) { alert('Напишите текст или выберите файл для загрузки!'); return; }
 
         saveBtn.disabled = true;
-        saveBtn.innerText = file ? "Отправка файла в облако..." : "Сохранение...";
+        saveBtn.innerText = "Обработка запроса...";
 
-        let fileUrl = null;
-        let fileStoragePath = null;
-
-        const uploadToFirestore = () => {
-            db.collection("notes").add({
-                catId: catId,
-                text: text,
-                fileUrl: fileUrl,
-                fileName: file ? file.name : null,
-                fileType: file ? file.type : null,
-                fileStoragePath: fileStoragePath,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp() || new Date()
-            }).then(() => {
-                document.getElementById('note-text').value = '';
-                fileInput.value = '';
-                document.getElementById('file-label-text').innerText = '📂 Выбрать файл...';
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Сохранить в облако";
-            }).catch(e => {
-                console.error("Firestore ошибка:", e);
-                alert("Ошибка базы данных Firestore!");
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Сохранить в облако";
-            });
+        // ФУНКЦИЯ СБРОСА ФОРМЫ
+        const resetForm = () => {
+            document.getElementById('note-text').value = '';
+            fileInput.value = '';
+            document.getElementById('file-label-text').innerText = '📂 Выбрать файл...';
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Сохранить в облако";
         };
 
-        if (file) {
-            fileStoragePath = `uploads/${Date.now()}_${file.name}`;
+        // ШАГ 1: Сначала железобетонно создаем текстовую запись в Firestore
+        db.collection("notes").add({
+            catId: catId,
+            text: text,
+            fileUrl: null,
+            fileName: null,
+            fileType: null,
+            fileStoragePath: null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp() || new Date()
+        }).then((docRef) => {
+            // Если файла нет — мы закончили
+            if (!file) {
+                resetForm();
+                return;
+            }
+
+            // ШАГ 2: Если файл есть, переходим к загрузке в Storage
+            saveBtn.innerText = "Загрузка файла...";
+            const fileStoragePath = `uploads/${Date.now()}_${file.name}`;
             
             try {
-                // Явно привязываемся к URL бакета, чтобы избежать внутренних сбоев определения путей Firebase
                 const bucketRef = storage.refFromURL('gs://my-dashboard-dc67a.firebasestorage.app');
                 const fileRef = bucketRef.child(fileStoragePath);
                 
                 fileRef.put(file).then((snapshot) => {
                     return snapshot.ref.getDownloadURL();
                 }).then((url) => {
-                    fileUrl = url;
-                    uploadToFirestore();
-                }).catch(error => {
-                    console.error("Storage сбой во время загрузки:", error);
-                    alert("⚠️ Ошибка Firebase Storage!\n\nФайлы блокируются правилами доступа.\n\nРЕШЕНИЕ:\n1. Зайди в Firebase Console\n2. Перейди во вкладку Storage -> Rules\n3. Поменяй правила на:\n   allow read, write: if true;\n4. Нажми Publish!");
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = "Сохранить в облако";
+                    // ШАГ 3: Файл успешно загружен, обновляем созданную ранее запись в Firestore
+                    return docRef.update({
+                        fileUrl: url,
+                        fileName: file.name,
+                        fileType: file.type,
+                        fileStoragePath: fileStoragePath
+                    });
+                }).then(() => {
+                    resetForm();
+                }).catch(storageError => {
+                    console.error("Storage Error Details:", storageError);
+                    // Выводим реальную ошибку текстом, чтобы понять, в чем дело
+                    alert("⚠️ Текст сохранен, но файл не загрузился!\n\nДетали ошибки:\n" + storageError.message + "\n\nСкорее всего, вкладка Storage в Firebase Console не активирована или заблокирована правилами Rules.");
+                    resetForm();
                 });
             } catch (err) {
-                console.error("Ошибка инициализации ссылки Storage:", err);
-                alert("Критический сбой инициализации ссылки хранилища!");
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Сохранить в облако";
+                console.error("Critical Storage Init Error:", err);
+                alert("Ошибка инициализации хранилища: " + err.message);
+                resetForm();
             }
-        } else {
-            uploadToFirestore();
-        }
+        }).catch(firestoreError => {
+            console.error("Firestore Error:", firestoreError);
+            alert("Ошибка сохранения: база данных Firestore отклонила запрос.");
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Сохранить в облако";
+        });
     }
 
     function deleteNote(id, storagePath) {
@@ -556,7 +564,7 @@
                 if (storagePath) {
                     try {
                         const bucketRef = storage.refFromURL('gs://my-dashboard-dc67a.firebasestorage.app');
-                        bucketRef.child(storagePath).delete().catch(e => console.log("Файл уже удален"));
+                        bucketRef.child(storagePath).delete().catch(e => console.log("Файл удален"));
                     } catch(e) { console.error(e); }
                 }
             }).catch(e => console.error(e));
