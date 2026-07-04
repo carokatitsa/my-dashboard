@@ -7,7 +7,10 @@
     
     <script>
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
             svg: { fontCache: 'global' }
         };
     </script>
@@ -15,19 +18,21 @@
 
     <style>
         :root {
-            --bg: #080b11;
-            --panel: #111622;
-            --panel-light: #1a2035;
-            --accent: #2a4cff;
-            --accent-glow: rgba(42, 76, 255, 0.4);
-            --text: #e8eefc;
-            --text-muted: #64748b;
+            --bg: #0a0e17;
+            --panel: #131a26;
+            --panel-light: #1c2637;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.35);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
             --danger: #ef4444;
+            --success: #10b981;
+            --border-neon: rgba(59, 130, 246, 0.15);
         }
 
         body { 
             margin: 0; 
-            font-family: 'Segoe UI', Arial, sans-serif; 
+            font-family: 'Segoe UI', system-ui, Arial, sans-serif; 
             background: var(--bg); 
             color: var(--text);
             display: flex;
@@ -36,154 +41,212 @@
         }
 
         header { 
-            background: rgba(17, 22, 34, 0.8); 
-            backdrop-filter: blur(12px);
-            padding: 16px 24px; 
+            background: rgba(19, 26, 38, 0.85); 
+            backdrop-filter: blur(16px);
+            padding: 18px 24px; 
             position: sticky; 
             top: 0; 
-            border-bottom: 1px solid rgba(42, 76, 255, 0.2); 
+            border-bottom: 1px solid var(--border-neon); 
             z-index: 100; 
         }
-        nav { display: flex; gap: 20px; max-width: 1400px; margin: auto; width: 100%; }
-        nav a { color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.9em; transition: 0.3s; }
-        nav a:hover { color: var(--accent); }
+        nav { display: flex; gap: 24px; max-width: 1400px; margin: auto; width: 100%; align-items: center;}
+        nav a { color: var(--text-muted); text-decoration: none; font-weight: 600; font-size: 0.95em; transition: 0.3s; }
+        nav a:hover { color: var(--text); }
         
         .workspace {
             display: grid;
-            grid-template-columns: 320px 1fr;
+            grid-template-columns: 360px 1fr;
             max-width: 1400px;
             width: 100%;
             margin: 0 auto;
-            gap: 24px;
-            padding: 24px;
+            gap: 30px;
+            padding: 30px;
             box-sizing: border-box;
             flex-grow: 1;
         }
 
-        @media (max-width: 900px) {
-            .workspace { grid-template-columns: 1fr; }
+        @media (max-width: 950px) {
+            .workspace { grid-template-columns: 1fr; padding: 15px; gap: 20px;}
         }
 
         .panel { 
             background: var(--panel); 
-            border-radius: 16px; 
+            border-radius: 20px; 
             padding: 24px; 
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid var(--border-neon);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
             height: fit-content;
         }
         
-        h3 { margin-top: 0; font-size: 1.2em; color: #fff; margin-bottom: 20px;}
+        h3 { margin-top: 0; font-size: 1.25em; color: #fff; margin-bottom: 20px; font-weight: 600; letter-spacing: 0.3px;}
 
         input, textarea, select {
             width: 100%;
-            padding: 12px;
-            margin-bottom: 16px;
+            padding: 14px;
+            margin-bottom: 18px;
             background: var(--panel-light);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
             color: var(--text);
             box-sizing: border-box;
             font-family: inherit;
-            transition: 0.3s;
+            font-size: 0.95em;
+            transition: all 0.3s ease;
         }
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--accent);
-            box-shadow: 0 0 10px var(--accent-glow);
+            box-shadow: 0 0 14px var(--accent-glow);
+            background: rgba(28, 38, 55, 0.7);
         }
         
         .btn {
             width: 100%;
-            background: var(--accent);
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 600;
             border: none;
             cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(29, 78, 216, 0.3);
+            font-size: 0.95em;
         }
-        .btn:hover { background: #1a36d9; transform: translateY(-1px); }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(29, 78, 216, 0.45);
+            filter: brightness(1.1);
+        }
+        .btn:active { transform: translateY(0); }
 
         .cat-item {
-            padding: 12px 16px;
-            margin-bottom: 8px;
+            padding: 14px 18px;
+            margin-bottom: 10px;
             background: var(--panel-light);
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: 0.2s;
-            border-left: 3px solid transparent;
+            transition: all 0.2s ease;
+            border-left: 4px solid transparent;
+            font-weight: 500;
         }
-        .cat-item:hover, .cat-item.active {
-            background: rgba(42, 76, 255, 0.15);
+        .cat-item:hover {
+            background: rgba(59, 130, 246, 0.08);
+            border-left-color: rgba(59, 130, 246, 0.5);
+            transform: translateX(3px);
+        }
+        .cat-item.active {
+            background: rgba(59, 130, 246, 0.15);
             border-left-color: var(--accent);
+            color: #fff;
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.1);
         }
-        .cat-item .del-btn { color: var(--text-muted); display:none; }
+        .cat-item .del-btn { color: var(--text-muted); padding: 2px 6px; border-radius: 6px; transition: 0.2s;}
         .cat-item:hover .del-btn { display: block; }
-        .cat-item .del-btn:hover { color: var(--danger); }
+        .cat-item .del-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
 
-        .notes-feed { display: flex; flex-direction: column; gap: 16px; }
+        .notes-feed { display: flex; flex-direction: column; gap: 20px; }
         .note-card {
             background: var(--panel);
-            border: 1px solid rgba(255,255,255,0.05);
-            padding: 20px;
-            border-radius: 16px;
+            border: 1px solid var(--border-neon);
+            padding: 24px;
+            border-radius: 20px;
             position: relative;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
         }
-        .note-card .meta { font-size: 0.8em; color: var(--text-muted); margin-bottom: 10px; }
-        .note-card .content-text { font-size: 1.05em; line-height: 1.6; white-space: pre-wrap; }
-        .note-card .delete-note-btn { position: absolute; top: 20px; right: 20px; background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 1.1em;}
-        .note-card .delete-note-btn:hover { color: var(--danger); }
+        .note-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 12px 36px rgba(0,0,0,0.3);
+            transform: translateY(-2px);
+        }
+        .note-card .meta { font-size: 0.8em; color: var(--text-muted); margin-bottom: 14px; display: flex; gap: 8px;}
+        .note-card .content-text { font-size: 1.1em; line-height: 1.7; white-space: pre-wrap; color: #e2e8f0; }
+        .note-card .delete-note-btn { 
+            position: absolute; top: 22px; right: 22px; background:none; border:none; 
+            color: var(--text-muted); cursor:pointer; font-size: 1.2em; transition: 0.2s;
+            padding: 4px 8px; border-radius: 8px;
+        }
+        .note-card .delete-note-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+
+        /* Красивое оформление формул */
+        .mjx-chtml, .MathJax {
+            font-size: 1.15em !important;
+            color: #fff;
+            background: rgba(255,255,255,0.03);
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
 
         .attachment-badge {
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            margin-top: 15px;
-            padding: 8px 14px;
-            background: var(--panel-light);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
+            gap: 10px;
+            margin-top: 18px;
+            padding: 10px 16px;
+            background: rgba(59, 130, 246, 0.06);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            border-radius: 10px;
             cursor: pointer;
-            color: #38bdf8;
+            color: #60a5fa;
             font-weight: 500;
-            transition: 0.2s;
+            transition: all 0.2s ease;
         }
-        .attachment-badge:hover { background: rgba(56, 189, 248, 0.1); }
+        .attachment-badge:hover { 
+            background: rgba(59, 130, 246, 0.15); 
+            border-color: var(--accent);
+            color: #fff;
+        }
 
-        /* Модалка для просмотра файлов */
+        /* Адаптивное модальное окно */
         .modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 7, 11, 0.85);
-            backdrop-filter: blur(8px);
+            background: rgba(4, 6, 10, 0.88);
+            backdrop-filter: blur(12px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
         }
         .modal-content {
             background: var(--panel);
-            border: 1px solid rgba(255,255,255,0.1);
-            padding: 24px;
-            border-radius: 20px;
-            max-width: 90%;
-            max-height: 85%;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 20px;
+            box-sizing: border-box;
         }
-        .modal-preview { max-width: 100%; max-height: 60vh; border-radius: 8px; object-fit: contain; }
-        .modal-actions { display: flex; justify-content: center; gap: 12px; margin-top: 10px; }
-        .close-modal { background: var(--panel-light); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer; border: none; }
-        .download-btn { background: #10b981; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        #modal-body {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 10px;
+            box-sizing: border-box;
+            min-height: 150px;
+        }
+        .modal-preview { max-width: 100%; max-height: 55vh; border-radius: 8px; object-fit: contain; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 14px; margin-top: 10px; }
+        .close-modal { background: var(--panel-light); color: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); font-weight: 600; transition: 0.2s;}
+        .close-modal:hover { background: #232f44; }
+        .download-btn { background: var(--success); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);}
+        .download-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .view-external-btn { background: var(--accent); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s;}
+        .view-external-btn:hover { filter: brightness(1.1); }
     </style>
 </head>
 <body>
@@ -191,43 +254,50 @@
 <header>
     <nav>
         <a href="index.html">← На главную</a>
-        <a href="#" style="color: var(--accent);">Запоминалка Pro</a>
+        <a href="#" style="color: var(--accent); font-size: 1.1em; box-shadow: 0 2px 0 var(--accent); padding-bottom:4px;">Запоминалка Pro</a>
     </nav>
 </header>
 
 <div class="workspace">
-    <div style="display: flex; flex-direction: column; gap: 20px;">
+    <div style="display: flex; flex-direction: column; gap: 24px;">
         <div class="panel">
-            <h3>Добавить инфу</h3>
+            <h3>Добавить информацию</h3>
+            <label style="font-size: 0.85em; color: var(--text-muted); display:block; margin-bottom: 6px;">Категория</label>
             <select id="note-cat-select"><option value="">Загрузка категорий...</option></select>
-            <textarea id="note-text" rows="5" placeholder="Текст. Для формул пиши, например: $\sqrt{x}$ или $\frac{a}{b}$"></textarea>
+            
+            <label style="font-size: 0.85em; color: var(--text-muted); display:block; margin-bottom: 6px;">Текст заметки / Формула</label>
+            <textarea id="note-text" rows="5" placeholder="Примеры формул:&#13;Просто дробь: 4224000/2500&#13;Сложная: $\sqrt{x}$ или $\frac{a}{b}$"></textarea>
+            
+            <label style="font-size: 0.85em; color: var(--text-muted); display:block; margin-bottom: 6px;">Прикрепить файл</label>
             <input type="file" id="note-file">
+            
             <button class="btn" onclick="saveNote()">Сохранить в облако</button>
         </div>
 
         <div class="panel">
             <h3>Категории</h3>
-            <div style="display:flex; gap: 8px; margin-bottom: 15px;">
+            <div style="display:flex; gap: 10px; margin-bottom: 18px;">
                 <input type="text" id="new-cat-name" placeholder="Новая категория" style="margin:0;">
-                <button class="btn" onclick="addCategory()" style="width: auto; padding: 0 15px;">+</button>
+                <button class="btn" onclick="addCategory()" style="width: 50px; padding: 0;">+</button>
             </div>
             <div id="categories-container"></div>
         </div>
     </div>
 
     <div>
-        <h2 style="margin: 0 0 20px 0; font-weight: 400;">Категория: <span id="current-cat-title" style="color: var(--accent); font-weight:600;">Все записи</span></h2>
+        <h2 style="margin: 0 0 24px 0; font-weight: 500; letter-spacing: 0.5px;">Выбрано: <span id="current-cat-title" style="color: var(--accent); font-weight:700;">Все записи</span></h2>
         <div id="notes-container" class="notes-feed"></div>
     </div>
 </div>
 
 <div id="file-modal" class="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="modal-filename">Просмотр файла</h3>
+        <h3 id="modal-filename" style="margin: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">Просмотр файла</h3>
         <div id="modal-body"></div>
         <div class="modal-actions">
             <button class="close-modal" onclick="closeModal()">Закрыть</button>
-            <a id="modal-download" class="download-btn" href="#" target="_blank" download>Скачать</a>
+            <a id="modal-view-external" class="view-external-btn" href="#" target="_blank">Открыть вкладку</a>
+            <a id="modal-download" class="download-btn" href="#" download target="_blank">Скачать файл</a>
         </div>
     </div>
 </div>
@@ -253,6 +323,22 @@
     let currentCategoryId = "all";
     let unsubscribeNotes = null;
 
+    // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ АВТО-ПЕРЕВОДА ОБЫЧНЫХ ДРОБЕЙ (например, 2/3) В LaTeX
+    function formatFractions(text) {
+        if (!text) return "";
+        // Ищет шаблоны чисел или переменных, разделенных слэшем, например 4224000/2500 или a/b, кроме тех, что уже внутри знаков $
+        // Заменяет их на формат LaTeX $\frac{числитель}{знаменатель}$
+        let processed = text;
+        const regex = /(?<!\$)\b([A-Za-z0-9А-Яа-я,\.\s]+)\/([A-Za-z0-9А-Яа-я,\.\s]+)\b(?!(\$|\w))/g;
+        
+        if (regex.test(processed)) {
+            processed = processed.replace(regex, (match, p1, p2) => {
+                return `$\\frac{${p1.trim()}}{${p2.trim()}}$`;
+            });
+        }
+        return processed;
+    }
+
     // СЛУШАТЕЛЬ КАТЕГОРИЙ
     const catQuery = query(collection(db, "categories"), orderBy("name"));
     onSnapshot(catQuery, (snapshot) => {
@@ -260,7 +346,7 @@
         const select = document.getElementById('note-cat-select');
         
         container.innerHTML = `<div class="cat-item ${currentCategoryId === 'all' ? 'active' : ''}" onclick="switchCategory('all', 'Все записи')"><span>📂 Все записи</span></div>`;
-        select.innerHTML = '';
+        select.innerHTML = '<option value="">-- Выберите категорию --</option>';
 
         snapshot.forEach(docSnap => {
             const cat = docSnap.data();
@@ -297,7 +383,7 @@
             container.innerHTML = '';
 
             if(snapshot.empty) {
-                container.innerHTML = '<p style="color: var(--text-muted);">В этой категории еще нет записей...</p>';
+                container.innerHTML = '<div class="panel" style="color: var(--text-muted); text-align:center; padding: 40px;">В этой категории еще нет записей...</div>';
                 return;
             }
 
@@ -311,20 +397,24 @@
                 if (note.fileUrl) {
                     fileHtml = `
                         <div class="attachment-badge" onclick="viewFile('${note.fileUrl}', '${note.fileName}', '${note.fileType}')">
-                            📎 Файл: ${note.fileName} (клик для просмотра)
+                            📎 Скрепка: ${note.fileName}
                         </div>
                     `;
                 }
 
+                // Форматируем текст (обрабатываем дробы /)
+                const formattedText = formatFractions(note.text);
+
                 div.innerHTML = `
                     <button class="delete-note-btn" onclick="deleteNote('${id}', '${note.fileStoragePath || ''}')">✕</button>
-                    <div class="meta">${note.createdAt ? new Date(note.createdAt.seconds * 1000).toLocaleString('ru-RU') : 'Сейчас'}</div>
-                    <div class="content-text">${note.text}</div>
+                    <div class="meta"><span>📅 ${note.createdAt ? new Date(note.createdAt.seconds * 1000).toLocaleString('ru-RU') : 'Сейчас'}</span></div>
+                    <div class="content-text">${formattedText}</div>
                     ${fileHtml}
                 `;
                 container.appendChild(div);
             });
 
+            // Запуск рендера формул MathJax
             if(window.MathJax && MathJax.typeset) {
                 MathJax.typeset();
             }
@@ -365,8 +455,8 @@
         const fileInput = document.getElementById('note-file');
         const file = fileInput.files[0];
 
-        if(!catId) { alert('Выбери или создай категорию!'); return; }
-        if(!text && !file) { alert('Напиши текст или выбери файл!'); return; }
+        if(!catId) { alert('Пожалуйста, выберите категорию!'); return; }
+        if(!text && !file) { alert('Напишите текст или выберите файл!'); return; }
 
         let fileUrl = null;
         let fileStoragePath = null;
@@ -380,7 +470,7 @@
                 fileUrl = await getDownloadURL(snapshot.ref);
             } catch (error) {
                 console.error(error);
-                alert("Ошибка загрузки файла! Проверь правила Storage.");
+                alert("Ошибка загрузки файла! Пожалуйста, проверьте правила (Rules) вашего Firebase Storage.");
                 return;
             }
         }
@@ -406,26 +496,38 @@
                 await deleteDoc(doc(db, "notes", id));
                 if (storagePath) {
                     const fileRef = ref(storage, storagePath);
-                    await deleteObject(fileRef).catch(e => console.log("Файл не найден"));
+                    await deleteObject(fileRef).catch(e => console.log("Файл в хранилище не найден или уже удален"));
                 }
             } catch(e) { console.error(e); }
         }
     }
 
+    // УЛУЧШЕННЫЙ ПРОСМОТР ФАЙЛОВ
     function viewFile(url, name, type) {
         document.getElementById('modal-filename').innerText = name;
         const body = document.getElementById('modal-body');
         const downloadLink = document.getElementById('modal-download');
+        const externalLink = document.getElementById('modal-view-external');
         
         body.innerHTML = '';
         downloadLink.href = url;
+        externalLink.href = url;
 
-        if (type.startsWith('image/')) {
+        // Если файл - картинка, показываем её в окне напрямую
+        if (type && type.startsWith('image/')) {
             body.innerHTML = `<img src="${url}" class="modal-preview" alt="Превью">`;
-        } else if (type === 'application/pdf' || type.startsWith('text/')) {
-            body.innerHTML = `<iframe src="${url}" style="width:600px; height:450px; border:none; max-width:100%;"></iframe>`;
+            externalLink.style.display = 'inline-block';
         } else {
-            body.innerHTML = `<p style="color:var(--text-muted)">Предпросмотр недоступен для этого формата файлов.<br>Используйте зеленую кнопку ниже.</p>`;
+            // Для остальных типов файлов (pdf, docx, zip)
+            body.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <span style="font-size: 3em;">📄</span>
+                    <p style="color: var(--text-muted); margin-top: 10px;">
+                        Файл системы: <b>${name}</b>.<br>
+                        Для быстрого просмотра нажмите «Открыть вкладку».
+                    </p>
+                </div>`;
+            externalLink.style.display = 'inline-block';
         }
 
         document.getElementById('file-modal').style.display = 'flex';
@@ -435,7 +537,7 @@
         document.getElementById('file-modal').style.display = 'none';
     }
 
-    // Привязываем функции к window, чтобы HTML-кнопки их видели
+    // Привязка к объекту window
     window.addCategory = addCategory;
     window.deleteCategory = deleteCategory;
     window.saveNote = saveNote;
@@ -444,7 +546,6 @@
     window.closeModal = closeModal;
     window.switchCategory = switchCategory;
 
-    // Запускаем первичный вывод
     loadNotes();
 </script>
 
