@@ -107,7 +107,6 @@
             background: rgba(20, 28, 43, 0.9);
         }
 
-        /* КРАСИВАЯ КАСТОМНАЯ КНОПКА ВЫБОРА ФАЙЛА */
         .file-upload-wrapper {
             position: relative;
             margin-bottom: 20px;
@@ -253,7 +252,6 @@
             box-shadow: 0 0 14px rgba(59, 130, 246, 0.3);
         }
 
-        /* Модалка */
         .modal {
             display: none;
             position: fixed;
@@ -385,7 +383,6 @@
         return processed;
     }
 
-    // СЛУШАТЕЛЬ КАТЕГОРИЙ
     db.collection("categories").orderBy("name").onSnapshot((snapshot) => {
         const container = document.getElementById('categories-container');
         const select = document.getElementById('note-cat-select');
@@ -410,7 +407,6 @@
         });
     });
 
-    // СЛУШАТЕЛЬ ЗАМЕТОК
     function loadNotes() {
         if (unsubscribeNotes) unsubscribeNotes();
 
@@ -484,7 +480,7 @@
         }
     }
 
-    // ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ФАЙЛОВ И ТЕКСТА
+    // ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ГАРАНТИРОВАННОЙ ЗАГРУЗКИ ФАЙЛОВ
     function saveNote() {
         const catId = document.getElementById('note-cat-select').value;
         const text = document.getElementById('note-text').value.trim();
@@ -518,7 +514,7 @@
                 saveBtn.innerText = "Сохранить в облако";
             }).catch(e => {
                 console.error("Firestore ошибка:", e);
-                alert("Ошибка! Проверь правила (Rules) во вкладке Cloud Firestore.");
+                alert("Ошибка базы данных Firestore!");
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Сохранить в облако";
             });
@@ -526,20 +522,29 @@
 
         if (file) {
             fileStoragePath = `uploads/${Date.now()}_${file.name}`;
-            const storageRef = storage.ref().child(fileStoragePath);
             
-            storageRef.put(file).then((snapshot) => {
-                return snapshot.ref.getDownloadURL();
-            }).then((url) => {
-                fileUrl = url;
-                uploadToFirestore();
-            }).catch(error => {
-                console.error("Storage сбой:", error);
-                // Четкая подсказка пользователю, если Firebase Storage закрыт правилами доступа
-                alert("⚠️ Ошибка Firebase Storage!\n\nФайлы не загружаются, потому что облачное хранилище заблокировано.\n\nРЕШЕНИЕ:\n1. Зайди в Firebase Console\n2. Открой вкладку Storage -> Rules\n3. Замени строку на:\n   allow read, write: if true;\n4. Нажми Publish!");
+            try {
+                // Явно привязываемся к URL бакета, чтобы избежать внутренних сбоев определения путей Firebase
+                const bucketRef = storage.refFromURL('gs://my-dashboard-dc67a.firebasestorage.app');
+                const fileRef = bucketRef.child(fileStoragePath);
+                
+                fileRef.put(file).then((snapshot) => {
+                    return snapshot.ref.getDownloadURL();
+                }).then((url) => {
+                    fileUrl = url;
+                    uploadToFirestore();
+                }).catch(error => {
+                    console.error("Storage сбой во время загрузки:", error);
+                    alert("⚠️ Ошибка Firebase Storage!\n\nФайлы блокируются правилами доступа.\n\nРЕШЕНИЕ:\n1. Зайди в Firebase Console\n2. Перейди во вкладку Storage -> Rules\n3. Поменяй правила на:\n   allow read, write: if true;\n4. Нажми Publish!");
+                    saveBtn.disabled = false;
+                    saveBtn.innerText = "Сохранить в облако";
+                });
+            } catch (err) {
+                console.error("Ошибка инициализации ссылки Storage:", err);
+                alert("Критический сбой инициализации ссылки хранилища!");
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Сохранить в облако";
-            });
+            }
         } else {
             uploadToFirestore();
         }
@@ -549,7 +554,10 @@
         if(confirm("Удалить эту запись?")) {
             db.collection("notes").doc(id).delete().then(() => {
                 if (storagePath) {
-                    storage.ref().child(storagePath).delete().catch(e => console.log("Файл удален вручную"));
+                    try {
+                        const bucketRef = storage.refFromURL('gs://my-dashboard-dc67a.firebasestorage.app');
+                        bucketRef.child(storagePath).delete().catch(e => console.log("Файл уже удален"));
+                    } catch(e) { console.error(e); }
                 }
             }).catch(e => console.error(e));
         }
