@@ -331,7 +331,6 @@
     </div>
 
     <script>
-        // Твои точные, реальные ключи от проекта my-dashboard-dc67a
         const firebaseConfig = {
             apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
             authDomain: "my-dashboard-dc67a.firebaseapp.com",
@@ -348,7 +347,7 @@
 
         let currentCategoryId = 'all';
         let categoriesMap = {};
-        let allCategoriesData = []; // Для копирования в выпадающий список редактирования
+        let allCategoriesData = []; 
 
         window.addEventListener('DOMContentLoaded', () => {
             loadCategories();
@@ -456,27 +455,19 @@
                         fileHtml = `<br><a href="${note.fileUrl}" target="_blank" class="note-file-link">📎 ${nameOfFile}</a>`;
                     }
 
-                    // Передаем все данные строки в функцию редактирования одной строкой JSON
-                    const safeNoteJson = JSON.stringify({
-                        id: id,
-                        catId: note.catId || '',
-                        text: note.text || '',
-                        fileUrl: note.fileUrl || ''
-                    }).replace(/"/g, '&quot;');
-
+                    // Передаем только ID, чтобы избежать багов с кавычками и переносами строк
                     card.innerHTML = `
                         <div class="note-header">
                             <span>${dateStr} | Лист: ${catName}</span>
                         </div>
                         <div class="note-text">${note.text || ''}</div>
                         ${fileHtml}
-                        <button class="edit-note-btn" onclick="openEditModal('${safeNoteJson}')">✏️</button>
+                        <button class="edit-note-btn" onclick="openEditModal('${id}')">✏️</button>
                         <button class="delete-note-btn" onclick="deleteNote('${id}')">×</button>
                     `;
                     container.appendChild(card);
                 });
 
-                // Принудительно просим MathJax перерисовать новые формулы на экране
                 if (window.MathJax && window.MathJax.typeset) {
                     window.MathJax.typeset();
                 }
@@ -521,25 +512,34 @@
             try { await db.collection("notes").doc(id).delete(); } catch(e) { alert(e.message); }
         }
 
-        // Логика модального окна редактирования
-        function openEditModal(noteJsonStr) {
-            const note = JSON.parse(noteJsonStr);
-            
-            document.getElementById('edit-note-id').value = note.id;
-            document.getElementById('edit-note-text').value = note.text;
-            document.getElementById('edit-note-file-url').value = note.fileUrl;
+        // Логика модального окна редактирования по ID
+        async function openEditModal(id) {
+            try {
+                const doc = await db.collection("notes").doc(id).get();
+                if (!doc.exists) {
+                    alert("Запись не найдена!");
+                    return;
+                }
+                const note = doc.data();
+                
+                document.getElementById('edit-note-id').value = id;
+                document.getElementById('edit-note-text').value = note.text || '';
+                document.getElementById('edit-note-file-url').value = note.fileUrl || '';
 
-            const modalSelect = document.getElementById('edit-note-cat-select');
-            modalSelect.innerHTML = '';
-            allCategoriesData.forEach(cat => {
-                const opt = document.createElement('option');
-                opt.value = cat.id;
-                opt.innerText = cat.name;
-                if(cat.id === note.catId) opt.selected = true;
-                modalSelect.appendChild(opt);
-            });
+                const modalSelect = document.getElementById('edit-note-cat-select');
+                modalSelect.innerHTML = '';
+                allCategoriesData.forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat.id;
+                    opt.innerText = cat.name;
+                    if(cat.id === note.catId) opt.selected = true;
+                    modalSelect.appendChild(opt);
+                });
 
-            document.getElementById('edit-modal').style.display = 'flex';
+                document.getElementById('edit-modal').style.display = 'flex';
+            } catch (e) {
+                alert("Ошибка загрузки данных: " + e.message);
+            }
         }
 
         function closeEditModal() {
