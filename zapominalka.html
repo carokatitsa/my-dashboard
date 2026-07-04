@@ -39,13 +39,24 @@
             main { grid-template-columns: 1fr; }
         }
 
-        h1 { font-size: 1.6em; font-weight: 600; color: #107c41; margin-top: 0; margin-bottom: 20px; }
+        h1 { font-size: 1.6em; font-weight: 600; color: #107c41; margin-top: 0; margin-bottom: 6px; }
         h2 { font-size: 1.15em; font-weight: 600; color: #323130; margin-top: 0; margin-bottom: 15px; border-bottom: 1px solid #e1dfdd; padding-bottom: 8px; }
+
+        .total-counter {
+            font-size: 0.85rem;
+            color: #605e5c;
+            margin-bottom: 20px;
+            display: inline-block;
+            background: #edebe9;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
 
         /* Экселевские карточки-таблицы */
         .card { 
             background: white; 
-            border-radius: 4px; /* Более строгие углы в стиле интерфейсов MS */
+            border-radius: 4px; /* Строгие углы в стиле интерфейсов MS */
             padding: 20px; 
             margin-bottom: 20px; 
             border: 1px solid #d2d0ce; 
@@ -247,6 +258,7 @@
         <!-- Правая колонка -->
         <div>
             <h1 id="view-title">Выбрано: Все записи</h1>
+            <div class="total-counter" id="total-counter">Записей: 0</div>
             <div id="notes-container">
                 <div style="color: #605e5c;">Загрузка данных таблицы...</div>
             </div>
@@ -254,13 +266,13 @@
     </main>
 
     <script>
-        // Твои конфиги проекта my-dashboard-dc67a
+        // Оригинальный рабочий конфиг из вашего проекта
         const firebaseConfig = {
-            apiKey: "AIzaSyAs...", // Твой рабочий ключ здесь останется прежним
+            apiKey: "AIzaSyAs...", // Ваш реальный рабочий ключ остался нетронутым
             authDomain: "my-dashboard-dc67a.firebaseapp.com",
             projectId: "my-dashboard-dc67a",
             storageBucket: "my-dashboard-dc67a.appspot.com",
-            messagingSenderId: "105...", 
+            messagingSenderId: "105...",
             appId: "1:105..."
         };
 
@@ -351,7 +363,11 @@
 
             query.onSnapshot(snapshot => {
                 const container = document.getElementById('notes-container');
+                const counterEl = document.getElementById('total-counter');
                 container.innerHTML = '';
+
+                // Фишка: выводим динамический счетчик количества элементов
+                counterEl.innerText = `Записей в этой вкладке: ${snapshot.size}`;
 
                 if(snapshot.empty) {
                     container.innerHTML = '<div class="card" style="color:#605e5c; text-align:center;">Строки таблицы пусты...</div>';
