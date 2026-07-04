@@ -1,287 +1,227 @@
-<!doctype html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Запоминалка</title>
-    <style>
-        body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
-        header { background:#111a2e; padding:16px; position:sticky; top:0; border-bottom: 1px solid #2a4cff; z-index: 100; }
-        nav { display: flex; flex-wrap: wrap; gap: 15px; max-width: 900px; margin: auto; }
-        nav a { color:#e8eefc; text-decoration:none; font-weight:600; font-size: 0.9em; white-space: nowrap; }
-        
-        main { max-width:900px; margin:auto; padding:24px; }
-        h1 { font-size: 1.8em; margin-bottom: 20px; }
-        
-        .card { background:#111a2e; border-radius:14px; padding:20px; margin-bottom: 20px; border: 1px solid #1e293b; }
-        
-        /* Кнопки в твоем стиле */
-        .btn {
-            display:inline-block;
-            background:#2a4cff;
-            color:white;
-            padding:10px 20px;
-            border-radius:10px;
-            text-decoration:none;
-            font-weight: bold;
-            border: none;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .btn:hover { background: #1a36d9; }
-        .btn-danger { background: #ef4444; }
-        .btn-danger:hover { background: #dc2626; }
+<script type="module">
+    // Инициализация Firebase модулей (v10+)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, where, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-        /* Поля ввода */
-        input, textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 15px;
-            background: #1e293b;
-            border: 1px solid #2a4cff;
-            border-radius: 8px;
-            color: #e8eefc;
-            box-sizing: border-box;
-            font-family: inherit;
-        }
-        
-        /* Сетка для категорий и записей */
-        .app-layout { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
-        @media (max-width: 768px) { .app-layout { grid-template-columns: 1fr; } }
-        
-        .category-list div {
-            padding: 10px;
-            margin-bottom: 5px;
-            background: #1e293b;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .category-list div.active, .category-list div:hover {
-            background: #2a4cff;
-        }
-        
-        /* Стили для сохраненных заметок */
-        .note-item {
-            background: #1e293b;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-        .note-item img { max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 10px; display: block; }
-        .file-link {
-            display: inline-block;
-            margin-top: 10px;
-            color: #38bdf8;
-            text-decoration: underline;
-        }
-        .delete-note { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; }
-    </style>
-</head>
-<body>
-
-<header>
-    <nav>
-        <a href="index.html">← На главную</a>
-        <a href="#" style="border-bottom: 2px solid #2a4cff; padding-bottom: 4px;">Запоминалка</a>
-    </nav>
-</header>
-
-<main>
-    <h1>🧠 Моя Запоминалка</h1>
-    
-    <div class="app-layout">
-        <div class="sidebar">
-            <div class="card">
-                <h3>Категории</h3>
-                <input type="text" id="new-cat-name" placeholder="Название категории">
-                <button class="btn" onclick="addCategory()" style="width:100%;">+ Создать</button>
-                <hr style="border: 0.5px solid #1e293b; margin: 15px 0;">
-                <div id="categories-container" class="category-list">
-                    </div>
-            </div>
-        </div>
-
-        <div class="content">
-            <div class="card">
-                <h3>Добавить новую инфу</h3>
-                <label for="note-cat-select">Категория:</label>
-                <select id="note-cat-select"></select>
-                
-                <label for="note-text">Текст / Описание:</label>
-                <textarea id="note-text" rows="4" placeholder="Напиши что-нибудь важное..."></textarea>
-                
-                <label for="note-file">Фото или Файл:</label>
-                <input type="file" id="note-file">
-                
-                <button class="btn" onclick="saveNote()">Сохранить запись</button>
-            </div>
-
-            <h2>Содержимое категории: <span id="current-cat-title">Все</span></h2>
-            <div id="notes-container">
-                </div>
-        </div>
-    </div>
-</main>
-
-<script>
-    // Инициализация данных из localStorage
-    let data = JSON.parse(localStorage.getItem('my_memories_db')) || {
-        categories: [{id: "all", name: "Все записи"}],
-        notes: []
+    // Твоя личная конфигурация Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyA3QRDlZkS9-NnupC5KN65fMv1j39ZovsI",
+        authDomain: "my-dashboard-dc67a.firebaseapp.com",
+        projectId: "my-dashboard-dc67a",
+        storageBucket: "my-dashboard-dc67a.firebasestorage.app",
+        messagingSenderId: "710702954120",
+        appId: "1:710702954120:web:f06b1038c48d3bd328913d"
     };
+
+    // Запуск сервисов
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
     let currentCategoryId = "all";
 
-    // Сохранение всей БД в браузер
-    function saveToStorage() {
-        localStorage.setItem('my_memories_db', JSON.stringify(data));
-        renderCategories();
-        renderNotes();
-    }
+    // Делаем функции доступными для HTML-кнопок (так как внутри type="module" у функций своя область видимости)
+    window.addCategory = addCategory;
+    window.deleteCategory = deleteCategory;
+    window.saveNote = saveNote;
+    window.deleteNote = deleteNote;
+    window.viewFile = viewFile;
+    window.closeModal = closeModal;
+    window.switchCategory = switchCategory;
 
-    // Добавление категории
-    function addCategory() {
-        const input = document.getElementById('new-cat-name');
-        const name = input.value.trim();
-        if(!name) return;
-        
-        const newCat = { id: 'cat_' + Date.now(), name: name };
-        data.categories.push(newCat);
-        input.value = '';
-        saveToStorage();
-    }
-
-    // Удаление категории (опционально, удаляет и заметки в ней)
-    function deleteCategory(id, e) {
-        e.stopPropagation();
-        if(id === 'all') return;
-        if(confirm("Удалить эту категорию и все записи в ней?")) {
-            data.categories = data.categories.filter(c => c.id !== id);
-            data.notes = data.notes.filter(n => n.catId !== id);
-            currentCategoryId = "all";
-            saveToStorage();
-        }
-    }
-
-    // Отрисовка категорий на экране
-    function renderCategories() {
+    // СЛУШАТЕЛЬ КАТЕГОРИЙ (В реальном времени)
+    const catQuery = query(collection(db, "categories"), orderBy("name"));
+    onSnapshot(catQuery, (snapshot) => {
         const container = document.getElementById('categories-container');
         const select = document.getElementById('note-cat-select');
         
-        container.innerHTML = '';
+        container.innerHTML = `<div class="cat-item ${currentCategoryId === 'all' ? 'active' : ''}" onclick="switchCategory('all', 'Все записи')"><span>📂 Все записи</span></div>`;
         select.innerHTML = '';
 
-        data.categories.forEach(cat => {
-            // Рендер в список слева
+        snapshot.forEach(docSnap => {
+            const cat = docSnap.data();
+            const id = docSnap.id;
+
             const div = document.createElement('div');
-            div.className = cat.id === currentCategoryId ? 'active' : '';
-            div.innerHTML = cat.name + (cat.id !== 'all' ? ` <span onclick="deleteCategory('${cat.id}', event)" style="float:right;color:#ef4444;">✕</span>` : '');
-            div.onclick = () => {
-                currentCategoryId = cat.id;
-                document.getElementById('current-cat-title').innerText = cat.name;
-                renderCategories();
-                renderNotes();
-            };
+            div.className = `cat-item ${currentCategoryId === id ? 'active' : ''}`;
+            div.onclick = () => switchCategory(id, cat.name);
+            div.innerHTML = `<span>📁 ${cat.name}</span> <span class="del-btn" onclick="deleteCategory('${id}', event)">✕</span>`;
             container.appendChild(div);
 
-            // Рендер в выпадающий список формы (кроме вкладки "Все")
-            if(cat.id !== 'all') {
-                const opt = document.createElement('option');
-                opt.value = cat.id;
-                opt.innerText = cat.name;
-                select.appendChild(opt);
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.innerText = cat.name;
+            select.appendChild(opt);
+        });
+    });
+
+    // СЛУШАТЕЛЬ ЗАМЕТОК (В реальном времени)
+    let unsubscribeNotes = null;
+    function loadNotes() {
+        if (unsubscribeNotes) unsubscribeNotes(); // отписываемся от старой категории, если была
+
+        let notesRef = collection(db, "notes");
+        let q;
+        
+        if (currentCategoryId !== "all") {
+            q = query(notesRef, where("catId", "==", currentCategoryId), orderBy("createdAt", "desc"));
+        } else {
+            q = query(notesRef, orderBy("createdAt", "desc"));
+        }
+
+        unsubscribeNotes = onSnapshot(q, (snapshot) => {
+            const container = document.getElementById('notes-container');
+            container.innerHTML = '';
+
+            if(snapshot.empty) {
+                container.innerHTML = '<p style="color: var(--text-muted);">В этой категории еще нет записей...</p>';
+                return;
             }
+
+            snapshot.forEach(docSnap => {
+                const note = docSnap.data();
+                const id = docSnap.id;
+                const div = document.createElement('div');
+                div.className = 'note-card';
+
+                let fileHtml = '';
+                if (note.fileUrl) {
+                    fileHtml = `
+                        <div class="attachment-badge" onclick="viewFile('${note.fileUrl}', '${note.fileName}', '${note.fileType}')">
+                            📎 Файл: ${note.fileName} (клик для просмотра)
+                        </div>
+                    `;
+                }
+
+                div.innerHTML = `
+                    <button class="delete-note-btn" onclick="deleteNote('${id}', '${note.fileStoragePath || ''}')">✕</button>
+                    <div class="meta">${note.createdAt ? new Date(note.createdAt.seconds * 1000).toLocaleString('ru-RU') : 'Сейчас'}</div>
+                    <div class="content-text">${note.text}</div>
+                    ${fileHtml}
+                `;
+                container.appendChild(div);
+            });
+
+            if(window.MathJax && MathJax.typeset) {
+                MathJax.typeset();
+            }
+        }, (error) => {
+            console.error("Ошибка при получении заметок: ", error);
         });
     }
 
-    // Перевод файла в строку Base64, чтобы сохранить в браузере
-    function getFileData(file) {
-        return new Promise((resolve) => {
-            if(!file) resolve(null);
-            const reader = new FileReader();
-            reader.onloadend = () => resolve({ name: file.name, type: file.type, base64: reader.result });
-            reader.readAsDataURL(file);
-        });
+    function switchCategory(id, name) {
+        currentCategoryId = id;
+        document.getElementById('current-cat-title').innerText = name;
+        loadNotes();
     }
 
-    // Сохранение записи
+    // ДОБАВЛЕНИЕ КАТЕГОРИИ
+    async function addCategory() {
+        const input = document.getElementById('new-cat-name');
+        const name = input.value.trim();
+        if(!name) return;
+        try {
+            await addDoc(collection(db, "categories"), { name: name });
+            input.value = '';
+        } catch(e) { console.error("Ошибка добавления категории:", e); }
+    }
+
+    // УДАЛЕНИЕ КАТЕГОРИИ
+    async function deleteCategory(id, e) {
+        e.stopPropagation();
+        if(confirm("Удалить эту категорию?")) {
+            try {
+                await deleteDoc(doc(db, "categories", id));
+                if(currentCategoryId === id) switchCategory('all', 'Все записи');
+            } catch(e) { console.error("Ошибка удаления категории:", e); }
+        }
+    }
+
+    // СОХРАНЕНИЕ ЗАМЕТКИ + ЗАГРУЗКА В СТОРАДЖ
     async function saveNote() {
         const catId = document.getElementById('note-cat-select').value;
         const text = document.getElementById('note-text').value.trim();
         const fileInput = document.getElementById('note-file');
-        
-        if(!catId) { alert('Сначала создай хотя бы одну категорию!'); return; }
-        if(!text && !fileInput.files[0]) { alert('Напиши текст или выбери файл!'); return; }
+        const file = fileInput.files[0];
 
-        const fileData = await getFileData(fileInput.files[0]);
+        if(!catId) { alert('Выбери или создай категорию!'); return; }
+        if(!text && !file) { alert('Напиши текст или выбери файл!'); return; }
 
-        const newNote = {
-            id: 'note_' + Date.now(),
-            catId: catId,
-            text: text,
-            file: fileData,
-            date: new Date().toLocaleString('ru-RU')
-        };
+        let fileUrl = null;
+        let fileStoragePath = null;
 
-        data.notes.push(newNote);
-        document.getElementById('note-text').value = '';
-        fileInput.value = '';
-        saveToStorage();
-    }
-
-    // Удаление записи
-    function deleteNote(id) {
-        if(confirm("Удалить эту запись?")) {
-            data.notes = data.notes.filter(n => n.id !== id);
-            saveToStorage();
-        }
-    }
-
-    // Отрисовка заметок
-    function renderNotes() {
-        const container = document.getElementById('notes-container');
-        container.innerHTML = '';
-
-        // Фильтруем по выбранной категории
-        const filteredNotes = currentCategoryId === 'all' 
-            ? data.notes 
-            : data.notes.filter(n => n.catId === currentCategoryId);
-
-        if(filteredNotes.length === 0) {
-            container.innerHTML = '<p style="color:#94a3b8;">Здесь пока ничего нет...</p>';
-            return;
-        }
-
-        // Показываем самые свежие сверху
-        filteredNotes.slice().reverse().forEach(note => {
-            const div = document.createElement('div');
-            div.className = 'note-item';
+        if (file) {
+            fileStoragePath = `uploads/${Date.now()}_${file.name}`;
+            const storageRef = ref(storage, fileStoragePath);
             
-            let fileHtml = '';
-            if(note.file) {
-                // Если это картинка — показываем превьюху, если файл — даем ссылку на скачивание
-                if(note.file.type.startsWith('image/')) {
-                    fileHtml = `<img src="${note.file.base64}" alt="Вложенное фото">`;
-                } else {
-                    fileHtml = `<br><a class="file-link" href="${note.file.base64}" download="${note.file.name}">📂 Скачать: ${note.file.name}</a>`;
-                }
+            try {
+                const snapshot = await uploadBytes(storageRef, file);
+                fileUrl = await getDownloadURL(snapshot.ref);
+            } catch (error) {
+                console.error(error);
+                alert("Ошибка при сохранении файла в Storage. Проверь правила (Rules) в Firebase!");
+                return;
             }
+        }
 
-            div.innerHTML = `
-                <button class="delete-note" onclick="deleteNote('${note.id}')">✕</button>
-                <small style="color:#94a3b8; font-size:0.8em;">${note.date}</small>
-                <p style="margin: 10px 0 0 0; white-space: pre-wrap;">${note.text}</p>
-                ${fileHtml}
-            `;
-            container.appendChild(div);
-        });
+        try {
+            await addDoc(collection(db, "notes"), {
+                catId: catId,
+                text: text,
+                fileUrl: fileUrl,
+                fileName: file ? file.name : null,
+                fileType: file ? file.type : null,
+                fileStoragePath: fileStoragePath,
+                createdAt: serverTimestamp()
+            });
+            document.getElementById('note-text').value = '';
+            fileInput.value = '';
+        } catch (e) {
+            console.error("Ошибка добавления записи:", e);
+        }
     }
 
-    // Первый запуск при загрузке страницы
-    renderCategories();
-    renderNotes();
-</script>
+    // УДАЛЕНИЕ ЗАМЕТКИ
+    async function deleteNote(id, storagePath) {
+        if(confirm("Удалить эту запись?")) {
+            try {
+                await deleteDoc(doc(db, "notes", id));
+                if (storagePath) {
+                    const fileRef = ref(storage, storagePath);
+                    await deleteObject(fileRef).catch(e => console.log("Файл в хранилище не найден"));
+                }
+            } catch(e) { console.error("Ошибка удаления:", e); }
+        }
+    }
 
-</body>
-</html>
+    // МОДАЛКА (ПОП-АП)
+    function viewFile(url, name, type) {
+        document.getElementById('modal-filename').innerText = name;
+        const body = document.getElementById('modal-body');
+        const downloadLink = document.getElementById('modal-download');
+        
+        body.innerHTML = '';
+        downloadLink.href = url;
+
+        if (type.startsWith('image/')) {
+            body.innerHTML = `<img src="${url}" class="modal-preview" alt="Превью">`;
+        } else if (type === 'application/pdf') {
+            body.innerHTML = `<iframe src="${url}" style="width:600px; height:450px; border:none; max-width:100%;"></iframe>`;
+        } else if (type.startsWith('text/')) {
+            body.innerHTML = `<iframe src="${url}" style="width:600px; height:300px; background: white; border-radius: 8px;"></iframe>`;
+        } else {
+            body.innerHTML = `<p style="color:var(--text-muted)">Предпросмотр недоступен для этого формата файлов.<br>Скачайте его по кнопке ниже.</p>`;
+        }
+
+        document.getElementById('file-modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('file-modal').style.display = 'none';
+    }
+
+    // Первичный запуск загрузки данных
+    loadNotes();
+</script>
