@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Запоминалка</title>
+    <style>
+        body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
+        header { background:#111a2e; padding:16px; position:sticky; top:0; border-bottom: 1px solid #2a4cff; z-index: 100; }
+        nav { display: flex; flex-wrap: wrap; gap: 15px; max-width: 900px; margin: auto; }
+        nav a { color:#e8eefc; text-decoration:none; font-weight:600; font-size: 0.9em; white-space: nowrap; }
+        
+        main { max-width:900px; margin:auto; padding:24px; }
+        h1 { font-size: 1.8em; margin-bottom: 20px; }
+        
+        .card { background:#111a2e; border-radius:14px; padding:20px; margin-bottom: 20px; border: 1px solid #1e293b; }
+        
+        /* Кнопки в твоем стиле */
+        .btn {
+            display:inline-block;
+            background:#2a4cff;
+            color:white;
+            padding:10px 20px;
+            border-radius:10px;
+            text-decoration:none;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .btn:hover { background: #1a36d9; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+
+        /* Поля ввода */
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #1e293b;
+            border: 1px solid #2a4cff;
+            border-radius: 8px;
+            color: #e8eefc;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+        
+        /* Сетка для категорий и записей */
+        .app-layout { display: grid; grid-template-columns: 250px 1fr; gap: 20px; }
+        @media (max-width: 768px) { .app-layout { grid-template-columns: 1fr; } }
+        
+        .category-list div {
+            padding: 10px;
+            margin-bottom: 5px;
+            background: #1e293b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .category-list div.active, .category-list div:hover {
+            background: #2a4cff;
+        }
+        
+        /* Стили для сохраненных заметок */
+        .note-item {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .note-item img { max-width: 100%; max-height: 250px; border-radius: 8px; margin-top: 10px; display: block; }
+        .file-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #38bdf8;
+            text-decoration: underline;
+        }
+        .delete-note { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ef4444; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <nav>
+        <a href="index.html">← На главную</a>
+        <a href="#" style="border-bottom: 2px solid #2a4cff; padding-bottom: 4px;">Запоминалка</a>
+    </nav>
+</header>
+
+<main>
+    <h1>🧠 Моя Запоминалка</h1>
+    
+    <div class="app-layout">
+        <div class="sidebar">
+            <div class="card">
+                <h3>Категории</h3>
+                <input type="text" id="new-cat-name" placeholder="Название категории">
+                <button class="btn" onclick="addCategory()" style="width:100%;">+ Создать</button>
+                <hr style="border: 0.5px solid #1e293b; margin: 15px 0;">
+                <div id="categories-container" class="category-list">
+                    </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="card">
+                <h3>Добавить новую инфу</h3>
+                <label for="note-cat-select">Категория:</label>
+                <select id="note-cat-select"></select>
+                
+                <label for="note-text">Текст / Описание:</label>
+                <textarea id="note-text" rows="4" placeholder="Напиши что-нибудь важное..."></textarea>
+                
+                <label for="note-file">Фото или Файл:</label>
+                <input type="file" id="note-file">
+                
+                <button class="btn" onclick="saveNote()">Сохранить запись</button>
+            </div>
+
+            <h2>Содержимое категории: <span id="current-cat-title">Все</span></h2>
+            <div id="notes-container">
+                </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    // Инициализация данных из localStorage
+    let data = JSON.parse(localStorage.getItem('my_memories_db')) || {
+        categories: [{id: "all", name: "Все записи"}],
+        notes: []
+    };
+    let currentCategoryId = "all";
+
+    // Сохранение всей БД в браузер
+    function saveToStorage() {
+        localStorage.setItem('my_memories_db', JSON.stringify(data));
+        renderCategories();
+        renderNotes();
+    }
+
+    // Добавление категории
+    function addCategory() {
+        const input = document.getElementById('new-cat-name');
+        const name = input.value.trim();
+        if(!name) return;
+        
+        const newCat = { id: 'cat_' + Date.now(), name: name };
+        data.categories.push(newCat);
+        input.value = '';
+        saveToStorage();
+    }
+
+    // Удаление категории (опционально, удаляет и заметки в ней)
+    function deleteCategory(id, e) {
+        e.stopPropagation();
+        if(id === 'all') return;
+        if(confirm("Удалить эту категорию и все записи в ней?")) {
+            data.categories = data.categories.filter(c => c.id !== id);
+            data.notes = data.notes.filter(n => n.catId !== id);
+            currentCategoryId = "all";
+            saveToStorage();
+        }
+    }
+
+    // Отрисовка категорий на экране
+    function renderCategories() {
+        const container = document.getElementById('categories-container');
+        const select = document.getElementById('note-cat-select');
+        
+        container.innerHTML = '';
+        select.innerHTML = '';
+
+        data.categories.forEach(cat => {
+            // Рендер в список слева
+            const div = document.createElement('div');
+            div.className = cat.id === currentCategoryId ? 'active' : '';
+            div.innerHTML = cat.name + (cat.id !== 'all' ? ` <span onclick="deleteCategory('${cat.id}', event)" style="float:right;color:#ef4444;">✕</span>` : '');
+            div.onclick = () => {
+                currentCategoryId = cat.id;
+                document.getElementById('current-cat-title').innerText = cat.name;
+                renderCategories();
+                renderNotes();
+            };
+            container.appendChild(div);
+
+            // Рендер в выпадающий список формы (кроме вкладки "Все")
+            if(cat.id !== 'all') {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.innerText = cat.name;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    // Перевод файла в строку Base64, чтобы сохранить в браузере
+    function getFileData(file) {
+        return new Promise((resolve) => {
+            if(!file) resolve(null);
+            const reader = new FileReader();
+            reader.onloadend = () => resolve({ name: file.name, type: file.type, base64: reader.result });
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Сохранение записи
+    async function saveNote() {
+        const catId = document.getElementById('note-cat-select').value;
+        const text = document.getElementById('note-text').value.trim();
+        const fileInput = document.getElementById('note-file');
+        
+        if(!catId) { alert('Сначала создай хотя бы одну категорию!'); return; }
+        if(!text && !fileInput.files[0]) { alert('Напиши текст или выбери файл!'); return; }
+
+        const fileData = await getFileData(fileInput.files[0]);
+
+        const newNote = {
+            id: 'note_' + Date.now(),
+            catId: catId,
+            text: text,
+            file: fileData,
+            date: new Date().toLocaleString('ru-RU')
+        };
+
+        data.notes.push(newNote);
+        document.getElementById('note-text').value = '';
+        fileInput.value = '';
+        saveToStorage();
+    }
+
+    // Удаление записи
+    function deleteNote(id) {
+        if(confirm("Удалить эту запись?")) {
+            data.notes = data.notes.filter(n => n.id !== id);
+            saveToStorage();
+        }
+    }
+
+    // Отрисовка заметок
+    function renderNotes() {
+        const container = document.getElementById('notes-container');
+        container.innerHTML = '';
+
+        // Фильтруем по выбранной категории
+        const filteredNotes = currentCategoryId === 'all' 
+            ? data.notes 
+            : data.notes.filter(n => n.catId === currentCategoryId);
+
+        if(filteredNotes.length === 0) {
+            container.innerHTML = '<p style="color:#94a3b8;">Здесь пока ничего нет...</p>';
+            return;
+        }
+
+        // Показываем самые свежие сверху
+        filteredNotes.slice().reverse().forEach(note => {
+            const div = document.createElement('div');
+            div.className = 'note-item';
+            
+            let fileHtml = '';
+            if(note.file) {
+                // Если это картинка — показываем превьюху, если файл — даем ссылку на скачивание
+                if(note.file.type.startsWith('image/')) {
+                    fileHtml = `<img src="${note.file.base64}" alt="Вложенное фото">`;
+                } else {
+                    fileHtml = `<br><a class="file-link" href="${note.file.base64}" download="${note.file.name}">📂 Скачать: ${note.file.name}</a>`;
+                }
+            }
+
+            div.innerHTML = `
+                <button class="delete-note" onclick="deleteNote('${note.id}')">✕</button>
+                <small style="color:#94a3b8; font-size:0.8em;">${note.date}</small>
+                <p style="margin: 10px 0 0 0; white-space: pre-wrap;">${note.text}</p>
+                ${fileHtml}
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    // Первый запуск при загрузке страницы
+    renderCategories();
+    renderNotes();
+</script>
+
+</body>
+</html>
