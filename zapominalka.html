@@ -135,12 +135,6 @@
             width: 100%; height: 100%;
             cursor: pointer;
         }
-        .file-upload-wrapper:hover .file-upload-btn {
-            background: rgba(59, 130, 246, 0.08);
-            border-color: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
-        }
         
         .btn {
             width: 100%;
@@ -160,12 +154,11 @@
             box-shadow: 0 8px 26px rgba(29, 78, 216, 0.6);
             filter: brightness(1.15);
         }
-        .btn:active { transform: translateY(0); }
         .btn:disabled {
-            background: #475569;
-            box-shadow: none;
+            background: #475569 !important;
+            box-shadow: none !important;
             cursor: not-allowed;
-            transform: none;
+            transform: none !important;
         }
 
         .cat-item {
@@ -208,11 +201,6 @@
             box-shadow: 0 10px 35px rgba(0,0,0,0.25);
             transition: all 0.3s ease;
         }
-        .note-card:hover {
-            border-color: rgba(59, 130, 246, 0.35);
-            box-shadow: 0 16px 45px rgba(0,0,0,0.4);
-            transform: translateY(-3px);
-        }
         .note-card .meta { font-size: 0.8em; color: var(--text-muted); margin-bottom: 16px; display: flex; gap: 8px;}
         .note-card .content-text { font-size: 1.1em; line-height: 1.7; white-space: pre-wrap; color: #e2e8f0; }
         .note-card .delete-note-btn { 
@@ -221,15 +209,6 @@
             padding: 4px 8px; border-radius: 8px;
         }
         .note-card .delete-note-btn:hover { color: var(--danger); background: rgba(239, 68, 68, 0.1); }
-
-        .mjx-chtml, .MathJax {
-            font-size: 1.15em !important;
-            color: #fff;
-            background: rgba(255,255,255,0.04);
-            padding: 4px 10px;
-            border-radius: 8px;
-            border: 1px solid rgba(255,255,255,0.07);
-        }
 
         .attachment-badge {
             display: inline-flex;
@@ -249,7 +228,6 @@
             background: rgba(59, 130, 246, 0.2); 
             border-color: var(--accent);
             color: #fff;
-            box-shadow: 0 0 14px rgba(59, 130, 246, 0.3);
         }
 
         .modal {
@@ -262,7 +240,6 @@
             justify-content: center;
             align-items: center;
             padding: 20px;
-            box-sizing: border-box;
         }
         .modal-content {
             background: #131a26;
@@ -271,11 +248,9 @@
             border-radius: 24px;
             width: 100%;
             max-width: 700px;
-            box-shadow: 0 25px 60px rgba(0,0,0,0.6);
             display: flex;
             flex-direction: column;
             gap: 20px;
-            box-sizing: border-box;
         }
         #modal-body {
             width: 100%;
@@ -285,17 +260,13 @@
             background: rgba(0,0,0,0.2);
             border-radius: 12px;
             padding: 10px;
-            box-sizing: border-box;
             min-height: 150px;
         }
         .modal-preview { max-width: 100%; max-height: 55vh; border-radius: 8px; object-fit: contain; }
-        .modal-actions { display: flex; justify-content: flex-end; gap: 14px; margin-top: 10px; }
-        .close-modal { background: rgba(255,255,255,0.05); color: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); font-weight: 600; transition: 0.2s;}
-        .close-modal:hover { background: rgba(255,255,255,0.1); }
-        .download-btn { background: var(--success); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);}
-        .download-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .view-external-btn { background: var(--accent); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; transition: 0.2s;}
-        .view-external-btn:hover { filter: brightness(1.1); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 14px; }
+        .close-modal { background: rgba(255,255,255,0.05); color: white; padding: 12px 24px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,0.05); font-weight: 600;}
+        .download-btn { background: var(--success); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; }
+        .view-external-btn { background: var(--accent); color: white; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -303,7 +274,7 @@
 <header>
     <nav>
         <a href="index.html">← На главную</a>
-        <a href="#" style="color: var(--accent); font-size: 1.1em; box-shadow: 0 2px 0 var(--accent); padding-bottom:4px;">Запоминалка Pro</a>
+        <a href="#" style="color: var(--accent); font-size: 1.1em;">Запоминалка Pro</a>
     </nav>
 </header>
 
@@ -315,7 +286,7 @@
             <select id="note-cat-select"><option value="">Загрузка категорий...</option></select>
             
             <label style="font-size: 0.85em; color: var(--text-muted); display:block; margin-bottom: 6px;">Текст заметки / Формула</label>
-            <textarea id="note-text" rows="5" placeholder="Примеры формул:&#13;Просто дробь: 4224000/2500&#13;Сложная: $\sqrt{x}$ или $\frac{a}{b}$"></textarea>
+            <textarea id="note-text" rows="5" placeholder="Текст или формулы..."></textarea>
             
             <label style="font-size: 0.85em; color: var(--text-muted); display:block; margin-bottom: 6px;">Прикрепить документ</label>
             <div class="file-upload-wrapper">
@@ -337,14 +308,14 @@
     </div>
 
     <div>
-        <h2 style="margin: 0 0 24px 0; font-weight: 500; letter-spacing: 0.5px;">Выбрано: <span id="current-cat-title" style="color: var(--accent); font-weight:700;">Все записи</span></h2>
+        <h2 style="margin: 0 0 24px 0; font-weight: 500;">Выбрано: <span id="current-cat-title" style="color: var(--accent); font-weight:700;">Все записи</span></h2>
         <div id="notes-container" class="notes-feed"></div>
     </div>
 </div>
 
 <div id="file-modal" class="modal" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-        <h3 id="modal-filename" style="margin: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 12px;">Просмотр файла</h3>
+        <h3 id="modal-filename">Просмотр файла</h3>
         <div id="modal-body"></div>
         <div class="modal-actions">
             <button class="close-modal" onclick="closeModal()">Закрыть</button>
@@ -420,7 +391,7 @@
             container.innerHTML = '';
 
             if(snapshot.empty) {
-                container.innerHTML = '<div class="panel" style="color: var(--text-muted); text-align:center; padding: 40px; width:100%; box-sizing:border-box;">В этой категории еще нет записей...</div>';
+                container.innerHTML = '<div class="panel" style="color: var(--text-muted); text-align:center; padding: 40px; width:100%;">В этой категории еще нет записей...</div>';
                 return;
             }
 
@@ -439,7 +410,8 @@
                     `;
                 }
 
-                const formattedText = formatFractions(note.text);
+                const displayContent = note.text || (note.fileUrl ? `Загружен файл: ${note.fileName}` : 'Пустая запись');
+                const formattedText = formatFractions(displayContent);
 
                 div.innerHTML = `
                     <button class="delete-note-btn" onclick="deleteNote('${id}', '${note.fileStoragePath || ''}')">✕</button>
@@ -453,9 +425,67 @@
             if(window.MathJax && MathJax.typeset) {
                 MathJax.typeset();
             }
-        }, (error) => {
-            console.error("Ошибка получения заметок: ", error);
         });
+    }
+
+    // ГАРАНТИРОВАННО СТАБИЛЬНАЯ ФУНКЦИЯ НА ASYNC/AWAIT
+    async function saveNote() {
+        const catId = document.getElementById('note-cat-select').value;
+        const textInput = document.getElementById('note-text');
+        const fileInput = document.getElementById('note-file');
+        const saveBtn = document.getElementById('save-btn');
+        
+        const text = textInput.value.trim();
+        const file = fileInput.files[0];
+
+        if(!catId) { alert('Пожалуйста, выберите категорию!'); return; }
+        if(!text && !file) { alert('Введите текст или прикрепите файл!'); return; }
+
+        // Блокируем кнопку интерфейса сразу
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Создание записи...";
+
+        try {
+            // Этап 1: Сначала загружаем физический файл в Firebase Storage (если он есть)
+            let fileUrl = null;
+            let fileStoragePath = null;
+
+            if (file) {
+                saveBtn.innerText = "Загрузка файла в облако...";
+                fileStoragePath = `uploads/${Date.now()}_${file.name}`;
+                
+                // Загружаем файл
+                const snapshot = await storage.ref().child(fileStoragePath).put(file);
+                // Получаем прямую скачиваемую ссылку
+                fileUrl = await snapshot.ref.getDownloadURL();
+            }
+
+            // Этап 2: Записываем всё в Firestore (включая готовую ссылку на файл)
+            saveBtn.innerText = "Сохранение данных...";
+            await db.collection("notes").add({
+                catId: catId,
+                text: text,
+                fileUrl: fileUrl,
+                fileName: file ? file.name : null,
+                fileType: file ? file.type : null,
+                fileStoragePath: fileStoragePath,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Очищаем форму при успехе
+            textInput.value = '';
+            fileInput.value = '';
+            document.getElementById('file-label-text').innerText = '📂 Выбрать файл...';
+            alert('Успешно сохранено!');
+
+        } catch (error) {
+            console.error("Критический сбой сохранения:", error);
+            alert("Произошла ошибка!\n\nПроверьте вкладку Storage Rules в консоли Firebase.\nТехнический текст: " + error.message);
+        } finally {
+            // Разблокируем интерфейс в любом случае
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Сохранить в облако";
+        }
     }
 
     function switchCategory(id, name) {
@@ -480,86 +510,11 @@
         }
     }
 
-    function saveNote() {
-        const catId = document.getElementById('note-cat-select').value;
-        const text = document.getElementById('note-text').value.trim();
-        const fileInput = document.getElementById('note-file');
-        const saveBtn = document.getElementById('save-btn');
-        const file = fileInput.files[0];
-
-        if(!catId || catId === "") { alert('Пожалуйста, выберите существующую категорию!'); return; }
-        if(!text && !file) { alert('Напишите текст или выберите файл для загрузки!'); return; }
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = "Обработка запроса...";
-
-        const resetForm = () => {
-            document.getElementById('note-text').value = '';
-            fileInput.value = '';
-            const label = document.getElementById('file-label-text');
-            if(label) label.innerText = '📂 Выбрать файл...';
-            saveBtn.disabled = false;
-            saveBtn.innerText = "Сохранить в облако";
-        };
-
-        // ШАГ 1: Создаем запись в Firestore сразу с текстом (если он есть)
-        db.collection("notes").add({
-            catId: catId,
-            text: text || "", 
-            fileUrl: null,
-            fileName: null,
-            fileType: null,
-            fileStoragePath: null,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp() || new Date()
-        }).then((docRef) => {
-            if (!file) {
-                resetForm();
-                return;
-            }
-
-            // ШАГ 2: Загружаем файл через авто-референс корзины
-            saveBtn.innerText = "Загрузка файла...";
-            const fileStoragePath = `uploads/${Date.now()}_${file.name}`;
-            const fileRef = storage.ref().child(fileStoragePath);
-            
-            fileRef.put(file).then((snapshot) => {
-                return snapshot.ref.getDownloadURL();
-            }).then((url) => {
-                // ШАГ 3: Загрузка успешна, обновляем Firestore и прикрепляем URL
-                return docRef.update({
-                    fileUrl: url,
-                    fileName: file.name,
-                    fileType: file.type,
-                    fileStoragePath: fileStoragePath
-                });
-            }).then(() => {
-                resetForm();
-            }).catch(storageError => {
-                console.error("Storage Error Details:", storageError);
-                
-                // Если файл не загрузился, пишем ошибку текстом в саму карточку
-                docRef.update({
-                    text: (text ? text + "\n\n" : "") + "⚠️ [Ошибка Firebase]: Файл не прикрепился. Причина: " + storageError.message
-                });
-                
-                alert("Текст успешно добавлен, но загрузка файла сорвалась!\n\nДетали ошибки:\n" + storageError.message);
-                resetForm();
-            });
-        }).catch(firestoreError => {
-            console.error("Firestore Error:", firestoreError);
-            alert("Ошибка сохранения базы данных: " + firestoreError.message);
-            saveBtn.disabled = false;
-            saveBtn.innerText = "Сохранить в облако";
-        });
-    }
-
     function deleteNote(id, storagePath) {
         if(confirm("Удалить эту запись?")) {
             db.collection("notes").doc(id).delete().then(() => {
                 if (storagePath) {
-                    try {
-                        storage.ref().child(storagePath).delete().catch(e => console.log("Файл удален"));
-                    } catch(e) { console.error(e); }
+                    storage.ref().child(storagePath).delete().catch(e => console.log("Файл уже удален"));
                 }
             }).catch(e => console.error(e));
         }
@@ -577,19 +532,16 @@
 
         if (type && type.startsWith('image/')) {
             body.innerHTML = `<img src="${url}" class="modal-preview" alt="Превью">`;
-            externalLink.style.display = 'inline-block';
         } else {
             body.innerHTML = `
                 <div style="text-align: center; padding: 20px;">
                     <span style="font-size: 3em;">📄</span>
                     <p style="color: var(--text-muted); margin-top: 10px;">
                         Документ: <b>${name}</b>.<br>
-                        Для работы с таблицей/файлом откройте его в новой вкладке.
+                        Используйте кнопки ниже для открытия или скачивания.
                     </p>
                 </div>`;
-            externalLink.style.display = 'inline-block';
         }
-
         document.getElementById('file-modal').style.display = 'flex';
     }
 
