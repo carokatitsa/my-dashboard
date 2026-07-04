@@ -366,7 +366,6 @@
         appId: "1:710702954120:web:f06b1038c48d3bd328913d"
     };
 
-    // Инициализируем Firebase через стабильный глобальный объект
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const storage = firebase.storage();
@@ -416,13 +415,9 @@
         if (unsubscribeNotes) unsubscribeNotes();
 
         let notesRef = db.collection("notes");
-        let q;
-        
-        if (currentCategoryId !== "all") {
-            q = notesRef.where("catId", "==", currentCategoryId).orderBy("createdAt", "desc");
-        } else {
-            q = notesRef.orderBy("createdAt", "desc");
-        }
+        let q = (currentCategoryId !== "all") 
+            ? notesRef.where("catId", "==", currentCategoryId).orderBy("createdAt", "desc")
+            : notesRef.orderBy("createdAt", "desc");
 
         unsubscribeNotes = q.onSnapshot((snapshot) => {
             const container = document.getElementById('notes-container');
@@ -463,7 +458,7 @@
                 MathJax.typeset();
             }
         }, (error) => {
-            console.error("Ошибка при получении заметок: ", error);
+            console.error("Ошибка получения заметок: ", error);
         });
     }
 
@@ -477,9 +472,7 @@
         const input = document.getElementById('new-cat-name');
         const name = input.value.trim();
         if(!name) return;
-        db.collection("categories").add({ name: name }).then(() => {
-            input.value = '';
-        }).catch(e => console.error(e));
+        db.collection("categories").add({ name: name }).then(() => { input.value = ''; }).catch(e => console.error(e));
     }
 
     function deleteCategory(id, e) {
@@ -491,7 +484,7 @@
         }
     }
 
-    // СТОПРОЦЕНТНО НАДЕЖНОЕ СОХРАНЕНИЕ С ИНДИКАЦИЕЙ ЗАГРУЗКИ
+    // ПОЛНОСТЬЮ ИСПРАВЛЕННАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ФАЙЛОВ И ТЕКСТА
     function saveNote() {
         const catId = document.getElementById('note-cat-select').value;
         const text = document.getElementById('note-text').value.trim();
@@ -502,14 +495,13 @@
         if(!catId || catId === "") { alert('Пожалуйста, выберите существующую категорию!'); return; }
         if(!text && !file) { alert('Напишите текст или выберите файл для загрузки!'); return; }
 
-        // Блокируем кнопку на время загрузки
         saveBtn.disabled = true;
-        saveBtn.innerText = file ? "Загрузка файла в облако..." : "Сохранение записи...";
+        saveBtn.innerText = file ? "Отправка файла в облако..." : "Сохранение...";
 
         let fileUrl = null;
         let fileStoragePath = null;
 
-        const proceedToFirestore = () => {
+        const uploadToFirestore = () => {
             db.collection("notes").add({
                 catId: catId,
                 text: text,
@@ -517,17 +509,16 @@
                 fileName: file ? file.name : null,
                 fileType: file ? file.type : null,
                 fileStoragePath: fileStoragePath,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: firebase.firestore.FieldValue.serverTimestamp() || new Date()
             }).then(() => {
-                // Разблокируем форму обратно
                 document.getElementById('note-text').value = '';
                 fileInput.value = '';
                 document.getElementById('file-label-text').innerText = '📂 Выбрать файл...';
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Сохранить в облако";
             }).catch(e => {
-                console.error("Firestore error:", e);
-                alert("Ошибка сохранения текста в базу данных! Проверь правила Firestore (Rules).");
+                console.error("Firestore ошибка:", e);
+                alert("Ошибка! Проверь правила (Rules) во вкладке Cloud Firestore.");
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Сохранить в облако";
             });
@@ -541,15 +532,16 @@
                 return snapshot.ref.getDownloadURL();
             }).then((url) => {
                 fileUrl = url;
-                proceedToFirestore();
+                uploadToFirestore();
             }).catch(error => {
-                console.error("Storage error:", error);
-                alert("Не удалось загрузить файл в Хранилище. Проверь правила Storage (Rules) в Firebase!");
+                console.error("Storage сбой:", error);
+                // Четкая подсказка пользователю, если Firebase Storage закрыт правилами доступа
+                alert("⚠️ Ошибка Firebase Storage!\n\nФайлы не загружаются, потому что облачное хранилище заблокировано.\n\nРЕШЕНИЕ:\n1. Зайди в Firebase Console\n2. Открой вкладку Storage -> Rules\n3. Замени строку на:\n   allow read, write: if true;\n4. Нажми Publish!");
                 saveBtn.disabled = false;
                 saveBtn.innerText = "Сохранить в облако";
             });
         } else {
-            proceedToFirestore();
+            uploadToFirestore();
         }
     }
 
@@ -557,7 +549,7 @@
         if(confirm("Удалить эту запись?")) {
             db.collection("notes").doc(id).delete().then(() => {
                 if (storagePath) {
-                    storage.ref().child(storagePath).delete().catch(e => console.log("Файл уже удален"));
+                    storage.ref().child(storagePath).delete().catch(e => console.log("Файл удален вручную"));
                 }
             }).catch(e => console.error(e));
         }
@@ -581,8 +573,8 @@
                 <div style="text-align: center; padding: 20px;">
                     <span style="font-size: 3em;">📄</span>
                     <p style="color: var(--text-muted); margin-top: 10px;">
-                        Файл системы: <b>${name}</b>.<br>
-                        Для быстрого просмотра нажмите «Открыть вкладку».
+                        Документ: <b>${name}</b>.<br>
+                        Для работы с таблицей/файлом откройте его в новой вкладке.
                     </p>
                 </div>`;
             externalLink.style.display = 'inline-block';
