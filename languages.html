@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LingoArchive | Экзамен с вводом</title>
+  <title>LingoArchive | Только Новые Слова</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
@@ -88,14 +88,14 @@
 
   <!-- Режимы Экзамена -->
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
-    <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode('all')">
-      <i class="fas fa-pen-nib"></i> Экзамен с вводом (Все)
+    <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode('new')">
+      <i class="fas fa-pen-nib"></i> Экзамен (ТОЛЬКО НОВЫЕ)
     </button>
     <button class="btn" style="background:var(--heart); color:#fff;" onclick="startTestMode('fav')">
       <i class="fas fa-heart"></i> Экзамен (Избранное)
     </button>
     <button class="btn" style="background:var(--success); color:#fff;" onclick="startTestMode('learned')">
-      <i class="fas fa-check-double"></i> Экзамен (Изученное)
+      <i class="fas fa-archive"></i> Экзамен (Корзина изученных)
     </button>
   </div>
 
@@ -122,10 +122,13 @@
     <button class="btn" id="addBtn" style="width:100%; margin-top:10px" onclick="add()">Сохранить в базу</button>
   </div>
 
-  <!-- Выбор типа (Слова / Фразы) -->
-  <div style="display:flex; gap:10px; margin-bottom:20px">
+  <!-- Выбор типа и режима корзины -->
+  <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
     <button class="btn" style="background:#2c3e50" onclick="setType('words')">📝 Слова</button>
     <button class="btn" style="background:#2c3e50" onclick="setType('phrases')">💬 Фразы</button>
+    <button class="btn" id="archiveToggleBtn" style="background:#16a085; margin-left:auto;" onclick="toggleArchiveView()">
+      📦 Показать Архив Изученных
+    </button>
   </div>
 
   <h2 id="titleDisplay">Список</h2>
@@ -154,17 +157,20 @@ const db = getFirestore(app);
 
 let currentLang = "DE";
 let currentType = "words";
-let allItems = []; // Все загруженные элементы для текущего языка и типа
+let showLearnedArchive = false; // Режим показа архива
+let allItems = []; 
 
 window.onload = () => { loadData(); };
 
 async function loadData() {
   const list = document.getElementById("list");
   list.innerHTML = "<p class='muted'>Загрузка...</p>";
-  document.getElementById("titleDisplay").innerText = `${currentLang} | ${currentType === 'words' ? 'Слова' : 'Фразы'}`;
+  
+  const typeText = currentType === 'words' ? 'Слова' : 'Фразы';
+  const statusText = showLearnedArchive ? '📦 [АРХИВ ИЗУЧЕННЫХ]' : '✨ [ТОЛЬКО НОВЫЕ]';
+  document.getElementById("titleDisplay").innerText = `${currentLang} | ${typeText} ${statusText}`;
 
   try {
-    // Загружаем данные без orderBy, чтобы избежать требования индексов Firebase
     const q = query(
       collection(db, "languages"), 
       where("lang", "==", currentLang), 
@@ -180,10 +186,14 @@ async function loadData() {
       allItems.push(data);
     });
     
-    // Сортируем в браузере от новых к старым
     allItems.sort((a, b) => (b.created || 0) - (a.created || 0));
     
-    renderList(allItems);
+    // Фильтруем список: либо только новые (!learned), либо изученные (learned)
+    const filteredItems = allItems.filter(item => 
+      showLearnedArchive ? item.learned === true : item.learned !== true
+    );
+
+    renderList(filteredItems);
   } catch (err) {
     console.error(err);
     list.innerHTML = "<p style='color:red'>Ошибка загрузки или доступа.</p>";
@@ -193,7 +203,12 @@ async function loadData() {
 function renderList(items) {
   const list = document.getElementById("list");
   list.innerHTML = "";
-  if (items.length === 0) { list.innerHTML = "<p class='muted'>Здесь пока ничего нет</p>"; return; }
+  if (items.length === 0) { 
+    list.innerHTML = showLearnedArchive 
+      ? "<p class='muted'>В архиве изученных пока ничего нет</p>" 
+      : "<p class='muted'>Все слова изучены! Добавь новые или загляни в архив 🎉</p>"; 
+    return; 
+  }
 
   const fragment = document.createDocumentFragment();
   
@@ -206,7 +221,7 @@ function renderList(items) {
         <div style="display:flex; justify-content:space-between; align-items: center;">
             <h3 style="margin:0">${index + 1}. ${e.text}</h3>
             <div style="display:flex; gap:15px; align-items:center;">
-                <button class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearned('${e.id}', ${isLearned})">
+                <button title="${isLearned ? 'Вернуть в новые' : 'Отправить в изученные'}" class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearned('${e.id}', ${isLearned})">
                     <i class="fas fa-check-circle"></i>
                 </button>
                 <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFav('${e.id}', ${isFav})">
@@ -225,13 +240,25 @@ function renderList(items) {
   list.appendChild(fragment);
 }
 
+window.toggleArchiveView = () => {
+  showLearnedArchive = !showLearnedArchive;
+  const btn = document.getElementById("archiveToggleBtn");
+  btn.innerText = showLearnedArchive ? "✨ Показать Новые Слова" : "📦 Показать Архив Изученных";
+  btn.style.background = showLearnedArchive ? "#27ae60" : "#16a085";
+  loadData();
+};
+
 window.applySearch = () => {
     const val = document.getElementById("search").value.toLowerCase();
+    const baseItems = allItems.filter(item => 
+      showLearnedArchive ? item.learned === true : item.learned !== true
+    );
+
     if (val.length === 0) {
-        renderList(allItems);
+        renderList(baseItems);
         return;
     }
-    const filtered = allItems.filter(i => 
+    const filtered = baseItems.filter(i => 
         i.text.toLowerCase().includes(val) || i.translation.toLowerCase().includes(val)
     );
     renderList(filtered);
@@ -267,23 +294,30 @@ async function add() {
 // --- ЛОГИКА ЭКЗАМЕНА С ВВОДОМ ---
 let testWords = [];
 let testIndex = 0;
-let currentTestMode = 'all';
+let currentTestMode = 'new';
 let correctCount = 0;
 
 function startTestMode(mode) {
   currentTestMode = mode;
   let pool = [];
-  if(mode === 'fav') pool = allItems.filter(i => i.favorite === true);
-  else if(mode === 'learned') pool = allItems.filter(i => i.learned === true);
-  else pool = allItems;
+  
+  if(mode === 'fav') {
+    pool = allItems.filter(i => i.favorite === true);
+  } else if(mode === 'learned') {
+    pool = allItems.filter(i => i.learned === true); // Только архив
+  } else {
+    pool = allItems.filter(i => i.learned !== true); // ТОЛЬКО НОВЫЕ!
+  }
   
   if (pool.length === 0) {
-      alert("В этой категории нет слов!");
+      alert("В этой категории нет слов для экзамена!");
       return;
   }
   document.getElementById("testBox").style.display = "block";
   document.getElementById("setupTest").style.display = "block";
-  document.getElementById("testStatusMsg").innerText = `Язык: ${currentLang} | Режим: ${mode}`;
+  
+  const modeTitle = mode === 'new' ? 'ТОЛЬКО НОВЫЕ' : (mode === 'fav' ? 'Избранное' : 'Архив изученных');
+  document.getElementById("testStatusMsg").innerText = `Язык: ${currentLang} | Режим: ${modeTitle}`;
   document.getElementById("testArea").innerHTML = "";
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -291,9 +325,14 @@ function startTestMode(mode) {
 function beginTest() {
   const count = Number(document.getElementById("testCount").value);
   let pool = [];
-  if(currentTestMode === 'fav') pool = allItems.filter(i => i.favorite === true);
-  else if(currentTestMode === 'learned') pool = allItems.filter(i => i.learned === true);
-  else pool = allItems;
+  
+  if(currentTestMode === 'fav') {
+    pool = allItems.filter(i => i.favorite === true);
+  } else if(currentTestMode === 'learned') {
+    pool = allItems.filter(i => i.learned === true);
+  } else {
+    pool = allItems.filter(i => i.learned !== true); // ТОЛЬКО НОВЫЕ
+  }
 
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
   testIndex = 0;
@@ -369,7 +408,7 @@ window.add = add; window.removeItem = removeItem; window.setLang = setLang;
 window.setType = setType; window.startTestMode = startTestMode; 
 window.beginTest = beginTest; window.checkAnswer = checkAnswer; 
 window.nextQuestion = nextQuestion; window.toggleFav = toggleFav;
-window.toggleLearned = toggleLearned;
+window.toggleLearned = toggleLearned; window.toggleArchiveView = toggleArchiveView;
 </script>
 </body>
 </html>
