@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LingoArchive | Только Новые Слова</title>
+  <title>LingoArchive | Экзамен по группам</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
@@ -55,6 +55,14 @@
 
     .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     
+    /* Стили для кнопок-групп */
+    .group-selector { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .group-chip { 
+      background: #000; border: 1px solid #333; color: var(--text-muted);
+      padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 14px; transition: 0.2s;
+    }
+    .group-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+
     .result-box { padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; font-size: 18px; font-weight: bold; }
     .result-correct { background: rgba(46, 204, 113, 0.2); border: 1px solid var(--success); color: var(--success); }
     .result-wrong { background: rgba(255, 107, 107, 0.2); border: 1px solid var(--error); color: var(--error); }
@@ -72,36 +80,58 @@
 <header>
   <nav>
     <a href="index.html">🏠 Главная</a>
-    <a href="languages.html" style="color:var(--gold)">📚 Тренажер Слов</a>
+    <a href="languages.html" style="color:var(--gold)">📚 Мои Группы Слов</a>
   </nav>
 </header>
 
 <main>
-  <h1>📚 Изучение Языков</h1>
+  <h1>📚 Тренажер по Группам</h1>
 
   <!-- Переключатели языков -->
   <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap: wrap; align-items: center;">
-    <button class="btn" id="btn-DE" onclick="setLang('DE')">🇩🇪 DE (Немецкий)</button>
-    <button class="btn" id="btn-IT" onclick="setLang('IT')">🇮🇹 IT (Итальянский)</button>
-    <button class="btn" id="btn-EN" onclick="setLang('EN')">🇬🇧 EN (Английский)</button>
+    <button class="btn" id="btn-DE" onclick="setLang('DE')">🇩🇪 DE</button>
+    <button class="btn" id="btn-IT" onclick="setLang('IT')">🇮🇹 IT</button>
+    <button class="btn" id="btn-EN" onclick="setLang('EN')">🇬🇧 EN</button>
+    <button class="btn" id="btn-PL" onclick="setLang('PL')">🇵🇱 PL</button>
+    <button class="btn" id="btn-ES" onclick="setLang('ES')">🇪🇸 ES</button>
   </div>
 
-  <!-- Режимы Экзамена -->
+  <!-- Панель выбора групп для экзамена -->
+  <div class="card" style="border: 2px solid var(--gold); padding: 15px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <label style="font-weight: bold; color: var(--gold);">🎯 Выбери группы для экзамена (кликни, чтобы включить/выключить):</label>
+      <div style="display:flex; gap:8px;">
+        <button class="btn" style="background:#2c3e50; padding:6px 12px; font-size:12px;" onclick="toggleAllGroups(true)">Выбрать все</button>
+        <button class="btn" style="background:#2c3e50; padding:6px 12px; font-size:12px;" onclick="toggleAllGroups(false)">Снять все</button>
+      </div>
+    </div>
+    
+    <!-- Контейнер для кнопок групп (1, 2, 3...) -->
+    <div id="groupSelectorContainer" class="group-selector">
+      <p class="muted">Загрузка групп...</p>
+    </div>
+
+    <button class="btn" style="background:var(--gold); color:#000; width:100%; justify-content:center; margin-top:10px;" onclick="startTestMode('selected_groups')">
+      <i class="fas fa-pen-nib"></i> Запустить экзамен по выбранным группам
+    </button>
+  </div>
+
+  <!-- Общие режимы экзамена -->
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
-    <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode('new')">
-      <i class="fas fa-pen-nib"></i> Экзамен (ТОЛЬКО НОВЫЕ)
+    <button class="btn" style="background:var(--accent); color:#fff;" onclick="startTestMode('all')">
+      <i class="fas fa-graduation-cap"></i> Экзамен (Все слова)
     </button>
     <button class="btn" style="background:var(--heart); color:#fff;" onclick="startTestMode('fav')">
-      <i class="fas fa-heart"></i> Экзамен (Избранное)
+      <i class="fas fa-heart"></i> Избранное
     </button>
     <button class="btn" style="background:var(--success); color:#fff;" onclick="startTestMode('learned')">
-      <i class="fas fa-archive"></i> Экзамен (Корзина изученных)
+      <i class="fas fa-check-double"></i> Изученное
     </button>
   </div>
 
   <!-- Блок Экзамена -->
   <div id="testBox" class="card" style="display:none; border: 2px solid var(--gold);">
-    <h2 id="testTitle" style="margin-top:0">📝 Экзамен Письменный</h2>
+    <h2 id="testTitle" style="margin-top:0">📝 Письменный экзамен</h2>
     <div id="setupTest" style="text-align: center; padding: 20px 0;">
         <p id="testStatusMsg" style="font-weight:bold; color:var(--accent)"></p>
         <label>Количество вопросов:</label><br>
@@ -111,28 +141,25 @@
     <div id="testArea"></div>
   </div>
 
-  <!-- Форма добавления -->
+  <!-- Форма добавления слов с указанием группы -->
   <div class="card" style="border: 1px solid var(--accent)">
-    <h3 style="margin-top:0">➕ Добавить новое слово</h3>
+    <h3 style="margin-top:0">➕ Добавить слово в группу</h3>
     <div class="add-grid">
-        <input id="text" placeholder="Слово / Фраза (на ин. языке)">
-        <input id="translation" placeholder="Перевод (на русском)">
+        <input id="text" placeholder="Слово / Фраза">
+        <input id="translation" placeholder="Перевод">
     </div>
-    <textarea id="note" placeholder="Заметка / Пример (необязательно)" rows="2"></textarea>
+    <div class="add-grid" style="margin-top: 10px;">
+        <input id="groupInput" placeholder="Номер группы (например: 1, 2, 3...)">
+        <div style="display: flex; align-items: center; color: var(--text-muted); font-size: 14px; padding-left: 5px;">
+          💡 Укажи цифру или имя группы
+        </div>
+    </div>
+    <textarea id="note" placeholder="Заметка (необязательно)" rows="2" style="margin-top: 10px;"></textarea>
     <button class="btn" id="addBtn" style="width:100%; margin-top:10px" onclick="add()">Сохранить в базу</button>
   </div>
 
-  <!-- Выбор типа и режима корзины -->
-  <div style="display:flex; gap:10px; margin-bottom:15px; flex-wrap:wrap;">
-    <button class="btn" style="background:#2c3e50" onclick="setType('words')">📝 Слова</button>
-    <button class="btn" style="background:#2c3e50" onclick="setType('phrases')">💬 Фразы</button>
-    <button class="btn" id="archiveToggleBtn" style="background:#16a085; margin-left:auto;" onclick="toggleArchiveView()">
-      📦 Показать Архив Изученных
-    </button>
-  </div>
-
-  <h2 id="titleDisplay">Список</h2>
-  <input id="search" placeholder="🔍 Поиск по списку..." oninput="applySearch()" style="margin-bottom:15px">
+  <h2 id="titleDisplay">Список слов</h2>
+  <input id="search" placeholder="🔍 Поиск по словам..." oninput="applySearch()" style="margin-bottom:15px">
 
   <div id="list"></div>
 </main>
@@ -156,25 +183,19 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let currentLang = "DE";
-let currentType = "words";
-let showLearnedArchive = false; // Режим показа архива
 let allItems = []; 
 
 window.onload = () => { loadData(); };
 
 async function loadData() {
   const list = document.getElementById("list");
-  list.innerHTML = "<p class='muted'>Загрузка...</p>";
-  
-  const typeText = currentType === 'words' ? 'Слова' : 'Фразы';
-  const statusText = showLearnedArchive ? '📦 [АРХИВ ИЗУЧЕННЫХ]' : '✨ [ТОЛЬКО НОВЫЕ]';
-  document.getElementById("titleDisplay").innerText = `${currentLang} | ${typeText} ${statusText}`;
+  list.innerHTML = "<p class='muted'>Загружаем твои слова...</p>";
+  document.getElementById("titleDisplay").innerText = `Язык: ${currentLang}`;
 
   try {
     const q = query(
       collection(db, "languages"), 
-      where("lang", "==", currentLang), 
-      where("type", "==", currentType)
+      where("lang", "==", currentLang)
     );
     
     const snapshot = await getDocs(q);
@@ -183,30 +204,61 @@ async function loadData() {
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
       data.id = docSnap.id;
+      // Поддержка обратной совместимости со старыми полями lecture
+      if (!data.group) data.group = data.lecture || "1";
       allItems.push(data);
     });
     
     allItems.sort((a, b) => (b.created || 0) - (a.created || 0));
     
-    // Фильтруем список: либо только новые (!learned), либо изученные (learned)
-    const filteredItems = allItems.filter(item => 
-      showLearnedArchive ? item.learned === true : item.learned !== true
-    );
-
-    renderList(filteredItems);
+    renderGroupChips();
+    renderList(allItems);
   } catch (err) {
     console.error(err);
-    list.innerHTML = "<p style='color:red'>Ошибка загрузки или доступа.</p>";
+    list.innerHTML = "<p style='color:red'>Ошибка доступа к Firebase.</p>";
   }
 }
+
+// Отрисовка кнопок-чипсов для выбора групп
+function renderGroupChips() {
+  const container = document.getElementById("groupSelectorContainer");
+  // Собираем уникальные группы и сортируем (если цифры, то по порядку)
+  const groups = [...new Set(allItems.map(i => String(i.group)))].sort((a, b) => {
+    return a.localeCompare(b, undefined, { numeric: true });
+  });
+  
+  if (groups.length === 0) {
+    container.innerHTML = `<p class='muted'>Пока нет созданных групп. Добавь слова!</p>`;
+    return;
+  }
+  
+  let html = "";
+  groups.forEach(g => {
+    html += `
+      <div class="group-chip active" data-group="${g}" onclick="toggleGroupChip(this)">
+        Группа ${g}
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+}
+
+window.toggleGroupChip = (el) => {
+  el.classList.toggle("active");
+};
+
+window.toggleAllGroups = (status) => {
+  document.querySelectorAll('.group-chip').forEach(chip => {
+    if (status) chip.classList.add("active");
+    else chip.classList.remove("active");
+  });
+};
 
 function renderList(items) {
   const list = document.getElementById("list");
   list.innerHTML = "";
   if (items.length === 0) { 
-    list.innerHTML = showLearnedArchive 
-      ? "<p class='muted'>В архиве изученных пока ничего нет</p>" 
-      : "<p class='muted'>Все слова изучены! Добавь новые или загляни в архив 🎉</p>"; 
+    list.innerHTML = `<p class='muted'>Здесь пока пусто.</p>`; 
     return; 
   }
 
@@ -219,9 +271,9 @@ function renderList(items) {
     div.className = 'card';
     div.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items: center;">
-            <h3 style="margin:0">${index + 1}. ${e.text}</h3>
+            <h3 style="margin:0">${index + 1}. ${e.text} <span style="font-size:12px; background:rgba(241,196,15,0.2); color:var(--gold); padding:3px 8px; border-radius:6px; margin-left:10px;">Группа ${e.group}</span></h3>
             <div style="display:flex; gap:15px; align-items:center;">
-                <button title="${isLearned ? 'Вернуть в новые' : 'Отправить в изученные'}" class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearned('${e.id}', ${isLearned})">
+                <button class="learn-btn ${isLearned ? 'active' : 'inactive'}" onclick="toggleLearned('${e.id}', ${isLearned})">
                     <i class="fas fa-check-circle"></i>
                 </button>
                 <button class="fav-btn ${isFav ? 'active' : 'inactive'}" onclick="toggleFav('${e.id}', ${isFav})">
@@ -240,26 +292,15 @@ function renderList(items) {
   list.appendChild(fragment);
 }
 
-window.toggleArchiveView = () => {
-  showLearnedArchive = !showLearnedArchive;
-  const btn = document.getElementById("archiveToggleBtn");
-  btn.innerText = showLearnedArchive ? "✨ Показать Новые Слова" : "📦 Показать Архив Изученных";
-  btn.style.background = showLearnedArchive ? "#27ae60" : "#16a085";
-  loadData();
-};
-
 window.applySearch = () => {
     const val = document.getElementById("search").value.toLowerCase();
-    const baseItems = allItems.filter(item => 
-      showLearnedArchive ? item.learned === true : item.learned !== true
-    );
-
     if (val.length === 0) {
-        renderList(baseItems);
+        renderList(allItems);
         return;
     }
-    const filtered = baseItems.filter(i => 
-        i.text.toLowerCase().includes(val) || i.translation.toLowerCase().includes(val)
+    const filtered = allItems.filter(i => 
+        (i.text && i.text.toLowerCase().includes(val)) || 
+        (i.translation && i.translation.toLowerCase().includes(val))
     );
     renderList(filtered);
 };
@@ -279,45 +320,66 @@ async function toggleLearned(id, currentState) {
 async function add() {
   const valText = document.getElementById("text").value.trim();
   const valTrans = document.getElementById("translation").value.trim();
+  const valGroup = document.getElementById("groupInput").value.trim() || "1";
   const valNote = document.getElementById("note").value.trim();
+  
   if (!valText || !valTrans) return alert("Заполни слово и перевод!");
 
   await addDoc(collection(db, "languages"), {
-    lang: currentLang, type: currentType, text: valText, translation: valTrans, note: valNote, favorite: false, learned: false, created: Date.now()
+    lang: currentLang, 
+    text: valText, 
+    translation: valTrans, 
+    group: valGroup, 
+    note: valNote, 
+    favorite: false, 
+    learned: false, 
+    created: Date.now()
   });
+
   document.getElementById("text").value = "";
   document.getElementById("translation").value = "";
   document.getElementById("note").value = "";
   loadData();
 }
 
-// --- ЛОГИКА ЭКЗАМЕНА С ВВОДОМ ---
+// --- ЛОГИКА ЭКЗАМЕНА ПО ВЫБРАННЫМ ГРУППАМ ---
 let testWords = [];
 let testIndex = 0;
-let currentTestMode = 'new';
+let currentTestMode = 'all';
 let correctCount = 0;
 
 function startTestMode(mode) {
   currentTestMode = mode;
   let pool = [];
   
-  if(mode === 'fav') {
+  if(mode === 'selected_groups') {
+    // Собираем группы с активных (подсвеченных) чипсов
+    const activeChips = [...document.querySelectorAll('.group-chip.active')];
+    const selectedGroups = activeChips.map(chip => chip.getAttribute('data-group'));
+    
+    if (selectedGroups.length === 0) {
+      alert("Выбери хотя бы одну группу нажатием на её кнопку!");
+      return;
+    }
+    pool = allItems.filter(i => selectedGroups.includes(String(i.group)));
+  } else if(mode === 'fav') {
     pool = allItems.filter(i => i.favorite === true);
   } else if(mode === 'learned') {
-    pool = allItems.filter(i => i.learned === true); // Только архив
+    pool = allItems.filter(i => i.learned === true);
   } else {
-    pool = allItems.filter(i => i.learned !== true); // ТОЛЬКО НОВЫЕ!
+    pool = allItems; 
   }
   
   if (pool.length === 0) {
-      alert("В этой категории нет слов для экзамена!");
+      alert("В выбранных группах нет слов для экзамена!");
       return;
   }
+  
   document.getElementById("testBox").style.display = "block";
   document.getElementById("setupTest").style.display = "block";
   
-  const modeTitle = mode === 'new' ? 'ТОЛЬКО НОВЫЕ' : (mode === 'fav' ? 'Избранное' : 'Архив изученных');
-  document.getElementById("testStatusMsg").innerText = `Язык: ${currentLang} | Режим: ${modeTitle}`;
+  let modeName = mode === 'selected_groups' ? 'Выбранные группы' : (mode === 'fav' ? 'Избранное' : (mode === 'learned' ? 'Изученное' : 'Все слова'));
+  document.getElementById("testStatusMsg").innerText = `Язык: ${currentLang} | Режим: ${modeName} | Доступно слов: ${pool.length}`;
   document.getElementById("testArea").innerHTML = "";
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
@@ -325,13 +387,17 @@ function startTestMode(mode) {
 function beginTest() {
   const count = Number(document.getElementById("testCount").value);
   let pool = [];
-  
-  if(currentTestMode === 'fav') {
+
+  if(currentTestMode === 'selected_groups') {
+    const activeChips = [...document.querySelectorAll('.group-chip.active')];
+    const selectedGroups = activeChips.map(chip => chip.getAttribute('data-group'));
+    pool = allItems.filter(i => selectedGroups.includes(String(i.group)));
+  } else if(currentTestMode === 'fav') {
     pool = allItems.filter(i => i.favorite === true);
   } else if(currentTestMode === 'learned') {
     pool = allItems.filter(i => i.learned === true);
   } else {
-    pool = allItems.filter(i => i.learned !== true); // ТОЛЬКО НОВЫЕ
+    pool = allItems;
   }
 
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
@@ -354,9 +420,12 @@ function showQuestion() {
   }
   const word = testWords[testIndex];
   area.innerHTML = `
-    <div class="test-header-row"><p class="test-q-count">Вопрос ${testIndex + 1} из ${testWords.length}</p></div>
+    <div class="test-header-row">
+      <p class="test-q-count">Вопрос ${testIndex + 1} из ${testWords.length}</p>
+      <span style="font-size:12px; color:var(--gold);">📁 Группа ${word.group}</span>
+    </div>
     <div class="test-word">${word.text}</div>
-    <input id="userAnswer" placeholder="Введите перевод на русском..." style="margin-bottom:15px;" onkeydown="if(event.key==='Enter') checkAnswer()">
+    <input id="userAnswer" placeholder="Напиши перевод..." style="margin-bottom:15px;" onkeydown="if(event.key==='Enter') checkAnswer()">
     <button class="btn" id="checkBtn" style="width:100%; padding: 15px; justify-content: center;" onclick="checkAnswer()">Проверить</button>
     <div id="answerResult"></div>
   `;
@@ -378,15 +447,15 @@ function checkAnswer() {
     correctCount++;
     resDiv.innerHTML = `
       <div class="result-box result-correct">
-        ✅ Верно!
+        ✅ Красава, верно!
       </div>
       <button class="btn" style="margin-top:15px; width:100%; background:var(--success); justify-content: center;" onclick="nextQuestion()">Дальше</button>
     `;
   } else {
     resDiv.innerHTML = `
       <div class="result-box result-wrong">
-        ❌ Ошибка!<br>
-        <span style="font-size:14px; color:#fff;">Правильный перевод: <b>${word.translation}</b></span>
+        ❌ Не угадал!<br>
+        <span style="font-size:14px; color:#fff;">Правильный ответ: <b>${word.translation}</b></span>
       </div>
       <button class="btn" style="margin-top:15px; width:100%; background:var(--accent); justify-content: center;" onclick="nextQuestion()">Дальше</button>
     `;
@@ -402,13 +471,12 @@ async function removeItem(id) {
 
 function nextQuestion() { testIndex++; showQuestion(); }
 function setLang(l) { currentLang = l; loadData(); }
-function setType(t) { currentType = t; loadData(); }
 
 window.add = add; window.removeItem = removeItem; window.setLang = setLang; 
-window.setType = setType; window.startTestMode = startTestMode; 
-window.beginTest = beginTest; window.checkAnswer = checkAnswer; 
-window.nextQuestion = nextQuestion; window.toggleFav = toggleFav;
-window.toggleLearned = toggleLearned; window.toggleArchiveView = toggleArchiveView;
+window.toggleGroupChip = toggleGroupChip; window.toggleAllGroups = toggleAllGroups;
+window.startTestMode = startTestMode; window.beginTest = beginTest; 
+window.checkAnswer = checkAnswer; window.nextQuestion = nextQuestion; 
+window.toggleFav = toggleFav; window.toggleLearned = toggleLearned;
 </script>
 </body>
 </html>
