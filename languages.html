@@ -132,15 +132,12 @@
   <input id="search" placeholder="🔍 Поиск по списку..." oninput="applySearch()" style="margin-bottom:15px">
 
   <div id="list"></div>
-  <div id="loadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
-      <button class="btn" style="background: #2c3e50;" onclick="loadMore()">Показать еще...</button>
-  </div>
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc, orderBy, limit, startAfter
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -157,10 +154,7 @@ const db = getFirestore(app);
 
 let currentLang = "DE";
 let currentType = "words";
-let fullSnapshotData = [];
-let displayData = [];
-let lastVisible = null;
-const PAGE_SIZE = 20;
+let allItems = []; // Все загруженные элементы для текущего языка и типа
 
 window.onload = () => { loadData(); };
 
@@ -168,74 +162,33 @@ async function loadData() {
   const list = document.getElementById("list");
   list.innerHTML = "<p class='muted'>Загрузка...</p>";
   document.getElementById("titleDisplay").innerText = `${currentLang} | ${currentType === 'words' ? 'Слова' : 'Фразы'}`;
-  document.getElementById("loadMoreContainer").style.display = "none";
 
-  // 1. Загрузка всех данных языка для экзаменов
-  const qFull = query(collection(db, "languages"), where("lang", "==", currentLang), where("type", "==", currentType));
-  getDocs(qFull).then(snap => {
-      fullSnapshotData = [];
-      snap.forEach(d => { 
-          let data = d.data(); 
-          data.id = d.id; 
-          fullSnapshotData.push(data); 
-      });
-  });
-
-  // 2. Порционная загрузка списка
-  const qLimit = query(
+  try {
+    // Загружаем данные без orderBy, чтобы избежать требования индексов Firebase
+    const q = query(
       collection(db, "languages"), 
       where("lang", "==", currentLang), 
-      where("type", "==", currentType),
-      orderBy("created", "desc"), 
-      limit(PAGE_SIZE)
-  );
-  
-  try {
-    const snapshot = await getDocs(qLimit);
-    displayData = [];
-    lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      where("type", "==", currentType)
+    );
+    
+    const snapshot = await getDocs(q);
+    allItems = [];
     
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
       data.id = docSnap.id;
-      displayData.push(data);
+      allItems.push(data);
     });
     
-    renderList(displayData);
-    if (snapshot.docs.length === PAGE_SIZE) {
-        document.getElementById("loadMoreContainer").style.display = "block";
-    }
+    // Сортируем в браузере от новых к старым
+    allItems.sort((a, b) => (b.created || 0) - (a.created || 0));
+    
+    renderList(allItems);
   } catch (err) {
     console.error(err);
     list.innerHTML = "<p style='color:red'>Ошибка загрузки или доступа.</p>";
   }
 }
-
-window.loadMore = async () => {
-    if (!lastVisible) return;
-    const qMore = query(
-        collection(db, "languages"), 
-        where("lang", "==", currentLang), 
-        where("type", "==", currentType),
-        orderBy("created", "desc"), 
-        startAfter(lastVisible),
-        limit(PAGE_SIZE)
-    );
-    
-    const snapshot = await getDocs(qMore);
-    lastVisible = snapshot.docs[snapshot.docs.length - 1];
-    
-    snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        data.id = docSnap.id;
-        displayData.push(data);
-    });
-
-    renderList(displayData);
-    if (snapshot.docs.length < PAGE_SIZE) {
-        document.getElementById("loadMoreContainer").style.display = "none";
-    }
-};
 
 function renderList(items) {
   const list = document.getElementById("list");
@@ -275,12 +228,10 @@ function renderList(items) {
 window.applySearch = () => {
     const val = document.getElementById("search").value.toLowerCase();
     if (val.length === 0) {
-        renderList(displayData);
-        document.getElementById("loadMoreContainer").style.display = "block";
+        renderList(allItems);
         return;
     }
-    document.getElementById("loadMoreContainer").style.display = "none";
-    const filtered = fullSnapshotData.filter(i => 
+    const filtered = allItems.filter(i => 
         i.text.toLowerCase().includes(val) || i.translation.toLowerCase().includes(val)
     );
     renderList(filtered);
@@ -322,9 +273,9 @@ let correctCount = 0;
 function startTestMode(mode) {
   currentTestMode = mode;
   let pool = [];
-  if(mode === 'fav') pool = fullSnapshotData.filter(i => i.favorite === true);
-  else if(mode === 'learned') pool = fullSnapshotData.filter(i => i.learned === true);
-  else pool = fullSnapshotData;
+  if(mode === 'fav') pool = allItems.filter(i => i.favorite === true);
+  else if(mode === 'learned') pool = allItems.filter(i => i.learned === true);
+  else pool = allItems;
   
   if (pool.length === 0) {
       alert("В этой категории нет слов!");
@@ -340,9 +291,9 @@ function startTestMode(mode) {
 function beginTest() {
   const count = Number(document.getElementById("testCount").value);
   let pool = [];
-  if(currentTestMode === 'fav') pool = fullSnapshotData.filter(i => i.favorite === true);
-  else if(currentTestMode === 'learned') pool = fullSnapshotData.filter(i => i.learned === true);
-  else pool = fullSnapshotData;
+  if(currentTestMode === 'fav') pool = allItems.filter(i => i.favorite === true);
+  else if(currentTestMode === 'learned') pool = allItems.filter(i => i.learned === true);
+  else pool = allItems;
 
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
   testIndex = 0;
