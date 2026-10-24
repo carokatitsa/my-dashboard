@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>LingoArchive Pro | Languages</title>
+  <title>LingoArchive | Экзамен с вводом</title>
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
@@ -31,7 +31,8 @@
     .btn:hover { opacity: 0.8; }
     
     input, textarea { background:#000; border:1px solid #333; color:#fff; padding:12px; border-radius:8px; width:100%; box-sizing:border-box; outline:none; font-size: 16px; }
-    
+    input:focus { border-color: var(--accent); }
+
     .test-word { font-size: 36px; color: var(--gold); margin: 20px 0; font-weight: bold; text-align: center; word-wrap: break-word; }
     
     .test-header-row { 
@@ -47,19 +48,16 @@
     .feedback-note { background: #000; padding: 12px; border-radius: 8px; margin-top: 12px; border-left: 4px solid var(--accent); color: var(--text-muted); font-size: 14px; }
     .muted { color: var(--text-muted); font-size: 14px; }
     
-    .fav-btn { cursor: pointer; font-size: 20px; transition: 0.2s; background: none; border: none; padding: 0; line-height: 1; }
+    .fav-btn, .learn-btn { cursor: pointer; font-size: 20px; transition: 0.2s; background: none; border: none; padding: 0; line-height: 1; }
     .fav-btn.active { color: var(--heart); }
-    .fav-btn.inactive { color: #333; }
-
-    .learn-btn { cursor: pointer; font-size: 20px; transition: 0.2s; background: none; border: none; padding: 0; line-height: 1; }
+    .fav-btn.inactive, .learn-btn.inactive { color: #333; }
     .learn-btn.active { color: var(--success); }
-    .learn-btn.inactive { color: #333; }
 
     .add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     
-    .duplicate-warning { font-size: 12px; margin-top: 5px; display: none; align-items: center; gap: 5px; }
-    .is-duplicate { color: var(--error); display: flex; }
-    .is-unique { color: var(--success); display: flex; }
+    .result-box { padding: 15px; border-radius: 8px; margin-top: 15px; text-align: center; font-size: 18px; font-weight: bold; }
+    .result-correct { background: rgba(46, 204, 113, 0.2); border: 1px solid var(--success); color: var(--success); }
+    .result-wrong { background: rgba(255, 107, 107, 0.2); border: 1px solid var(--error); color: var(--error); }
 
     @media (max-width: 600px) { 
         .add-grid { grid-template-columns: 1fr; }
@@ -74,31 +72,24 @@
 <header>
   <nav>
     <a href="index.html">🏠 Главная</a>
-    <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html" style="color:var(--gold)">📚 Языки</a>
-    <a href="training.html">💪 Тренировки</a>
+    <a href="languages.html" style="color:var(--gold)">📚 Тренажер Слов</a>
   </nav>
 </header>
 
 <main>
-  <h1>📚 Мои Языки</h1>
+  <h1>📚 Изучение Языков</h1>
 
+  <!-- Переключатели языков -->
   <div style="display:flex; gap:8px; margin-bottom:15px; flex-wrap: wrap; align-items: center;">
-    <button class="btn" onclick="setLang('EN')">🇬🇧 EN</button>
-    <button class="btn" onclick="setLang('DE')">🇩🇪 DE</button>
-    <button class="btn" onclick="setLang('PL')">🇵🇱 PL</button>
-    <button class="btn" onclick="setLang('ES')">🇪🇸 ES</button>
-    
-    <div style="flex-grow: 1;"></div> 
-    
-    <button class="btn" style="background: var(--success);" onclick="goToTheory()">
-        <i class="fas fa-book-open"></i> Изучить теорию
-    </button>
+    <button class="btn" id="btn-DE" onclick="setLang('DE')">🇩🇪 DE (Немецкий)</button>
+    <button class="btn" id="btn-IT" onclick="setLang('IT')">🇮🇹 IT (Итальянский)</button>
+    <button class="btn" id="btn-EN" onclick="setLang('EN')">🇬🇧 EN (Английский)</button>
   </div>
 
+  <!-- Режимы Экзамена -->
   <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap: wrap;">
     <button class="btn" style="background:var(--gold); color:#000;" onclick="startTestMode('all')">
-      <i class="fas fa-graduation-cap"></i> Экзамен (Все)
+      <i class="fas fa-pen-nib"></i> Экзамен с вводом (Все)
     </button>
     <button class="btn" style="background:var(--heart); color:#fff;" onclick="startTestMode('fav')">
       <i class="fas fa-heart"></i> Экзамен (Избранное)
@@ -108,37 +99,37 @@
     </button>
   </div>
 
+  <!-- Блок Экзамена -->
   <div id="testBox" class="card" style="display:none; border: 2px solid var(--gold);">
-    <h2 id="testTitle" style="margin-top:0">📝 Экзамен</h2>
+    <h2 id="testTitle" style="margin-top:0">📝 Экзамен Письменный</h2>
     <div id="setupTest" style="text-align: center; padding: 20px 0;">
         <p id="testStatusMsg" style="font-weight:bold; color:var(--accent)"></p>
         <label>Количество вопросов:</label><br>
         <input id="testCount" type="number" value="10" min="1" style="width:100px; margin:10px 0; text-align:center;"><br>
-        <button class="btn btn-save" style="background:var(--success); color:white" onclick="beginTest()">Поехали!</button>
+        <button class="btn" style="background:var(--success); color:white" onclick="beginTest()">Начать тест!</button>
     </div>
     <div id="testArea"></div>
   </div>
 
+  <!-- Форма добавления -->
   <div class="card" style="border: 1px solid var(--accent)">
-    <h3 style="margin-top:0">➕ Добавить новое</h3>
+    <h3 style="margin-top:0">➕ Добавить новое слово</h3>
     <div class="add-grid">
-        <div>
-            <input id="text" placeholder="Слово / Фраза" oninput="checkDuplicate(this.value)">
-            <div id="dupMsg" class="duplicate-warning"></div>
-        </div>
-        <input id="translation" placeholder="Перевод">
+        <input id="text" placeholder="Слово / Фраза (на ин. языке)">
+        <input id="translation" placeholder="Перевод (на русском)">
     </div>
-    <textarea id="note" placeholder="Заметка (необязательно)" rows="2"></textarea>
+    <textarea id="note" placeholder="Заметка / Пример (необязательно)" rows="2"></textarea>
     <button class="btn" id="addBtn" style="width:100%; margin-top:10px" onclick="add()">Сохранить в базу</button>
   </div>
 
+  <!-- Выбор типа (Слова / Фразы) -->
   <div style="display:flex; gap:10px; margin-bottom:20px">
     <button class="btn" style="background:#2c3e50" onclick="setType('words')">📝 Слова</button>
     <button class="btn" style="background:#2c3e50" onclick="setType('phrases')">💬 Фразы</button>
   </div>
 
   <h2 id="titleDisplay">Список</h2>
-  <input id="search" placeholder="🔍 Поиск по списку (ищет везде)..." oninput="applySearch()" style="margin-bottom:15px">
+  <input id="search" placeholder="🔍 Поиск по списку..." oninput="applySearch()" style="margin-bottom:15px">
 
   <div id="list"></div>
   <div id="loadMoreContainer" style="text-align: center; margin-top: 20px; display: none;">
@@ -164,18 +155,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let currentLang = "EN";
+let currentLang = "DE";
 let currentType = "words";
-let fullSnapshotData = []; // Используется для тестов и поиска
-let displayData = []; // Только то, что видим сейчас
-let lastVisible = null; // Для пагинации
+let fullSnapshotData = [];
+let displayData = [];
+let lastVisible = null;
 const PAGE_SIZE = 20;
 
 window.onload = () => { loadData(); };
-
-window.goToTheory = () => {
-    window.location.href = `theory.html?lang=${currentLang}`;
-};
 
 async function loadData() {
   const list = document.getElementById("list");
@@ -183,7 +170,7 @@ async function loadData() {
   document.getElementById("titleDisplay").innerText = `${currentLang} | ${currentType === 'words' ? 'Слова' : 'Фразы'}`;
   document.getElementById("loadMoreContainer").style.display = "none";
 
-  // 1. Загружаем ВООБЩЕ ВСЁ для тестов и поиска в фоне (чтобы не тормозить интерфейс)
+  // 1. Загрузка всех данных языка для экзаменов
   const qFull = query(collection(db, "languages"), where("lang", "==", currentLang), where("type", "==", currentType));
   getDocs(qFull).then(snap => {
       fullSnapshotData = [];
@@ -194,7 +181,7 @@ async function loadData() {
       });
   });
 
-  // 2. Загружаем только первую порцию для списка
+  // 2. Порционная загрузка списка
   const qLimit = query(
       collection(db, "languages"), 
       where("lang", "==", currentLang), 
@@ -220,7 +207,7 @@ async function loadData() {
     }
   } catch (err) {
     console.error(err);
-    list.innerHTML = "<p style='color:red'>Ошибка доступа.</p>";
+    list.innerHTML = "<p style='color:red'>Ошибка загрузки или доступа.</p>";
   }
 }
 
@@ -255,7 +242,6 @@ function renderList(items) {
   list.innerHTML = "";
   if (items.length === 0) { list.innerHTML = "<p class='muted'>Здесь пока ничего нет</p>"; return; }
 
-  // Используем DocumentFragment для ускорения отрисовки
   const fragment = document.createDocumentFragment();
   
   items.forEach((e, index) => {
@@ -300,8 +286,6 @@ window.applySearch = () => {
     renderList(filtered);
 };
 
-// --- ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ (ФИЗИЧЕСКИ ТЕ ЖЕ СТРОКИ) ---
-
 async function toggleFav(id, currentState) {
     const wordDoc = doc(db, "languages", id);
     await updateDoc(wordDoc, { favorite: !currentState });
@@ -318,7 +302,7 @@ async function add() {
   const valText = document.getElementById("text").value.trim();
   const valTrans = document.getElementById("translation").value.trim();
   const valNote = document.getElementById("note").value.trim();
-  if (!valText || !valTrans) return alert("Заполни поля!");
+  if (!valText || !valTrans) return alert("Заполни слово и перевод!");
 
   await addDoc(collection(db, "languages"), {
     lang: currentLang, type: currentType, text: valText, translation: valTrans, note: valNote, favorite: false, learned: false, created: Date.now()
@@ -329,9 +313,11 @@ async function add() {
   loadData();
 }
 
+// --- ЛОГИКА ЭКЗАМЕНА С ВВОДОМ ---
 let testWords = [];
 let testIndex = 0;
 let currentTestMode = 'all';
+let correctCount = 0;
 
 function startTestMode(mode) {
   currentTestMode = mode;
@@ -341,17 +327,17 @@ function startTestMode(mode) {
   else pool = fullSnapshotData;
   
   if (pool.length === 0) {
-      alert("В этой категории пусто!");
+      alert("В этой категории нет слов!");
       return;
   }
   document.getElementById("testBox").style.display = "block";
   document.getElementById("setupTest").style.display = "block";
-  document.getElementById("testStatusMsg").innerText = `Режим: ${mode}`;
+  document.getElementById("testStatusMsg").innerText = `Язык: ${currentLang} | Режим: ${mode}`;
   document.getElementById("testArea").innerHTML = "";
   window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-async function beginTest() {
+function beginTest() {
   const count = Number(document.getElementById("testCount").value);
   let pool = [];
   if(currentTestMode === 'fav') pool = fullSnapshotData.filter(i => i.favorite === true);
@@ -360,6 +346,7 @@ async function beginTest() {
 
   testWords = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
   testIndex = 0;
+  correctCount = 0;
   document.getElementById("setupTest").style.display = "none";
   showQuestion();
 }
@@ -367,39 +354,71 @@ async function beginTest() {
 function showQuestion() {
   const area = document.getElementById("testArea");
   if (testIndex >= testWords.length) {
-    area.innerHTML = `<div style="text-align:center; padding: 20px 0;"><h3>✅ Готово!</h3><button class="btn" style="background:var(--success)" onclick="location.reload()">Выход</button></div>`;
+    area.innerHTML = `
+      <div style="text-align:center; padding: 20px 0;">
+        <h3>🎉 Экзамен завершен!</h3>
+        <p style="font-size:20px;">Результат: <b>${correctCount}</b> из <b>${testWords.length}</b></p>
+        <button class="btn" style="background:var(--success)" onclick="document.getElementById('testBox').style.display='none'">Закрыть</button>
+      </div>`;
     return;
   }
   const word = testWords[testIndex];
   area.innerHTML = `
-    <div class="test-header-row"><p class="test-q-count">Вопрос ${testIndex + 1}/${testWords.length}</p></div>
+    <div class="test-header-row"><p class="test-q-count">Вопрос ${testIndex + 1} из ${testWords.length}</p></div>
     <div class="test-word">${word.text}</div>
-    <button class="btn" style="width:100%; padding: 15px; justify-content: center;" onclick="revealAnswer()">Ответ</button>
-    <div id="answerBox" style="display:none; margin-top: 20px; text-align:center;">
-        <p style="font-size: 26px; color: var(--success); font-weight: bold;">${word.translation}</p>
-        <button class="btn" style="margin-top:20px; width:100%; background:var(--success); justify-content: center;" onclick="nextQuestion()">Дальше</button>
-    </div>
+    <input id="userAnswer" placeholder="Введите перевод на русском..." style="margin-bottom:15px;" onkeydown="if(event.key==='Enter') checkAnswer()">
+    <button class="btn" id="checkBtn" style="width:100%; padding: 15px; justify-content: center;" onclick="checkAnswer()">Проверить</button>
+    <div id="answerResult"></div>
   `;
+  document.getElementById("userAnswer").focus();
+}
+
+function checkAnswer() {
+  const userIn = document.getElementById("userAnswer").value.trim().toLowerCase();
+  const word = testWords[testIndex];
+  const correctAns = word.translation.trim().toLowerCase();
+  const resDiv = document.getElementById("answerResult");
+  
+  if(!userIn) return;
+
+  document.getElementById("checkBtn").style.display = "none";
+  document.getElementById("userAnswer").disabled = true;
+
+  if (userIn === correctAns) {
+    correctCount++;
+    resDiv.innerHTML = `
+      <div class="result-box result-correct">
+        ✅ Верно!
+      </div>
+      <button class="btn" style="margin-top:15px; width:100%; background:var(--success); justify-content: center;" onclick="nextQuestion()">Дальше</button>
+    `;
+  } else {
+    resDiv.innerHTML = `
+      <div class="result-box result-wrong">
+        ❌ Ошибка!<br>
+        <span style="font-size:14px; color:#fff;">Правильный перевод: <b>${word.translation}</b></span>
+      </div>
+      <button class="btn" style="margin-top:15px; width:100%; background:var(--accent); justify-content: center;" onclick="nextQuestion()">Дальше</button>
+    `;
+  }
 }
 
 async function removeItem(id) {
-  if(confirm("Удалить?")) {
+  if(confirm("Удалить слово из базы?")) {
     await deleteDoc(doc(db, "languages", id));
     loadData();
   }
 }
 
-function revealAnswer() { document.getElementById("answerBox").style.display = "block"; }
 function nextQuestion() { testIndex++; showQuestion(); }
 function setLang(l) { currentLang = l; loadData(); }
 function setType(t) { currentType = t; loadData(); }
 
 window.add = add; window.removeItem = removeItem; window.setLang = setLang; 
 window.setType = setType; window.startTestMode = startTestMode; 
-window.beginTest = beginTest; window.revealAnswer = revealAnswer; 
+window.beginTest = beginTest; window.checkAnswer = checkAnswer; 
 window.nextQuestion = nextQuestion; window.toggleFav = toggleFav;
 window.toggleLearned = toggleLearned;
-window.checkDuplicate = (v) => {}; // Заглушка для упрощения
 </script>
 </body>
 </html>
