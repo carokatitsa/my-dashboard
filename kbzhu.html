@@ -9,6 +9,13 @@
         :root { --bg: #0d1117; --card: #161b22; --accent: #238636; --blue: #58a6ff; --text: #c9d1d9; --border: #30363d; --danger: #f85149; --gold: #f1c40f; --grey-text: #8b949e; }
         * { box-sizing: border-box; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; padding: 15px; overflow-x: hidden; }
+        
+        /* Переключатель языков в шапке */
+        .top-nav-bar { max-width: 1200px; margin: 0 auto 15px auto; display: flex; justify-content: flex-end; }
+        .lang-switcher { display: flex; gap: 5px; }
+        .lang-btn { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; transition: 0.2s; }
+        .lang-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
         .container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 380px 1fr; gap: 20px; width: 100%; }
         
         /* Шапка КБЖУ */
@@ -88,41 +95,51 @@
 </head>
 <body>
 
+<div class="top-nav-bar">
+    <div class="lang-switcher">
+        <button class="lang-btn" onclick="setLanguage('uk')" id="btn-uk">UA</button>
+        <button class="lang-btn" onclick="setLanguage('ru')" id="btn-ru">RU</button>
+        <button class="lang-btn" onclick="setLanguage('en')" id="btn-en">EN</button>
+        <button class="lang-btn" onclick="setLanguage('de')" id="btn-de">DE</button>
+        <button class="lang-btn" onclick="setLanguage('it')" id="btn-it">IT</button>
+    </div>
+</div>
+
 <div id="summaryDisplay" class="summary-card">
-    <h2 style="margin:0; color: var(--gold); text-align: center;">🏆 Итоги дня</h2>
+    <h2 id="t-summary-title" style="margin:0; color: var(--gold); text-align: center;">🏆 Итоги дня</h2>
     <div class="summary-grid">
         <div class="stat-box">
-            <small>ИЗМЕНЕНИЕ ЖИРА</small>
+            <small id="t-fat-change-label">ИЗМЕНЕНИЕ ЖИРА</small>
             <big id="fatResult">0г</big>
             <span id="fatDesc" style="font-size: 11px; color: var(--grey-text);"></span>
         </div>
         <div class="stat-box">
-            <small>СТАТУС МЫШЦ</small>
+            <small id="t-muscle-status-label">СТАТУС МЫШЦ</small>
             <big id="muscleResult" style="font-size: 18px;">—</big>
             <span id="muscleDesc" style="font-size: 11px; color: var(--grey-text);"></span>
         </div>
     </div>
-    <button class="btn" style="background:none; color:var(--blue); margin-top:15px;" onclick="closeSummary()">Закрыть отчет</button>
+    <button id="t-close-summary" class="btn" style="background:none; color:var(--blue); margin-top:15px;" onclick="closeSummary()">Закрыть отчет</button>
 </div>
 
 <div class="goals-header" id="mainHeader">
     <div class="goal-item">
-        <div class="goal-label-row">ККАЛ <span id="curK" class="current-val">0</span></div>
+        <div class="goal-label-row"><span id="t-kcal-label">ККАЛ</span> <span id="curK" class="current-val">0</span></div>
         <input type="number" id="goalK" value="2300" oninput="renderHistory()">
         <div class="progress-mini"><div id="barK" class="progress-fill"></div></div>
     </div>
     <div class="goal-item">
-        <div class="goal-label-row">БЕЛКИ <span id="curP" class="current-val">0</span></div>
+        <div class="goal-label-row"><span id="t-proteins-label">БЕЛКИ</span> <span id="curP" class="current-val">0</span></div>
         <input type="number" id="goalP" value="170" oninput="renderHistory()">
         <div class="progress-mini"><div id="barP" class="progress-fill"></div></div>
     </div>
     <div class="goal-item">
-        <div class="goal-label-row">ЖИРЫ <span id="curF" class="current-val">0</span></div>
+        <div class="goal-label-row"><span id="t-fats-label">ЖИРЫ</span> <span id="curF" class="current-val">0</span></div>
         <input type="number" id="goalF" value="70" oninput="renderHistory()">
         <div class="progress-mini"><div id="barF" class="progress-fill"></div></div>
     </div>
     <div class="goal-item">
-        <div class="goal-label-row">УГЛЕВОДЫ <span id="curC" class="current-val">0</span></div>
+        <div class="goal-label-row"><span id="t-carbs-label">УГЛЕВОДЫ</span> <span id="curC" class="current-val">0</span></div>
         <input type="number" id="goalC" value="240" oninput="renderHistory()">
         <div class="progress-mini"><div id="barC" class="progress-fill"></div></div>
     </div>
@@ -144,7 +161,7 @@
                 <input type="number" id="pK" placeholder="Ккал">
             </div>
             <label style="font-size:12px; color:var(--gold); display:flex; align-items:center; gap:5px; margin-bottom:15px; cursor:pointer;">
-                <input type="checkbox" id="pIsPortion"> Целая порция
+                <input type="checkbox" id="pIsPortion"> <span id="t-portion-label">Целая порция</span>
             </label>
             <button id="saveBtn" class="btn btn-add" onclick="saveToLib()">СОХРАНИТЬ В БАЗУ</button>
             <button id="cancelBtn" style="display:none; background:none; color:gray; border:none; margin-top:8px; cursor:pointer; width:100%;" onclick="resetForm()">Отмена</button>
@@ -153,13 +170,240 @@
         <input type="text" id="libSearch" class="main-input" style="margin-top:20px; border-color: var(--blue);" placeholder="🔍 Поиск..." oninput="renderLibrary()">
         <div id="libraryList" class="lib-list"></div>
 
-        <button class="btn btn-finish" onclick="finishDay()">✅ ЗАВЕРШИТЬ ДЕНЬ</button>
+        <button id="t-finish-day-btn" class="btn btn-finish" onclick="finishDay()">✅ ЗАВЕРШИТЬ ДЕНЬ</button>
     </div>
 
     <div id="history"></div>
 </div>
 
 <script>
+    // --- СЛОВАРИ ПЕРЕВОДОВ ---
+    const translations = {
+        uk: {
+            summaryTitle: "🏆 Підсумки дня",
+            fatChangeLabel: "ЗМІНА ЖИРУ",
+            muscleStatusLabel: "СТАТУС М'ЯЗІВ",
+            closeSummary: "Закрити звіт",
+            kcal: "ККАЛ",
+            proteins: "БІЛКИ",
+            fats: "ЖИРИ",
+            carbs: "ВУГЛЕВОДИ",
+            tabLib: "БАЗА",
+            tabMenu: "МЕНЮ ❤️",
+            placeholderName: "Назва страви",
+            portionLabel: "Ціла порція",
+            saveBtn: "ЗБЕРЕГТИ В БАЗУ",
+            updateBtn: "ОНОВИТИ",
+            cancelBtn: "Скасувати",
+            searchPlaceholder: "🔍 Пошук...",
+            emptyMenu: "Тут поки порожньо. Натисніть ❤️ на стравах у базі!",
+            finishDayBtn: "✅ ЗАВЕРШИТИ ДЕНЬ",
+            todayLabel: "СЬОГОДНІ",
+            inProgress: "В процесі...",
+            breakfast: "СНІДАНОК",
+            lunch: "ОБІД",
+            dinner: "ВЕЧЕРЯ",
+            snack: "ПЕРЕКУС",
+            deleteConfirm: "Видалити?",
+            deleteLibConfirm: "Видалити з бази?",
+            promptMealType: "Прийом їжі: 1-Сніданок, 2-Обід, 3-Вечеря, 4-Перекус",
+            promptWeight: "Вага в грамах?",
+            fatBurned: "Жиру спалено",
+            fatStored: "Жир в запас",
+            retention: "УТРИМАННЯ",
+            growth: "РІСТ 💪",
+            preservation: "ЗБЕРЕЖЕННЯ",
+            loss: "ВТРАТА ⚠️"
+        },
+        ru: {
+            summaryTitle: "🏆 Итоги дня",
+            fatChangeLabel: "ИЗМЕНЕНИЕ ЖИРА",
+            muscleStatusLabel: "СТАТУС МЫШЦ",
+            closeSummary: "Закрыть отчет",
+            kcal: "ККАЛ",
+            proteins: "БЕЛКИ",
+            fats: "ЖИРЫ",
+            carbs: "УГЛЕВОДЫ",
+            tabLib: "БАЗА",
+            tabMenu: "МЕНЮ ❤️",
+            placeholderName: "Название блюда",
+            portionLabel: "Целая порция",
+            saveBtn: "СОХРАНИТЬ В БАЗУ",
+            updateBtn: "ОБНОВИТЬ",
+            cancelBtn: "Отмена",
+            searchPlaceholder: "🔍 Поиск...",
+            emptyMenu: "Тут пока пусто. Нажми ❤️ на блюдах в базе!",
+            finishDayBtn: "✅ ЗАВЕРШИТЬ ДЕНЬ",
+            todayLabel: "СЕГОДНЯ",
+            inProgress: "В процессе...",
+            breakfast: "ЗАВТРАК",
+            lunch: "ОБЕД",
+            dinner: "УЖИН",
+            snack: "ПЕРЕКУС",
+            deleteConfirm: "Удалить?",
+            deleteLibConfirm: "Удалить из базы?",
+            promptMealType: "Прием пищи: 1-Завтрак, 2-Обед, 3-Ужин, 4-Перекус",
+            promptWeight: "Вес в граммах?",
+            fatBurned: "Жира сожжено",
+            fatStored: "Жир в запас",
+            retention: "УДЕРЖАНИЕ",
+            growth: "РОСТ 💪",
+            preservation: "СОХРАНЕНИЕ",
+            loss: "УБЫЛЬ ⚠️"
+        },
+        en: {
+            summaryTitle: "🏆 Day Summary",
+            fatChangeLabel: "FAT CHANGE",
+            muscleStatusLabel: "MUSCLE STATUS",
+            closeSummary: "Close report",
+            kcal: "KCAL",
+            proteins: "PROTEINS",
+            fats: "FATS",
+            carbs: "CARBS",
+            tabLib: "LIBRARY",
+            tabMenu: "MENU ❤️",
+            placeholderName: "Dish name",
+            portionLabel: "Full portion",
+            saveBtn: "SAVE TO LIBRARY",
+            updateBtn: "UPDATE",
+            cancelBtn: "Cancel",
+            searchPlaceholder: "🔍 Search...",
+            emptyMenu: "Empty here yet. Click ❤️ on dishes in the library!",
+            finishDayBtn: "✅ FINISH DAY",
+            todayLabel: "TODAY",
+            inProgress: "In progress...",
+            breakfast: "BREAKFAST",
+            lunch: "LUNCH",
+            dinner: "DINNER",
+            snack: "SNACK",
+            deleteConfirm: "Delete?",
+            deleteLibConfirm: "Delete from library?",
+            promptMealType: "Meal type: 1-Breakfast, 2-Lunch, 3-Dinner, 4-Snack",
+            promptWeight: "Weight in grams?",
+            fatBurned: "Fat burned",
+            fatStored: "Fat stored",
+            retention: "MAINTENANCE",
+            growth: "GROWTH 💪",
+            preservation: "PRESERVATION",
+            loss: "LOSS ⚠️"
+        },
+        de: {
+            summaryTitle: "🏆 Tageszusammenfassung",
+            fatChangeLabel: "FETTVERÄNDERUNG",
+            muscleStatusLabel: "MUSKELSTATUS",
+            closeSummary: "Bericht schließen",
+            kcal: "KKAL",
+            proteins: "EIWEISS",
+            fats: "FETT",
+            carbs: "KOHLENHYDR.",
+            tabLib: "DATENBANK",
+            tabMenu: "MENÜ ❤️",
+            placeholderName: "Gericht Name",
+            portionLabel: "Ganze Portion",
+            saveBtn: "IN DATENBANK SPEICHERN",
+            updateBtn: "AKTUALISIEREN",
+            cancelBtn: "Abbrechen",
+            searchPlaceholder: "🔍 Suchen...",
+            emptyMenu: "Hier ist noch nichts. Klicke ❤️ bei Gerichten in der Datenbank!",
+            finishDayBtn: "✅ TAG BEENDEN",
+            todayLabel: "HEUTE",
+            inProgress: "In Bearbeitung...",
+            breakfast: "FRÜHSTÜCK",
+            lunch: "MITTAGESSEN",
+            dinner: "ABENDESSEN",
+            snack: "SNACK",
+            deleteConfirm: "Löschen?",
+            deleteLibConfirm: "Aus Datenbank löschen?",
+            promptMealType: "Mahlzeit: 1-Frühstück, 2-Mittag, 3-Abend, 4-Snack",
+            promptWeight: "Gewicht in Gramm?",
+            fatBurned: "Fett verbrannt",
+            fatStored: "Fett gespeichert",
+            retention: "ERHALTUNG",
+            growth: "WACHSTUM 💪",
+            preservation: "ERHALT",
+            loss: "VERLUST ⚠️"
+        },
+        it: {
+            summaryTitle: "🏆 Riepilogo Giornaliero",
+            fatChangeLabel: "VARIAZIONE GRASSO",
+            muscleStatusLabel: "STATO MUSCOLARE",
+            closeSummary: "Chiudi rapporto",
+            kcal: "KCAL",
+            proteins: "PROTEINE",
+            fats: "GRASSI",
+            carbs: "CARBOIDRATI",
+            tabLib: "LIBRERIA",
+            tabMenu: "MENU ❤️",
+            placeholderName: "Nome piatto",
+            portionLabel: "Porzione intera",
+            saveBtn: "SALVA IN LIBRERIA",
+            updateBtn: "AGGIORNA",
+            cancelBtn: "Annulla",
+            searchPlaceholder: "🔍 Cerca...",
+            emptyMenu: "Ancora vuoto qui. Clicca ❤️ sui piatti nella libreria!",
+            finishDayBtn: "✅ TERMINA GIORNATA",
+            todayLabel: "OGGI",
+            inProgress: "In corso...",
+            breakfast: "COLAZIONE",
+            lunch: "PRANZO",
+            dinner: "CENA",
+            snack: "SPUNTINO",
+            deleteConfirm: "Eliminare?",
+            deleteLibConfirm: "Eliminare dalla libreria?",
+            promptMealType: "Tipo pasto: 1-Colazione, 2-Pranzo, 3-Cena, 4-Spuntino",
+            promptWeight: "Peso in grammi?",
+            fatBurned: "Grasso bruciato",
+            fatStored: "Grasso immagazzinato",
+            retention: "MANTENIMENTO",
+            growth: "CRESCITA 💪",
+            preservation: "CONSERVAZIONE",
+            loss: "PERDITA ⚠️"
+        }
+    };
+
+    function setLanguage(lang) {
+        localStorage.setItem("site_lang", lang);
+        
+        document.querySelectorAll(".lang-btn").forEach(btn => btn.classList.remove("active"));
+        const activeBtn = document.getElementById("btn-" + lang);
+        if (activeBtn) activeBtn.classList.add("active");
+
+        const t = translations[lang] || translations.uk;
+
+        document.getElementById("t-summary-title").innerText = t.summaryTitle;
+        document.getElementById("t-fat-change-label").innerText = t.fatChangeLabel;
+        document.getElementById("t-muscle-status-label").innerText = t.muscleStatusLabel;
+        document.getElementById("t-close-summary").innerText = t.closeSummary;
+        
+        document.getElementById("t-kcal-label").innerText = t.kcal;
+        document.getElementById("t-proteins-label").innerText = t.proteins;
+        document.getElementById("t-fats-label").innerText = t.fats;
+        document.getElementById("t-carbs-label").innerText = t.carbs;
+
+        document.getElementById("tabLib").innerText = t.tabLib;
+        document.getElementById("tabMenu").innerText = t.tabMenu;
+
+        document.getElementById("pName").placeholder = t.placeholderName;
+        document.getElementById("t-portion-label").innerText = t.portionLabel;
+        
+        const saveBtnEl = document.getElementById("saveBtn");
+        if(editId) {
+            saveBtnEl.innerText = t.updateBtn;
+        } else {
+            saveBtnEl.innerText = t.saveBtn;
+        }
+        document.getElementById("cancelBtn").innerText = t.cancelBtn;
+        document.getElementById("libSearch").placeholder = t.searchPlaceholder;
+        document.getElementById("t-finish-day-btn").innerText = t.finishDayBtn;
+
+        renderLibrary();
+        renderHistory();
+    }
+
+    // Инициализация языка при загрузке (по умолчанию украинский 'uk')
+    const savedLang = localStorage.getItem("site_lang") || "uk";
+    setLanguage(savedLang);
+
     // --- КОНФИГ FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyA3QRDLzkS9-NnupC5KN65fMv1j39ZovsI",
@@ -198,6 +442,9 @@
 
     // --- ОТРИСОВКА БАЗЫ ---
     function renderLibrary() {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         const q = document.getElementById('libSearch').value.toLowerCase();
         const list = document.getElementById('libraryList');
         list.innerHTML = "";
@@ -223,7 +470,7 @@
         });
 
         if (currentTab === 'menu' && filtered.length === 0) {
-            list.innerHTML = `<div style="text-align:center; padding:20px; color:gray; font-size:12px;">Тут пока пусто. Нажми ❤️ на блюдах в базе!</div>`;
+            list.innerHTML = `<div style="text-align:center; padding:20px; color:gray; font-size:12px;">${t.emptyMenu}</div>`;
         }
     }
 
@@ -233,6 +480,9 @@
 
     // --- ОТРИСОВКА ИСТОРИИ И ШАПКИ ---
     function renderHistory() {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         const container = document.getElementById('history');
         const today = new Date().toLocaleDateString('ru-RU');
         const groups = {};
@@ -278,7 +528,7 @@
                     <span>${s.muscleStatus}</span>
                 </div>`;
             } else if (isToday) { 
-                brief = `<div class="day-stats-brief">В процессе...</div>`; 
+                brief = `<div class="day-stats-brief">${t.inProgress}</div>`; 
             }
 
             const mealGroups = {};
@@ -296,10 +546,16 @@
             mealCategories.forEach(catName => {
                 if(mealGroups[catName]) {
                     const m = mealGroups[catName];
+                    let translatedCatName = catName;
+                    if(catName === "Завтрак") translatedCatName = t.breakfast;
+                    if(catName === "Обед") translatedCatName = t.lunch;
+                    if(catName === "Ужин") translatedCatName = t.dinner;
+                    if(catName === "Перекус") translatedCatName = t.snack;
+
                     mealHtml += `
                         <div class="meal-group">
                             <div class="meal-title">
-                                <span>${catName.toUpperCase()}</span>
+                                <span>${translatedCatName}</span>
                                 <span class="meal-totals">
                                     Ккал: ${Math.round(m.k)} | Б: ${m.p.toFixed(1)} | Ж: ${m.f.toFixed(1)} | У: ${m.c.toFixed(1)}
                                 </span>
@@ -315,7 +571,7 @@
 
             html += `<div class="day-block">
                 <div class="day-header" onclick="toggleDay('${date}')">
-                    <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?'СЕГОДНЯ':date}</b>${brief}</div>
+                    <div class="day-info"><b style="color:${isToday?'var(--blue)':'#fff'}">${isToday?t.todayLabel:date}</b>${brief}</div>
                     <span style="font-size:10px">${isToday?'▼':'▶'}</span>
                 </div>
                 <div id="list-${date}" class="eat-list ${!isToday?'collapsed':''}">
@@ -328,22 +584,25 @@
 
     // --- ФИНАЛ ДНЯ ---
     async function finishDay() {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         const gK = parseFloat(document.getElementById('goalK').value) || 2300;
         const gP = parseFloat(document.getElementById('goalP').value) || 170;
         const kcalDiff = totals.k - gK; 
         const fatChange = parseFloat((kcalDiff / 7.7).toFixed(1)); 
         
-        let mStat = "УДЕРЖАНИЕ";
+        let mStat = t.retention;
         if (totals.p >= gP) { 
-            mStat = (totals.k >= (gK - 200)) ? "РОСТ 💪" : "СОХРАНЕНИЕ"; 
+            mStat = (totals.k >= (gK - 200)) ? t.growth : t.preservation; 
         } else { 
-            mStat = "УБЫЛЬ ⚠️"; 
+            mStat = t.loss; 
         }
 
         const fatResEl = document.getElementById('fatResult');
         fatResEl.innerText = (fatChange > 0 ? "+" : "") + fatChange + "г";
         fatResEl.style.color = fatChange <= 0 ? "var(--accent)" : "var(--danger)";
-        document.getElementById('fatDesc').innerText = fatChange <= 0 ? "Жира сожжено" : "Жир в запас";
+        document.getElementById('fatDesc').innerText = fatChange <= 0 ? t.fatBurned : t.fatStored;
         document.getElementById('muscleResult').innerText = mStat;
         
         isDayFinished = true;
@@ -377,15 +636,18 @@
     }
 
     async function addToDay(id) {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         isDayFinished = false; 
         const p = library.find(x => x.id === id);
         
-        let mealType = prompt("Прием пищи: 1-Завтрак, 2-Обед, 3-Ужин, 4-Перекус", "1");
+        let mealType = prompt(t.promptMealType, "1");
         if (!mealType) return;
         const typeMap = {"1":"Завтрак", "2":"Обед", "3":"Ужин", "4":"Перекус"};
         const selectedMeal = typeMap[mealType] || "Перекус";
 
-        let w = p.isPortion ? "порция" : prompt("Вес в граммах?", "100");
+        let w = p.isPortion ? "порция" : prompt(t.promptWeight, "100");
         if (!w) return;
         let d = { ...p, w: w === "порция" ? w : parseFloat(w), mealType: selectedMeal };
         if (!p.isPortion) { 
@@ -397,23 +659,38 @@
     }
 
     function resetForm() {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         editId = null;
         ['pName','pP','pF','pC','pK'].forEach(i => document.getElementById(i).value = "");
         document.getElementById('pIsPortion').checked = false;
-        document.getElementById('saveBtn').innerText = "СОХРАНИТЬ В БАЗУ";
+        document.getElementById('saveBtn').innerText = t.saveBtn;
         document.getElementById('cancelBtn').style.display = "none";
     }
 
-    async function deleteLog(id) { if(confirm("Удалить?")) await db.collection("day_logs").doc(id).delete(); }
-    async function deleteFromLib(id) { if(confirm("Удалить из базы?")) await db.collection("food_library").doc(id).delete(); }
+    async function deleteLog(id) { 
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+        if(confirm(t.deleteConfirm)) await db.collection("day_logs").doc(id).delete(); 
+    }
+    
+    async function deleteFromLib(id) { 
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+        if(confirm(t.deleteLibConfirm)) await db.collection("food_library").doc(id).delete(); 
+    }
     
     function editProduct(id) {
+        const currentLangKey = localStorage.getItem("site_lang") || "uk";
+        const t = translations[currentLangKey] || translations.uk;
+
         const i = library.find(x => x.id === id);
         switchTab('lib'); 
         document.getElementById('pName').value = i.name; document.getElementById('pP').value = i.p;
         document.getElementById('pF').value = i.f; document.getElementById('pC').value = i.c;
         document.getElementById('pK').value = i.k; document.getElementById('pIsPortion').checked = i.isPortion;
-        editId = id; document.getElementById('saveBtn').innerText = "ОБНОВИТЬ"; document.getElementById('cancelBtn').style.display = "block";
+        editId = id; document.getElementById('saveBtn').innerText = t.updateBtn; document.getElementById('cancelBtn').style.display = "block";
     }
 
     function toggleDay(date) { document.getElementById(`list-${date}`).classList.toggle('collapsed'); }
