@@ -5,22 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Мой личный сайт</title>
   <style>
-    body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background:#0b0f17; color:#e8eefc; }
-    header { background:#111a2e; padding:16px; position:sticky; top:0; border-bottom: 1px solid #2a4cff; z-index: 100; }
-    nav { display: flex; flex-wrap: wrap; gap: 15px; max-width: 900px; margin: auto; }
-    nav a { color:#e8eefc; text-decoration:none; font-weight:600; font-size: 0.9em; white-space: nowrap; }
+    :root {
+      --bg-main: #0b0f17;
+      --card-bg: #111a2e;
+      --text-main: #e8eefc;
+      --text-muted: #94a3b8;
+      --accent: #2a4cff;
+      --accent-hover: #1a36d9;
+      --border: #1e293b;
+    }
+    body { margin:0; font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-main); color: var(--text-main); }
+    header { background: var(--card-bg); padding:16px; position:sticky; top:0; border-bottom: 1px solid var(--accent); z-index: 100; }
+    nav { display: flex; flex-wrap: wrap; gap: 15px; max-width: 900px; margin: auto; align-items: center; justify-content: space-between; }
+    .nav-links { display: flex; flex-wrap: wrap; gap: 15px; }
+    nav a { color: var(--text-main); text-decoration:none; font-weight:600; font-size: 0.9em; white-space: nowrap; }
     
+    /* Переключатель языков в шапке */
+    .lang-switcher { display: flex; gap: 5px; }
+    .lang-btn { background: #1e293b; color: var(--text-main); border: 1px solid var(--accent); padding: 4px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8em; font-weight: bold; transition: 0.2s; }
+    .lang-btn.active { background: var(--accent); }
+
     main { max-width:900px; margin:auto; padding:24px; }
     h1 { font-size: 1.8em; margin-bottom: 30px; }
     
-    .card { background:#111a2e; border-radius:14px; padding:20px; margin-bottom: 20px; border: 1px solid #1e293b; }
+    .card { background: var(--card-bg); border-radius:14px; padding:20px; margin-bottom: 20px; border: 1px solid var(--border); }
     .card h2 { margin-top: 0; font-size: 1.4em; }
-    .card p { color: #94a3b8; margin-bottom: 20px; }
+    .card p { color: var(--text-muted); margin-bottom: 20px; }
     
     /* Единый стиль для всех кнопок */
     .btn { 
       display:inline-block; 
-      background:#2a4cff; 
+      background: var(--accent); 
       color:white; 
       padding:10px 20px; 
       border-radius:10px; 
@@ -28,86 +43,242 @@
       font-weight: bold;
       transition: background 0.3s;
     }
-    .btn:hover { background: #1a36d9; }
+    .btn:hover { background: var(--accent-hover); }
   </style>
 </head>
 <body>
 
 <header>
   <nav>
-    <a href="index.html">🏠 Главная</a>
-    <a href="planer.html">🚀 Планер</a>
-    <a href="notes.html">Запоминалка</a>
-    <a href="coins.html">🪙 Монеты</a>
-    <a href="languages.html">📚 Языки</a>
-    <a href="daily.html">🎯 Daily 10</a>
-    <a href="training.html">💪 Тренировки</a>
-    <a href="chess.html">♟ Шахматы</a>
-    <a href="kbzhu.html">🍎 КБЖУ</a>
-    <a href="history.html">🏛️ История</a>
+    <div class="nav-links">
+      <a href="index.html">🏠 Главная</a>
+      <a href="planer.html">🚀 Планер</a>
+      <a href="notes.html">Запоминалка</a>
+      <a href="coins.html">🪙 Монеты</a>
+      <a href="languages.html">📚 Языки</a>
+      <a href="daily.html">🎯 Daily 10</a>
+      <a href="training.html">💪 Тренировки</a>
+      <a href="chess.html">♟ Шахматы</a>
+      <a href="kbzhu.html">🍎 КБЖУ</a>
+      <a href="history.html">🏛️ История</a>
+    </div>
+    <!-- Переключатель языков -->
+    <div class="lang-switcher">
+      <button class="lang-btn" onclick="setLanguage('uk')" id="btn-uk">UA</button>
+      <button class="lang-btn" onclick="setLanguage('ru')" id="btn-ru">RU</button>
+      <button class="lang-btn" onclick="setLanguage('en')" id="btn-en">EN</button>
+      <button class="lang-btn" onclick="setLanguage('de')" id="btn-de">DE</button>
+      <button class="lang-btn" onclick="setLanguage('it')" id="btn-it">IT</button>
+    </div>
   </nav>
 </header>
 
 <main>
-  <h1>Личный сайт-панель</h1>
+  <h1 id="t-title">Личный сайт-панель</h1>
 
   <div class="card">
-    <h2>🚀 Планер</h2>
-    <p>Мой прогресс и задачи на день</p>
-    <a href="planer.html" class="btn">Открыть</a>
+    <h2 id="t-planer-h">🚀 Планер</h2>
+    <p id="t-planer-p">Мой прогресс и задачи на день</p>
+    <a href="planer.html" class="btn t-open">Открыть</a>
   </div>
   
   <div class="card">
-    <h2>🪙 Монеты</h2>
-    <p>База данных монет с фотографиями</p>
-    <a href="coins.html" class="btn">Открыть</a>
+    <h2 id="t-coins-h">🪙 Монеты</h2>
+    <p id="t-coins-p">База данных монет с фотографиями</p>
+    <a href="coins.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
-    <h2>📚 Запоминалка</h2>
-    <p>Стать лучше</p>
-    <a href="zapominalka.html" class="btn">Открыть</a>
+    <h2 id="t-zap-h">📚 Запоминалка</h2>
+    <p id="t-zap-p">Стать лучше</p>
+    <a href="zapominalka.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
-    <h2>📚 Языки</h2>
-    <p>Словарь, фразы, повторение</p>
-    <a href="languages.html" class="btn">Открыть</a>
+    <h2 id="t-lang-h">📚 Языки</h2>
+    <p id="t-lang-p">Словарь, фразы, повторение</p>
+    <a href="languages.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
   <h2>🎯 Daily 10</h2>
-  <p>Учи по 10 слов в день. Дисциплина и экзамены.</p>
-  <a href="daily.html" class="btn">Открыть</a>
+  <p id="t-daily-p">Учи по 10 слов в день. Дисциплина и экзамены.</p>
+  <a href="daily.html" class="btn t-open">Открыть</a>
 </div>
 
   <div class="card">
-    <h2>💪 Тренировки</h2>
-    <p>Дневник тренировок и прогресс</p>
-    <a href="training.html" class="btn">Открыть</a>
+    <h2 id="t-train-h">💪 Тренировки</h2>
+    <p id="t-train-p">Дневник тренировок и прогресс</p>
+    <a href="training.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
-    <h2>♟️ Шахматы</h2>
-    <p>Изучение дебютов и вариантов</p>
-    <a href="chess.html" class="btn">Открыть</a>
+    <h2 id="t-chess-h">♟️ Шахматы</h2>
+    <p id="t-chess-p">Изучение дебютов и вариантов</p>
+    <a href="chess.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
-    <h2>🍎 КБЖУ</h2>
-    <p>Дневник питания и база продуктов</p>
-    <a href="kbzhu.html" class="btn">Открыть</a>
+    <h2 id="t-kbzhu-h">🍎 КБЖУ</h2>
+    <p id="t-kbzhu-p">Дневник питания и база продуктов</p>
+    <a href="kbzhu.html" class="btn t-open">Открыть</a>
   </div>
 
   <div class="card">
-    <h2>🏛️ История</h2>
-    <p>Архив событий и важные даты</p>
-    <a href="history.html" class="btn">Открыть</a>
+    <h2 id="t-history-h">🏛️ История</h2>
+    <p id="t-history-p">Архив событий и важные даты</p>
+    <a href="history.html" class="btn t-open">Открыть</a>
   </div>
 
 </main>
 
 <script>
+  // Словари для переводов (Украинский по умолчанию)
+  const translations = {
+    uk: {
+      title: "Особистий сайт-панель",
+      open: "Відкрити",
+      planerH: "🚀 Планер",
+      planerP: "Мій прогрес та завдання на день",
+      coinsH: "🪙 Монети",
+      coinsP: "База даних монет з фотографіями",
+      zapH: "📚 Запам'ятовувачка",
+      zapP: "Стати краще",
+      langH: "📚 Мови",
+      langP: "Словник, фрази, повторення",
+      dailyP: "Вчи по 10 слів на день. Дисципліна та іспити.",
+      trainH: "💪 Тренування",
+      trainP: "Щоденник тренувань та прогрес",
+      chessH: "♟️ Шахи",
+      chessP: "Вивчення дебютів та варіантів",
+      kbzhuH: "🍎 КБЖВ",
+      kbzhuP: "Щоденник харчування та база продуктів",
+      historyH: "🏛️ Історія",
+      historyP: "Архів подій та важливі дати"
+    },
+    ru: {
+      title: "Личный сайт-панель",
+      open: "Открыть",
+      planerH: "🚀 Планер",
+      planerP: "Мой прогресс и задачи на день",
+      coinsH: "🪙 Монеты",
+      coinsP: "База данных монет с фотографиями",
+      zapH: "📚 Запоминалка",
+      zapP: "Стать лучше",
+      langH: "📚 Языки",
+      langP: "Словарь, фразы, повторение",
+      dailyP: "Учи по 10 слов в день. Дисциплина и экзамены.",
+      trainH: "💪 Тренировки",
+      trainP: "Дневник тренировок и прогресс",
+      chessH: "♟️ Шахматы",
+      chessP: "Изучение дебютов и вариантов",
+      kbzhuH: "🍎 КБЖУ",
+      kbzhuP: "Дневник питания и база продуктов",
+      historyH: "🏛️ История",
+      historyP: "Архив событий и важные даты"
+    },
+    en: {
+      title: "Personal Dashboard",
+      open: "Open",
+      planerH: "🚀 Planner",
+      planerP: "My progress and daily tasks",
+      coinsH: "🪙 Coins",
+      coinsP: "Coin database with photos",
+      zapH: "📚 Memory Helper",
+      zapP: "Become better",
+      langH: "📚 Languages",
+      langP: "Dictionary, phrases, repetition",
+      dailyP: "Learn 10 words a day. Discipline and exams.",
+      trainH: "💪 Workouts",
+      trainP: "Workout diary and progress",
+      chessH: "♟️ Chess",
+      chessP: "Studying openings and variations",
+      kbzhuH: "🍎 Macros (KBZH)",
+      kbzhuP: "Food diary and food database",
+      historyH: "🏛️ History",
+      historyP: "Event archive and important dates"
+    },
+    de: {
+      title: "Persönliches Dashboard",
+      open: "Öffnen",
+      planerH: "🚀 Planer",
+      planerP: "Mein Fortschritt und tägliche Aufgaben",
+      coinsH: "🪙 Münzen",
+      coinsP: "Münzdatenbank mit Fotos",
+      zapH: "📚 Gedächtnishelfer",
+      zapP: "Besser werden",
+      langH: "📚 Sprachen",
+      langP: "Wörterbuch, Phrasen, Wiederholung",
+      dailyP: "Lerne 10 Wörter am Tag. Disziplin und Prüfungen.",
+      trainH: "💪 Training",
+      trainP: "Trainingstagebuch und Fortschritt",
+      chessH: "♟️ Schach",
+      chessP: "Eröffnungen und Varianten studieren",
+      kbzhuH: "🍎 Makros (KBZH)",
+      kbzhuP: "Ernährungstagebuch und Lebensmitteltabelle",
+      historyH: "🏛️ Geschichte",
+      historyP: "Ereignisarchiv und wichtige Daten"
+    },
+    it: {
+      title: "Pannello Personale",
+      open: "Apri",
+      planerH: "🚀 Pianificatore",
+      planerP: "I miei progressi e le attività giornaliere",
+      coinsH: "🪙 Monete",
+      coinsP: "Database di monete con foto",
+      zapH: "📚 Aiuto Memoria",
+      zapP: "Migliorare se stessi",
+      langH: "📚 Lingue",
+      langP: "Dizionario, frasi, ripetizione",
+      dailyP: "Impara 10 parole al giorno. Disciplina ed esami.",
+      trainH: "💪 Allenamenti",
+      trainP: "Diario degli allenamenti e progressi",
+      chessH: "♟️ Scacchi",
+      chessP: "Studio delle aperture e varianti",
+      kbzhuH: "🍎 Macro (KBZH)",
+      kbzhuP: "Diario alimentare e database cibi",
+      historyH: "🏛️ Storia",
+      historyP: "Archivio eventi e date importanti"
+    }
+  };
+
+  function setLanguage(lang) {
+    localStorage.setItem("site_lang", lang);
+    
+    // Подсветка активной кнопки языка
+    document.querySelectorAll(".lang-btn").forEach(btn => btn.classList.remove("active"));
+    const activeBtn = document.getElementById("btn-" + lang);
+    if (activeBtn) activeBtn.classList.add("active");
+
+    const t = translations[lang] || translations.uk;
+
+    document.getElementById("t-title").innerText = t.title;
+    document.getElementById("t-planer-h").innerText = t.planerH;
+    document.getElementById("t-planer-p").innerText = t.planerP;
+    document.getElementById("t-coins-h").innerText = t.coinsH;
+    document.getElementById("t-coins-p").innerText = t.coinsP;
+    document.getElementById("t-zap-h").innerText = t.zapH;
+    document.getElementById("t-zap-p").innerText = t.zapP;
+    document.getElementById("t-lang-h").innerText = t.langH;
+    document.getElementById("t-lang-p").innerText = t.langP;
+    document.getElementById("t-daily-p").innerText = t.dailyP;
+    document.getElementById("t-train-h").innerText = t.trainH;
+    document.getElementById("t-train-p").innerText = t.trainP;
+    document.getElementById("t-chess-h").innerText = t.chessH;
+    document.getElementById("t-chess-p").innerText = t.chessP;
+    document.getElementById("t-kbzhu-h").innerText = t.kbzhuH;
+    document.getElementById("t-kbzhu-p").innerText = t.kbzhuP;
+    document.getElementById("t-history-h").innerText = t.historyH;
+    document.getElementById("t-history-p").innerText = t.historyP;
+
+    // Кнопки "Открыть"
+    document.querySelectorAll(".t-open").forEach(el => el.innerText = t.open);
+  }
+
+  // При загрузке страницы проверяем язык (по умолчанию украинский 'uk', если еще не выбирал)
+  const savedLang = localStorage.getItem("site_lang") || "uk";
+  setLanguage(savedLang);
+
   const CORRECT_PIN = "256444"; 
 
   if (!localStorage.getItem("access_granted")) {
